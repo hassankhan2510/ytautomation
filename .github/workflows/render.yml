@@ -1,0 +1,81 @@
+name: Render Video
+
+# Trigger manually from the Actions tab. Pick the platform; the runner does the
+# whole pipeline (validate -> voiceover -> assets -> compress -> render) in the
+# cloud, so your laptop can be OFF. Download the MP4 from the run's Artifacts.
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: "Which platform to render"
+        required: true
+        default: "youtube-long"
+        type: choice
+        options:
+          - youtube-long
+          - shorts
+          - reel
+          - linkedin
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    defaults:
+      run:
+        working-directory: theranos-doc
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: theranos-doc/package-lock.json
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install headless-Chrome system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 \
+            libxdamage1 libpango-1.0-0 libcairo2 libcups2 \
+            fonts-liberation fonts-noto-color-emoji
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install edge-tts
+        run: pip install edge-tts
+
+      - name: Prepare video (validate -> voiceover -> assets -> compress)
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: npm run prepare-video
+
+      - name: Render
+        run: |
+          case "${{ github.event.inputs.platform }}" in
+            youtube-long) COMP=YouTube; OUT=video.mp4 ;;
+            shorts)       COMP=Shorts;  OUT=shorts.mp4 ;;
+            reel)         COMP=Shorts;  OUT=reel.mp4 ;;
+            linkedin)     COMP=Square;  OUT=linkedin.mp4 ;;
+            *)            COMP=YouTube; OUT=video.mp4 ;;
+          esac
+          echo "Rendering $COMP -> out/$OUT"
+          npx remotion render "$COMP" "out/$OUT" --concurrency=2
+
+      - name: Upload rendered video
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-video-${{ github.event.inputs.platform }}
+          path: theranos-doc/out/*.mp4
+          retention-days: 7

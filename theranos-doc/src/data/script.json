@@ -1,0 +1,74 @@
+{
+  "meta": {
+    "title": "Theranos: The $9 Billion Illusion",
+    "topic": "The rise and fall of Theranos and Elizabeth Holmes",
+    "niche": "business",
+    "channel": "business",
+    "platform": "youtube-long",
+    "targetSeconds": 360,
+    "fps": 30,
+    "style": "dark-documentary",
+    "voice": "en-US-GuyNeural",
+    "pauseBetweenLinesSec": 0.35,
+    "accentColor": "#e11d48",
+    "description": "How a Stanford dropout built a nine billion dollar company on a lie that endangered real patients' lives. The full story of Theranos, Elizabeth Holmes, and the fraud that changed Silicon Valley.",
+    "tags": ["theranos", "elizabeth holmes", "silicon valley", "startup fraud", "documentary", "true crime"],
+    "researchFile": "research.md",
+    "requireResearch": true
+  },
+  "lines": [
+    { "text": "Silicon Valley is built on a single, intoxicating premise: that technology can solve any human problem.", "keywords": ["silicon valley skyline night", "city lights aerial"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center", "kicker": "A Silicon Valley Story" },
+    { "text": "In 2014, the valley believed it had found its next messiah. A Stanford dropout promising to revolutionize blood-testing.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video" },
+    { "text": "Her name was Elizabeth Holmes. And her company, Theranos, was secretly built on a nine billion dollar lie.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center" },
+    { "text": "To understand the scale of this fraud, we have to look at the culture that birthed it.", "keywords": ["steve jobs black turtleneck", "tech founder stage"], "asset": "steve_jobs.jpg", "type": "image" },
+    { "text": "Investors were desperate for a female Steve Jobs. Holmes gave them exactly what they wanted to see.", "keywords": ["steve jobs presentation"], "asset": "steve_jobs.jpg", "type": "image" },
+
+    { "text": "She dropped out of Stanford at nineteen with nothing but a patent application and an idea for a wearable patch.", "keywords": ["modern office glass building", "startup office"], "asset": "office.jpg", "type": "image", "kicker": "The Pitch" },
+    { "text": "When professors told her the physics of the patch were impossible, she pivoted to a blood-testing machine.", "keywords": ["laboratory equipment"], "asset": "office.jpg", "type": "image" },
+    { "text": "She named the machine the Edison. It was pitched as a portable lab that could run hundreds of tests on one drop of blood.", "keywords": ["blood drop macro slow motion", "red liquid droplet"], "asset": "blood_drop.mp4", "type": "video" },
+    { "text": "The pitch was flawless. No needles. No massive vials. Just a tiny finger prick at your local pharmacy.", "keywords": ["blood drop macro"], "asset": "blood_drop.mp4", "type": "video" },
+    { "text": "Venture capitalists threw money at her without ever seeing a working prototype or validated scientific data.", "keywords": ["money cash stacks", "hundred dollar bills"], "asset": "money.jpg", "type": "image" },
+
+    { "text": "To legitimize her company, Holmes recruited a board of directors that looked like a shadow government.", "keywords": ["boardroom meeting dark", "corporate office"], "asset": "office.jpg", "type": "image" },
+    { "text": "Henry Kissinger, George Shultz, General James Mattis. Powerful men used to intimidate skeptics.", "keywords": ["government officials suits"], "asset": "office.jpg", "type": "image" },
+    { "text": "Almost no one on the board had any background in medicine, biology, or blood pathology.", "keywords": ["empty boardroom"], "asset": "office.jpg", "type": "image" },
+    { "text": "This political armor allowed Theranos to operate in total secrecy, claiming trade secrets whenever asked for data.", "keywords": ["dark digital grid cyber", "data network abstract"], "asset": "dark_grid.mp4", "type": "video" },
+    { "text": "Employees were siloed, tracked, and forced to sign suffocating non-disclosure agreements.", "keywords": ["surveillance dark technology"], "asset": "dark_grid.mp4", "type": "video" },
+
+    { "text": "The turning point came when Theranos partnered with Walgreens to roll out wellness centers nationwide.", "keywords": ["pharmacy store aisle", "drugstore interior"], "asset": "walgreens.jpg", "type": "image", "kicker": "The Deal" },
+    { "text": "Walgreens executives were afraid of missing out on the next big tech disruption, so they rushed the deal.", "keywords": ["pharmacy storefront"], "asset": "walgreens.jpg", "type": "image" },
+    { "text": "They completely bypassed standard medical vetting. Theranos was now testing real patients in retail stores.", "keywords": ["pharmacy counter"], "asset": "walgreens.jpg", "type": "image" },
+    { "text": "But inside the Theranos labs, the Edison machines were failing catastrophically.", "keywords": ["medical laboratory machines", "lab equipment dark"], "asset": "lab.jpg", "type": "image" },
+    { "text": "The robots were dropping pipettes, breaking glass, and returning wildly inaccurate results.", "keywords": ["laboratory robotics"], "asset": "lab.jpg", "type": "image" },
+
+    { "text": "The physics simply did not work. Capillary blood from a finger is fundamentally different from venous blood.", "keywords": ["blood drop macro"], "asset": "blood_drop.mp4", "type": "video" },
+    { "text": "It is contaminated with interstitial fluid and cellular debris from the tissue damage of the prick.", "keywords": ["blood cells microscope"], "asset": "blood_drop.mp4", "type": "video" },
+    { "text": "Furthermore, you cannot run two hundred distinct chemical assays on just fifty microliters of liquid.", "keywords": ["laboratory test tubes"], "asset": "lab.jpg", "type": "image" },
+    { "text": "When scientists tried to dilute the microscopic blood samples to make them stretch, the chemistry broke down.", "keywords": ["laboratory pipette liquid"], "asset": "lab.jpg", "type": "image" },
+    { "text": "The Edison was physically, biologically, and mathematically incapable of doing what Holmes promised.", "keywords": ["dark digital grid"], "asset": "dark_grid.mp4", "type": "video" },
+
+    { "text": "To hide the failure, Theranos resorted to massive, coordinated fraud across their entire operation.", "keywords": ["dark digital grid cyber"], "asset": "dark_grid.mp4", "type": "video" },
+    { "text": "They secretly bought commercial Siemens blood analyzers and hid them in a separate basement lab.", "keywords": ["hidden laboratory dark"], "asset": "dark_grid.mp4", "type": "video" },
+    { "text": "Employees were ordered to hack the Siemens machines open to accommodate the tiny, diluted patient samples.", "keywords": ["laboratory machine internals"], "asset": "lab.jpg", "type": "image" },
+    { "text": "Because the blood was artificially diluted, the results were highly erratic and statistically invalid.", "keywords": ["laboratory data screen"], "asset": "lab.jpg", "type": "image" },
+    { "text": "Real patients were receiving terrifyingly false medical diagnostics, from fake H.I.V. results to false cancer markers.", "keywords": ["newspaper headline dark", "financial newspaper"], "asset": "newspaper.jpg", "type": "image" },
+
+    { "text": "The facade cracked when young whistleblowers like Tyler Shultz and Erika Cheung realized what was happening.", "keywords": ["office worker concerned", "corporate hallway"], "asset": "office.jpg", "type": "image" },
+    { "text": "They noticed that quality control data was being routinely manipulated or deleted to pass inspections.", "keywords": ["computer data screen"], "asset": "office.jpg", "type": "image" },
+    { "text": "When they reported it to management, they were threatened with massive corporate lawsuits and intimidation tactics.", "keywords": ["legal documents dark"], "asset": "office.jpg", "type": "image" },
+    { "text": "But the secret reached Wall Street Journal reporter John Carreyrou, who began a quiet, relentless investigation.", "keywords": ["newspaper printing press", "journalism newspaper"], "asset": "newspaper.jpg", "type": "image" },
+    { "text": "Despite Holmes deploying elite lawyers to kill the story, Carreyrou published the devastating expose in 2015.", "keywords": ["newspaper headline"], "asset": "newspaper.jpg", "type": "image" },
+
+    { "text": "The article destroyed the illusion instantly. Medical agencies raided the labs and banned Holmes from operating.", "keywords": ["courthouse building", "court steps"], "asset": "court.jpg", "type": "image" },
+    { "text": "The nine billion dollar valuation evaporated to zero overnight. The emperor had no clothes.", "keywords": ["money burning stock crash"], "asset": "money.jpg", "type": "image" },
+    { "text": "In 2018, Elizabeth Holmes and her chief operating officer, Sunny Balwani, were indicted on federal wire fraud charges.", "keywords": ["courthouse columns"], "asset": "court.jpg", "type": "image" },
+    { "text": "After a highly publicized trial, Holmes was found guilty and sentenced to eleven years in federal prison.", "keywords": ["courthouse gavel justice"], "asset": "court.jpg", "type": "image" },
+    { "text": "Theranos remains the ultimate cautionary tale of what happens when Silicon Valley hustle collides with human biology.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video" },
+
+    { "text": "You cannot patch a biological failure with a software update.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center" },
+    { "text": "When deep tech founders lie to investors, they lose money. When they lie to patients, they lose lives.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video" },
+    { "text": "The Theranos disaster fundamentally changed how venture capitalists evaluate biotech startups forever.", "keywords": ["money finance dark"], "asset": "money.jpg", "type": "image" },
+    { "text": "But the allure of the visionary founder remains. The valley is always waiting for its next messiah.", "keywords": ["steve jobs silhouette"], "asset": "steve_jobs.jpg", "type": "image" },
+    { "text": "The only question is: who will they believe next?", "keywords": ["steve jobs silhouette dark"], "asset": "steve_jobs.jpg", "type": "image", "layout": "center" }
+  ]
+}

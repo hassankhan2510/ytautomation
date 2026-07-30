@@ -1,0 +1,20 @@
+# --- dependencies & build output ---
+node_modules/
+theranos-doc/node_modules/
+theranos-doc/out/
+theranos-doc/.remotion/
+
+# --- generated per render (recreated by `npm run prepare-video`) ---
+theranos-doc/public/audio/
+theranos-doc/src/data/timeline.json
+
+# --- uncompressed source-asset duplicates ---
+# The COMPRESSED versions live in theranos-doc/public/assets (those ARE committed).
+# This folder holds the original heavy files + is only used by the retired TheranosDoc.tsx.
+theranos-doc/src/assets/
+
+# --- os / editor / logs ---
+*.log
+.DS_Store
+Thumbs.db
+.vscode/

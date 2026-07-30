@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "VideoScript",
+  "description": "The single per-video content file. The AI produces this; the engine renders it.",
+  "type": "object",
+  "required": ["meta", "lines"],
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": ["title", "topic", "niche", "channel", "platform", "targetSeconds", "style", "voice", "accentColor", "description", "tags", "researchFile"],
+      "properties": {
+        "title": { "type": "string", "minLength": 8 },
+        "topic": { "type": "string", "minLength": 8 },
+        "niche": { "type": "string", "enum": ["space", "business", "ai"] },
+        "channel": { "type": "string", "minLength": 2 },
+        "platform": { "type": "string", "enum": ["youtube-long", "shorts", "reel", "linkedin"] },
+        "targetSeconds": { "type": "integer", "minimum": 15 },
+        "fps": { "type": "integer", "default": 30 },
+        "style": { "type": "string" },
+        "voice": { "type": "string", "description": "Edge TTS voice id, or cloned voice id later" },
+        "pauseBetweenLinesSec": { "type": "number", "default": 0.35 },
+        "accentColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "description": { "type": "string", "minLength": 20 },
+        "tags": { "type": "array", "items": { "type": "string" }, "minItems": 3 },
+        "researchFile": { "type": "string", "description": "Path (relative to script.json) to the research.md used to write this script" },
+        "requireResearch": { "type": "boolean", "default": true }
+      }
+    },
+    "lines": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["text", "keywords", "type"],
+        "properties": {
+          "text": { "type": "string", "minLength": 1 },
+          "keywords": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+          "asset": { "type": ["string", "null"] },
+          "type": { "type": "string", "enum": ["image", "video"] },
+          "layout": { "type": "string", "enum": ["lower-third", "center", "title"], "default": "lower-third" },
+          "kicker": { "type": ["string", "null"] }
+        }
+      }
+    }
+  }
+}

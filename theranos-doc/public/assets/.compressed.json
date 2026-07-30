@@ -1,0 +1,52 @@
+{
+  "blood_drop.mp4": {
+    "before": 28519991,
+    "after": 592929,
+    "at": "compressed"
+  },
+  "court.jpg": {
+    "before": 111708,
+    "after": 78356,
+    "at": "compressed"
+  },
+  "dark_grid.mp4": {
+    "before": 16240806,
+    "after": 5292593,
+    "at": "compressed"
+  },
+  "lab.jpg": {
+    "before": 385013,
+    "after": 186415,
+    "at": "compressed"
+  },
+  "money.jpg": {
+    "before": 240260,
+    "after": 77887,
+    "at": "compressed"
+  },
+  "newspaper.jpg": {
+    "before": 335702,
+    "after": 145781,
+    "at": "compressed"
+  },
+  "office.jpg": {
+    "before": 416761,
+    "after": 195204,
+    "at": "compressed"
+  },
+  "steve_jobs.jpg": {
+    "before": 981804,
+    "after": 595395,
+    "at": "compressed"
+  },
+  "sv_skyline.mp4": {
+    "before": 80007602,
+    "after": 4263651,
+    "at": "compressed"
+  },
+  "walgreens.jpg": {
+    "before": 176754,
+    "after": 68552,
+    "at": "compressed"
+  }
+}

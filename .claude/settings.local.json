@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m edge_tts --voice en-US-GuyNeural --text \"Silicon Valley is built on a single, intoxicating premise.\" --write-media test.mp3 --write-subtitles test.vtt)",
+      "Bash(python -c ' *)",
+      "Bash(mkdir -p public/assets)",
+      "Bash(cp -n src/assets/* public/assets/)",
+      "Bash(node scripts/fetch_assets.mjs)",
+      "Bash(npx remotion *)",
+      "Bash(mkdir -p \"D:/remotion-temp\")",
+      "Bash(TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" TMPDIR=\"D:/remotion-temp\" npx remotion render YouTube out/preview_clip.mp4 --frames=0-120)",
+      "Bash(TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion still Shorts out/still_shorts.png --frame=1200)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion render YouTube out/preview_clip2.mp4 --frames=0-90)",
+      "Bash(awk '{print $5, $9}')",
+      "Bash(TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion ffmpeg -y -i public/assets/sv_skyline.mp4 -vf \"scale=-2:1080\" -c:v libx264 -crf 26 -preset veryfast -an \"D:/remotion-temp/sv_test.mp4\")",
+      "Bash(node scripts/compress_assets.mjs)",
+      "Bash(python -c 'import json; t=json.load\\(open\\('\\\\''src/data/timeline.json'\\\\'',encoding='\\\\''utf-8'\\\\''\\)\\); l=t['\\\\''lines'\\\\'']; *)",
+      "Bash(TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion still YouTube \"out/scene_line0_center.png\" --frame=90)",
+      "Bash(cd \"D:/gen ai/personal reserch/Youtube_Automation/theranos-doc\")",
+      "Bash(time TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion render YouTube out/opener_preview.mp4 --frames=0-260 --concurrency=4)",
+      "Bash(TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion render YouTube out/speedtest.mp4 --frames=0-60 --concurrency=6)",
+      "Bash(sed -i 's/--concurrency=6/--concurrency=4/g' package.json)",
+      "Bash(echo \"=== optimized 60 frames, concurrency=4 ===\")",
+      "Bash(time TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion render YouTube out/speedtest.mp4 --frames=0-60 --concurrency=4)",
+      "Bash(echo \"=== PREVIEW mode \\(scale 0.5\\) 120 frames ===\")",
+      "Bash(time TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion render YouTube out/speedtest_preview.mp4 --frames=0-120 --scale=0.5 --concurrency=4 --jpeg-quality=70)",
+      "Bash(echo \"=== IMAGE-ONLY stretch, 120 frames, full 1080p ===\")",
+      "Bash(time TMP=\"D:/remotion-temp\" TEMP=\"D:/remotion-temp\" npx remotion render YouTube out/imgtest.mp4 --frames=1120-1240 --concurrency=4)",
+      "WebSearch",
+      "Bash(node scripts/validate.mjs)",
+      "Bash(echo \"exit=$?\")",
+      "Bash(node scripts/validate.mjs \"C:/Users/Dell/AppData/Local/Temp/claude/D--gen-ai-personal-reserch-Youtube-Automation/4e40e68b-6c63-4677-88d8-82576ec13e92/scratchpad/lazy_script.json\")"
+    ]
+  }
+}
