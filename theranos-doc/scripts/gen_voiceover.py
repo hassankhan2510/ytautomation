@@ -148,11 +148,24 @@ async def main():
         bar = "#" * int((i + 1) / len(lines) * 30)
         print(f"  [{i + 1:>2}/{len(lines)}] {speech_sec:5.1f}s  {audio_name}  {bar}")
 
+    # Optional background music bed. Only enabled if the file actually exists,
+    # so a missing/unset track never breaks the render — it just plays no music.
+    music_name = meta.get("music")
+    music_rel = None
+    if music_name:
+        music_path = os.path.join(ROOT, "public", "music", music_name)
+        if os.path.exists(music_path):
+            music_rel = f"music/{music_name}"
+        else:
+            print(f"NOTE: meta.music '{music_name}' not found in public/music/ — rendering without music.")
+
     timeline = {
         "fps": fps,
         "totalDurationInFrames": cursor_frame,
         "totalSeconds": round(cursor_frame / fps, 1),
         "accentColor": meta.get("accentColor", "#e11d48"),
+        "music": music_rel,
+        "musicVolume": float(meta.get("musicVolume", 0.14)),
         "lines": timeline_lines,
     }
 

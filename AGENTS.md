@@ -60,6 +60,8 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
     "style", "voice",                // from the niche pack
     "accentColor": "#rrggbb",        // from the niche pack
     "pauseBetweenLinesSec": 0.35,
+    "music": "cinematic_bed.mp3",    // OPTIONAL: calm/ambient bed in public/music/ (never club/EDM). Omit for none.
+    "musicVolume": 0.14,             // low, sits under the voice
     "description", "tags": [">= 3"],
     "researchFile": "research.md",
     "requireResearch": true

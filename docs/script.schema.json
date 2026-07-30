@@ -19,6 +19,8 @@
         "style": { "type": "string" },
         "voice": { "type": "string", "description": "Edge TTS voice id, or cloned voice id later" },
         "pauseBetweenLinesSec": { "type": "number", "default": 0.35 },
+        "music": { "type": ["string", "null"], "description": "Optional filename in public/music/ (a calm/cinematic royalty-free bed). Omit for no music." },
+        "musicVolume": { "type": "number", "default": 0.14, "description": "Background music level, 0-1. Keep low (~0.10-0.18) so it sits under the voice." },
         "accentColor": { "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
         "description": { "type": "string", "minLength": 20 },
         "tags": { "type": "array", "items": { "type": "string" }, "minItems": 3 },

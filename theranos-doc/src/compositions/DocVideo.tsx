@@ -58,8 +58,14 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
   const fontSize = portrait ? Math.round(width * 0.052) : Math.round(width * 0.029);
   const maxWidth = portrait ? width * 0.86 : width * 0.68;
 
+  const music = (timeline as { music?: string | null }).music;
+  const musicVolume = (timeline as { musicVolume?: number }).musicVolume ?? 0.14;
+
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
+      {/* Optional low-volume background music bed under the whole video */}
+      {music ? <Audio src={staticFile(music)} volume={musicVolume} loop /> : null}
+
       {/* Continuous background layer */}
       <Background segments={segments} />
 
