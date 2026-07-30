@@ -140,6 +140,16 @@ async def main():
                 "stat": line.get("stat"),
                 "cite": line.get("cite"),
                 "items": line.get("items"),
+                # Data-block payloads (all optional).
+                "chart": line.get("chart"),
+                "compare": line.get("compare"),
+                "events": line.get("events"),
+                "percent": line.get("percent"),
+                "name": line.get("name"),
+                "role": line.get("role"),
+                "location": line.get("location"),
+                "coords": line.get("coords"),
+                "collageAssets": line.get("collageAssets"),
                 "words": word_frames,
             }
         )

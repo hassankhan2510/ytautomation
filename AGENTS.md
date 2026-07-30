@@ -72,14 +72,22 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
       "keywords": ["visual search term"],
       "asset": "optional_file.jpg",           // omit to auto-fetch from keywords
       "type": "image|video",
-      "layout": "lower-third|center|title|stat|quote|bullets",  // optional, default lower-third
-      "kicker": "OPTIONAL LABEL",             // also the heading for a bullets scene
-      "stat": "$9B → $0",                     // only for layout: stat
-      "cite": "attribution",                  // only for layout: quote
-      "items": ["point one", "point two"] }   // only for layout: bullets
+      "layout": "lower-third|center|title|stat|quote|bullets|chart|compare|timeline|meter|nametag|map|collage",
+      "kicker": "OPTIONAL LABEL",             // heading for bullets/chart; label for meter
+      "stat": "$9B → $0",                     // layout: stat
+      "cite": "attribution",                  // layout: quote
+      "items": ["point one", "point two"],    // layout: bullets
+      "chart": [{"label":"2014","value":9000}],                 // layout: chart
+      "compare": {"left":{"title":"","items":[]},"right":{"title":"","items":[]}}, // layout: compare
+      "events": [{"label":"2015","text":"..."}],                // layout: timeline
+      "percent": 12,                          // layout: meter
+      "name": "Person", "role": "Title",      // layout: nametag
+      "location": "City", "coords": "0°N, 0°W",                 // layout: map
+      "collageAssets": ["a.jpg","b.jpg"] }    // layout: collage (2-4 files in public/assets)
   ]
 }
 ```
+See `docs/COMPONENT_CATALOG.md` for when to use each of the 13 layouts.
 
 **Languages:** set `meta.voice` to a Hindi/Urdu voice (e.g. `ur-PK-AsadNeural`, `hi-IN-MadhurNeural`)
 and write `text` in that language. On-screen text stays **English** via `caption` — the validator

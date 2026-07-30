@@ -10,6 +10,7 @@ import timeline from "../data/timeline.json";
 import { Background, BgSegment } from "../components/Background";
 import { Caption, Word, Layout } from "../components/Caption";
 import { Stat, Quote, Bullets } from "../components/SceneBlocks";
+import { Chart, Compare, Timeline, Meter, NameTag, MapLocator, Collage } from "../components/DataBlocks";
 import { Grain } from "../components/Grain";
 
 type TimelineLine = {
@@ -20,12 +21,22 @@ type TimelineLine = {
   text: string;
   asset: string | null;
   type: "image" | "video";
-  layout?: Layout | "stat" | "quote" | "bullets";
+  layout?: string;
   kicker?: string | null;
+  words: Word[];
+  // Optional block payloads
   stat?: string | null;
   cite?: string | null;
   items?: string[] | null;
-  words: Word[];
+  chart?: { label: string; value: number }[] | null;
+  compare?: { left: { title: string; items: string[] }; right: { title: string; items: string[] } } | null;
+  events?: { label: string; text: string }[] | null;
+  percent?: number | null;
+  name?: string | null;
+  role?: string | null;
+  location?: string | null;
+  coords?: string | null;
+  collageAssets?: string[] | null;
 };
 
 /** Group consecutive lines that share the same asset into one background segment. */
@@ -54,12 +65,50 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
   const segments = buildSegments(lines);
 
   const portrait = height > width;
-  // Scale caption text to the frame so it reads well on both long-form and vertical.
   const fontSize = portrait ? Math.round(width * 0.052) : Math.round(width * 0.029);
   const maxWidth = portrait ? width * 0.86 : width * 0.68;
 
   const music = (timeline as { music?: string | null }).music;
   const musicVolume = (timeline as { musicVolume?: number }).musicVolume ?? 0.14;
+
+  const renderScene = (line: TimelineLine) => {
+    const common = { accent, fontSize, portrait };
+    switch (line.layout) {
+      case "stat":
+        return <Stat stat={line.stat || line.text} label={line.text} {...common} />;
+      case "quote":
+        return <Quote text={line.text} cite={line.cite} {...common} />;
+      case "bullets":
+        return <Bullets heading={line.kicker} items={line.items || []} {...common} />;
+      case "chart":
+        return <Chart data={line.chart || []} title={line.kicker || line.text} {...common} />;
+      case "compare":
+        return line.compare ? <Compare left={line.compare.left} right={line.compare.right} {...common} /> : null;
+      case "timeline":
+        return <Timeline events={line.events || []} {...common} />;
+      case "meter":
+        return <Meter percent={line.percent ?? 0} label={line.kicker || line.text} {...common} />;
+      case "nametag":
+        return <NameTag name={line.name || line.text} role={line.role} {...common} />;
+      case "map":
+        return <MapLocator location={line.location || line.text} coords={line.coords} {...common} />;
+      case "collage":
+        return <Collage assets={line.collageAssets || []} accent={accent} />;
+      default:
+        return (
+          <Caption
+            words={line.words}
+            fallbackText={line.text}
+            kicker={line.kicker}
+            layout={line.layout as Layout}
+            accent={accent}
+            fontSize={fontSize}
+            maxWidth={maxWidth}
+            portrait={portrait}
+          />
+        );
+    }
+  };
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
@@ -69,50 +118,11 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
       {/* Continuous background layer */}
       <Background segments={segments} />
 
-      {/* Per-line narration + caption */}
+      {/* Per-line narration + scene */}
       {lines.map((line) => (
-        <Sequence
-          key={line.index}
-          from={line.startFrame}
-          durationInFrames={line.durationInFrames}
-        >
+        <Sequence key={line.index} from={line.startFrame} durationInFrames={line.durationInFrames}>
           <Audio src={staticFile(line.audio)} />
-          {line.layout === "stat" ? (
-            <Stat
-              stat={line.stat || line.text}
-              label={line.text}
-              accent={accent}
-              fontSize={fontSize}
-              portrait={portrait}
-            />
-          ) : line.layout === "quote" ? (
-            <Quote
-              text={line.text}
-              cite={line.cite}
-              accent={accent}
-              fontSize={fontSize}
-              portrait={portrait}
-            />
-          ) : line.layout === "bullets" ? (
-            <Bullets
-              heading={line.kicker}
-              items={line.items || []}
-              accent={accent}
-              fontSize={fontSize}
-              portrait={portrait}
-            />
-          ) : (
-            <Caption
-              words={line.words}
-              fallbackText={line.text}
-              kicker={line.kicker}
-              layout={line.layout as Layout}
-              accent={accent}
-              fontSize={fontSize}
-              maxWidth={maxWidth}
-              portrait={portrait}
-            />
-          )}
+          {renderScene(line)}
         </Sequence>
       ))}
 
@@ -120,12 +130,7 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
       <Grain />
 
       {/* Cinematic vignette */}
-      <AbsoluteFill
-        style={{
-          boxShadow: "inset 0 0 400px rgba(0,0,0,0.92)",
-          pointerEvents: "none",
-        }}
-      />
+      <AbsoluteFill style={{ boxShadow: "inset 0 0 400px rgba(0,0,0,0.92)", pointerEvents: "none" }} />
     </AbsoluteFill>
   );
 };

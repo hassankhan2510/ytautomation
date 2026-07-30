@@ -40,11 +40,20 @@
           "keywords": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
           "asset": { "type": ["string", "null"] },
           "type": { "type": "string", "enum": ["image", "video"] },
-          "layout": { "type": "string", "enum": ["lower-third", "center", "title", "stat", "quote", "bullets"], "default": "lower-third" },
-          "kicker": { "type": ["string", "null"], "description": "Short label above text; also the heading for a bullets scene" },
-          "stat": { "type": ["string", "null"], "description": "For layout=stat: the big figure to display, e.g. \"$9,000,000,000\"" },
-          "cite": { "type": ["string", "null"], "description": "For layout=quote: the attribution line" },
-          "items": { "type": ["array", "null"], "items": { "type": "string" }, "description": "For layout=bullets: the list items (2-5)" }
+          "layout": { "type": "string", "enum": ["lower-third", "center", "title", "stat", "quote", "bullets", "chart", "compare", "timeline", "meter", "nametag", "map", "collage"], "default": "lower-third" },
+          "kicker": { "type": ["string", "null"], "description": "Short label above text; also the heading for a bullets/chart scene" },
+          "stat": { "type": ["string", "null"], "description": "layout=stat: the big figure, e.g. \"$9,000,000,000\"" },
+          "cite": { "type": ["string", "null"], "description": "layout=quote: the attribution line" },
+          "items": { "type": ["array", "null"], "items": { "type": "string" }, "description": "layout=bullets: the list items (2-5)" },
+          "chart": { "type": ["array", "null"], "items": { "type": "object", "properties": { "label": { "type": "string" }, "value": { "type": "number" } } }, "description": "layout=chart: bars, 2-6 of {label,value}" },
+          "compare": { "type": ["object", "null"], "properties": { "left": { "type": "object" }, "right": { "type": "object" } }, "description": "layout=compare: { left:{title,items[]}, right:{title,items[]} }" },
+          "events": { "type": ["array", "null"], "items": { "type": "object", "properties": { "label": { "type": "string" }, "text": { "type": "string" } } }, "description": "layout=timeline: 2-6 of {label,text}" },
+          "percent": { "type": ["number", "null"], "description": "layout=meter: 0-100" },
+          "name": { "type": ["string", "null"], "description": "layout=nametag: person name" },
+          "role": { "type": ["string", "null"], "description": "layout=nametag: title/role under the name" },
+          "location": { "type": ["string", "null"], "description": "layout=map: place name" },
+          "coords": { "type": ["string", "null"], "description": "layout=map: coordinates string" },
+          "collageAssets": { "type": ["array", "null"], "items": { "type": "string" }, "description": "layout=collage: 2-4 asset filenames from public/assets" }
         }
       }
     }

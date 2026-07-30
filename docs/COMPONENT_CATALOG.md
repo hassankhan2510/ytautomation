@@ -17,6 +17,13 @@ composes these building blocks by setting fields in `script.json`. This is why v
 | `stat` | e.g. `"$9B → $0"` | For `layout: stat` — the big figure to display |
 | `cite` | short string | For `layout: quote` — the attribution line |
 | `items` | array of 2–5 strings | For `layout: bullets` — the list items |
+| `chart` | `[{label,value}]` | For `layout: chart` — 2–6 bars |
+| `compare` | `{left:{title,items}, right:{title,items}}` | For `layout: compare` — the two panels |
+| `events` | `[{label,text}]` | For `layout: timeline` — 2–6 events |
+| `percent` | number 0–100 | For `layout: meter` — the gauge value |
+| `name` / `role` | strings | For `layout: nametag` — person name + title |
+| `location` / `coords` | strings | For `layout: map` — place name + coordinates |
+| `collageAssets` | `[filenames]` | For `layout: collage` — 2–4 images from public/assets |
 
 ## Layouts
 
@@ -32,6 +39,18 @@ composes these building blocks by setting fields in `script.json`. This is why v
   a powerful quotation or a thesis statement.
 - **`bullets`**: a list (`items`) that reveals one point at a time, with an optional heading
   (`kicker`). For "3 reasons", "the 5 signs", comparisons — very strong on Reels/Shorts.
+- **`chart`**: an animated bar chart (`chart: [{label,value}]`, title from `kicker`). For growth,
+  funding, counts, any 2–6 numbers.
+- **`compare`**: a side-by-side VS panel (`compare: {left:{title,items}, right:{title,items}}`).
+  For Promise vs Reality, Before vs After, Us vs Them.
+- **`timeline`**: a vertical event timeline (`events: [{label,text}]`). For a rise-and-fall arc,
+  a history, a sequence of dates.
+- **`meter`**: a big radial percentage gauge (`percent` 0–100, label from `kicker`). For a single
+  striking stat.
+- **`nametag`**: a broadcast-style lower-third (`name`, `role`). For introducing a person.
+- **`map`**: a location marker — pulsing pin + place name (`location`) + `coords`. For "where".
+- **`collage`**: a 2–4 image grid (`collageAssets: [filenames]` from public/assets). For montages,
+  groups of people/things. (v1 uses existing asset filenames; auto-fetch for collage is future.)
 
 ## Languages (Hindi / Urdu voice, English on screen)
 

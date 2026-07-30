@@ -33,6 +33,11 @@ const PLATFORMS = {
   reel: { secPerLine: 4.5, aspect: "9:16" },
 };
 
+const LAYOUTS = [
+  "lower-third", "center", "title", "stat", "quote", "bullets",
+  "chart", "compare", "timeline", "meter", "nametag", "map", "collage",
+];
+
 const PLACEHOLDER = /\b(todo|tbd|lorem ipsum|placeholder|xxx|insert .* here|example text|your text)\b/i;
 const TTS_UNSAFE = /[$%&#]|\b\d{5,}\b/; // symbols / 5+ digit runs (4-digit years read fine)
 
@@ -92,8 +97,15 @@ function main() {
     if (!l || typeof l.text !== "string" || !l.text.trim()) badLines.push(`#${i} empty text`);
     else if (!Array.isArray(l.keywords) || l.keywords.length < 1) badLines.push(`#${i} no keywords`);
     else if (l.type && !["image", "video"].includes(l.type)) badLines.push(`#${i} bad type "${l.type}"`);
-    else if (l.layout && !["lower-third", "center", "title", "stat", "quote", "bullets"].includes(l.layout)) badLines.push(`#${i} bad layout "${l.layout}"`);
-    else if (l.layout === "bullets" && (!Array.isArray(l.items) || l.items.length < 2)) badLines.push(`#${i} bullets layout needs an "items" array (>=2)`);
+    else if (l.layout && !LAYOUTS.includes(l.layout)) badLines.push(`#${i} bad layout "${l.layout}"`);
+    else if (l.layout === "bullets" && (!Array.isArray(l.items) || l.items.length < 2)) badLines.push(`#${i} bullets needs an "items" array (>=2)`);
+    else if (l.layout === "chart" && (!Array.isArray(l.chart) || l.chart.length < 2)) badLines.push(`#${i} chart needs a "chart" array (>=2 of {label,value})`);
+    else if (l.layout === "compare" && (!l.compare || !l.compare.left || !l.compare.right)) badLines.push(`#${i} compare needs "compare" with left+right {title,items}`);
+    else if (l.layout === "timeline" && (!Array.isArray(l.events) || l.events.length < 2)) badLines.push(`#${i} timeline needs an "events" array (>=2 of {label,text})`);
+    else if (l.layout === "meter" && typeof l.percent !== "number") badLines.push(`#${i} meter needs a numeric "percent"`);
+    else if (l.layout === "nametag" && !l.name) badLines.push(`#${i} nametag needs a "name"`);
+    else if (l.layout === "map" && !l.location) badLines.push(`#${i} map needs a "location"`);
+    else if (l.layout === "collage" && (!Array.isArray(l.collageAssets) || l.collageAssets.length < 2)) badLines.push(`#${i} collage needs "collageAssets" (>=2 filenames)`);
   });
   gate("every line complete", badLines.length === 0, badLines.length ? badLines.slice(0, 5).join("; ") : "all lines have text + keywords + valid type/layout");
 
