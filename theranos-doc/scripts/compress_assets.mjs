@@ -19,7 +19,7 @@ function orientationFromScript() {
   try {
     const s = JSON.parse(fs.readFileSync(SCRIPT_JSON, "utf-8"));
     const p = (s.meta?.platform || "youtube").toLowerCase();
-    return ["shorts", "reels", "tiktok", "instagram"].includes(p) ? "portrait" : "landscape";
+    return ["shorts", "reel", "reels", "tiktok", "instagram"].includes(p) ? "portrait" : "landscape";
   } catch {
     return "landscape";
   }

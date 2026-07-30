@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "title": "Theranos: The $9 Billion Illusion — Reel 4",
+    "topic": "The rise and fall of Theranos and Elizabeth Holmes",
+    "niche": "business",
+    "channel": "business",
+    "platform": "reel",
+    "targetSeconds": 41,
+    "fps": 30,
+    "style": "dark-documentary",
+    "voice": "en-US-GuyNeural",
+    "pauseBetweenLinesSec": 0.35,
+    "music": null,
+    "musicVolume": 0.14,
+    "accentColor": "#e11d48",
+    "description": "How a Stanford dropout built a nine billion dollar company on a lie that endangered real patients' lives. The full story of Theranos, Elizabeth Holmes, and the fraud that changed Silicon Valley.",
+    "tags": [
+      "theranos",
+      "elizabeth holmes",
+      "silicon valley",
+      "startup fraud",
+      "documentary",
+      "true crime"
+    ],
+    "researchFile": "research.md",
+    "requireResearch": false
+  },
+  "lines": [
+    {
+      "text": "The nine billion dollar valuation evaporated to zero overnight. The emperor had no clothes.",
+      "keywords": [
+        "money burning stock crash"
+      ],
+      "asset": "money.jpg",
+      "type": "image",
+      "layout": "stat",
+      "stat": "$9B → $0"
+    },
+    {
+      "text": "In 2018, Elizabeth Holmes and her chief operating officer, Sunny Balwani, were indicted on federal wire fraud charges.",
+      "keywords": [
+        "courthouse columns"
+      ],
+      "asset": "court.jpg",
+      "type": "image"
+    },
+    {
+      "text": "After a highly publicized trial, Holmes was found guilty and sentenced to eleven years in federal prison.",
+      "keywords": [
+        "courthouse gavel justice"
+      ],
+      "asset": "court.jpg",
+      "type": "image"
+    },
+    {
+      "text": "Theranos remains the ultimate cautionary tale of what happens when Silicon Valley hustle collides with human biology.",
+      "keywords": [
+        "silicon valley skyline night"
+      ],
+      "asset": "sv_skyline.mp4",
+      "type": "video",
+      "layout": "timeline",
+      "events": [
+        {
+          "label": "2003",
+          "text": "Theranos founded"
+        },
+        {
+          "label": "2014",
+          "text": "Nine billion dollar peak valuation"
+        },
+        {
+          "label": "2015",
+          "text": "Wall Street Journal exposé"
+        },
+        {
+          "label": "2018",
+          "text": "Federal fraud charges"
+        },
+        {
+          "label": "2022",
+          "text": "Convicted, sentenced to 11 years"
+        }
+      ]
+    },
+    {
+      "text": "You cannot patch a biological failure with a software update.",
+      "keywords": [
+        "silicon valley skyline night"
+      ],
+      "asset": "sv_skyline.mp4",
+      "type": "video",
+      "layout": "quote",
+      "cite": "The lesson of Theranos"
+    },
+    {
+      "text": "When deep tech founders lie to investors, they lose money. When they lie to patients, they lose lives.",
+      "keywords": [
+        "silicon valley skyline night"
+      ],
+      "asset": "sv_skyline.mp4",
+      "type": "video"
+    },
+    {
+      "text": "The Theranos disaster fundamentally changed how venture capitalists evaluate biotech startups forever.",
+      "keywords": [
+        "money finance dark"
+      ],
+      "asset": "money.jpg",
+      "type": "image"
+    },
+    {
+      "text": "But the allure of the visionary founder remains. The valley is always waiting for its next messiah.",
+      "keywords": [
+        "steve jobs silhouette"
+      ],
+      "asset": "steve_jobs.jpg",
+      "type": "image"
+    },
+    {
+      "text": "The only question is: who will they believe next?",
+      "keywords": [
+        "steve jobs silhouette dark"
+      ],
+      "asset": "steve_jobs.jpg",
+      "type": "image",
+      "layout": "center"
+    }
+  ]
+}

@@ -140,7 +140,9 @@ function main() {
   const minVisuals = Math.max(2, Math.ceil(lines.length / 5));
   gate("visual variety", visuals.size >= minVisuals, `${visuals.size} unique visuals (min ${minVisuals})`);
 
-  if (lines.length >= 6) {
+  // Long-form should have chapter structure; short-form (reels/shorts) is exempt.
+  const longForm = platform === "youtube-long" || platform === "linkedin";
+  if (lines.length >= 6 && longForm) {
     const hasEmphasis = lines.some((l) => l.layout === "center" || l.layout === "title");
     const hasKicker = lines.some((l) => l.kicker);
     gate("layout variety", hasEmphasis && hasKicker,

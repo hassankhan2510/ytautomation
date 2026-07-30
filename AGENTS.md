@@ -114,7 +114,11 @@ npm run prepare-video    # voiceover + assets + compress (+ real-duration check)
 npm run dev              # live preview in the browser (fast)
 npm run render:youtube   # final 16:9 MP4   (shorts / square for other platforms)
 npm run preview:youtube  # fast half-res draft render
+npm run autocut          # split the current long-form into jobs/reel_*.json (Reels/Shorts)
+npm run batch            # render every jobs/*.json -> out/  (parallel on GitHub Actions)
 ```
+**Batch & Reels:** put one script per video in `jobs/`, or run `autocut` to cut a long-form into
+vertical reels; then `batch` renders them all. Full guide: `docs/BATCH.md`.
 Windows note: renders route temp to `D:/remotion-temp` (C: is nearly full). Only 4 CPU cores,
 so full renders are slow (~90 min for a 5-min video) — prefer live preview to iterate, and
 offload final renders to GitHub Actions.

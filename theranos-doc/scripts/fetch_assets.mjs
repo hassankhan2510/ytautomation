@@ -71,7 +71,7 @@ async function main() {
   const script = JSON.parse(fs.readFileSync(SCRIPT_JSON, "utf-8"));
   const platform = (script.meta?.platform || "youtube").toLowerCase();
   // Vertical platforms want portrait footage.
-  const orientation = ["shorts", "reels", "tiktok", "instagram"].includes(platform)
+  const orientation = ["shorts", "reel", "reels", "tiktok", "instagram"].includes(platform)
     ? "portrait"
     : "landscape";
 

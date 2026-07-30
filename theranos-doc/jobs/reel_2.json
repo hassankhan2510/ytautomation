@@ -1,0 +1,130 @@
+{
+  "meta": {
+    "title": "Theranos: The $9 Billion Illusion — Reel 2",
+    "topic": "The rise and fall of Theranos and Elizabeth Holmes",
+    "niche": "business",
+    "channel": "business",
+    "platform": "reel",
+    "targetSeconds": 54,
+    "fps": 30,
+    "style": "dark-documentary",
+    "voice": "en-US-GuyNeural",
+    "pauseBetweenLinesSec": 0.35,
+    "music": null,
+    "musicVolume": 0.14,
+    "accentColor": "#e11d48",
+    "description": "How a Stanford dropout built a nine billion dollar company on a lie that endangered real patients' lives. The full story of Theranos, Elizabeth Holmes, and the fraud that changed Silicon Valley.",
+    "tags": [
+      "theranos",
+      "elizabeth holmes",
+      "silicon valley",
+      "startup fraud",
+      "documentary",
+      "true crime"
+    ],
+    "researchFile": "research.md",
+    "requireResearch": false
+  },
+  "lines": [
+    {
+      "text": "Almost no one on the board had any background in medicine, biology, or blood pathology.",
+      "keywords": [
+        "empty boardroom"
+      ],
+      "asset": "office.jpg",
+      "type": "image"
+    },
+    {
+      "text": "This political armor allowed Theranos to operate in total secrecy, claiming trade secrets whenever asked for data.",
+      "keywords": [
+        "dark digital grid cyber",
+        "data network abstract"
+      ],
+      "asset": "dark_grid.mp4",
+      "type": "video"
+    },
+    {
+      "text": "Employees were siloed, tracked, and forced to sign suffocating non-disclosure agreements.",
+      "keywords": [
+        "surveillance dark technology"
+      ],
+      "asset": "dark_grid.mp4",
+      "type": "video"
+    },
+    {
+      "text": "The turning point came when Theranos partnered with Walgreens to roll out wellness centers nationwide.",
+      "keywords": [
+        "pharmacy store aisle",
+        "drugstore interior"
+      ],
+      "asset": "walgreens.jpg",
+      "type": "image",
+      "kicker": "The Deal"
+    },
+    {
+      "text": "Walgreens executives were afraid of missing out on the next big tech disruption, so they rushed the deal.",
+      "keywords": [
+        "pharmacy storefront"
+      ],
+      "asset": "walgreens.jpg",
+      "type": "image"
+    },
+    {
+      "text": "They completely bypassed standard medical vetting. Theranos was now testing real patients in retail stores.",
+      "keywords": [
+        "pharmacy counter"
+      ],
+      "asset": "walgreens.jpg",
+      "type": "image"
+    },
+    {
+      "text": "But inside the Theranos labs, the Edison machines were failing catastrophically.",
+      "keywords": [
+        "medical laboratory machines",
+        "lab equipment dark"
+      ],
+      "asset": "lab.jpg",
+      "type": "image"
+    },
+    {
+      "text": "The robots were dropping pipettes, breaking glass, and returning wildly inaccurate results.",
+      "keywords": [
+        "laboratory robotics"
+      ],
+      "asset": "lab.jpg",
+      "type": "image"
+    },
+    {
+      "text": "The physics simply did not work. Capillary blood from a finger is fundamentally different from venous blood.",
+      "keywords": [
+        "blood drop macro"
+      ],
+      "asset": "blood_drop.mp4",
+      "type": "video"
+    },
+    {
+      "text": "It is contaminated with interstitial fluid and cellular debris from the tissue damage of the prick.",
+      "keywords": [
+        "blood cells microscope"
+      ],
+      "asset": "blood_drop.mp4",
+      "type": "video"
+    },
+    {
+      "text": "Furthermore, you cannot run two hundred distinct chemical assays on just fifty microliters of liquid.",
+      "keywords": [
+        "laboratory test tubes"
+      ],
+      "asset": "lab.jpg",
+      "type": "image"
+    },
+    {
+      "text": "When scientists tried to dilute the microscopic blood samples to make them stretch, the chemistry broke down.",
+      "keywords": [
+        "laboratory pipette liquid"
+      ],
+      "asset": "lab.jpg",
+      "type": "image"
+    }
+  ]
+}

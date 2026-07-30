@@ -27,6 +27,8 @@
     "voiceover": "python scripts/gen_voiceover.py",
     "assets": "node scripts/fetch_assets.mjs",
     "compress": "node scripts/compress_assets.mjs",
+    "autocut": "node scripts/autocut.mjs",
+    "batch": "node scripts/batch.mjs",
     "prepare-video": "node scripts/validate.mjs && python scripts/gen_voiceover.py && node scripts/fetch_assets.mjs && node scripts/compress_assets.mjs",
     "render:youtube": "remotion render YouTube out/video.mp4 --concurrency=4",
     "render:shorts": "remotion render Shorts out/shorts.mp4 --concurrency=4",
