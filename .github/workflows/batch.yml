@@ -78,3 +78,35 @@ jobs:
           name: video-${{ matrix.name }}
           path: theranos-doc/out/${{ matrix.name }}.mp4
           retention-days: 7
+
+  # Gather every rendered video and commit them into the repo's out/ folder,
+  # so you can grab them from GitHub on any device (no artifacts, no tokens).
+  collect:
+    needs: render
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          path: _artifacts
+      - name: Move videos into out/
+        run: |
+          mkdir -p out
+          find _artifacts -name '*.mp4' -exec cp {} out/ \; 2>/dev/null || true
+          echo "Videos ready:" && ls -la out || true
+      - name: Commit videos to repo
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git pull --rebase origin main || true
+          git add out/*.mp4 || true
+          if git diff --cached --quiet; then
+            echo "No videos to commit."
+          else
+            git commit -m "Add rendered videos [skip ci]"
+            git push
+          fi

@@ -21,6 +21,8 @@ jobs:
   render:
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: theranos-doc
@@ -79,3 +81,16 @@ jobs:
           name: rendered-video-${{ github.event.inputs.platform }}
           path: theranos-doc/out/*.mp4
           retention-days: 7
+
+      # Also commit the video into the repo's out/ folder so you can grab it
+      # from GitHub on any device (no artifacts, no tokens).
+      - name: Save video to repo out/
+        working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p out
+          cp theranos-doc/out/*.mp4 out/ 2>/dev/null || true
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git pull --rebase origin main || true
+          git add out/*.mp4 || true
+          git diff --cached --quiet || (git commit -m "Add rendered video [skip ci]" && git push)
