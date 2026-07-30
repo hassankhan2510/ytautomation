@@ -105,17 +105,23 @@ async def main():
         audio_name = f"line_{i:02d}.mp3"
         out_path = os.path.join(AUDIO_DIR, audio_name)
 
-        speech_sec = await synthesize(line["text"], voice, out_path)
+        # `text` is what is SPOKEN (can be Hindi/Urdu). `caption` is what is SHOWN
+        # on screen (English). If no caption, the spoken text is also shown.
+        spoken = line["text"]
+        displayed = line.get("caption") or line["text"]
+
+        speech_sec = await synthesize(spoken, voice, out_path)
 
         # Fallback estimate if the service returned no timing metadata at all.
         if speech_sec <= 0:
-            speech_sec = max(1.5, len(line["text"].split()) * 0.38)
+            speech_sec = max(1.5, len(spoken.split()) * 0.38)
 
         total_sec = speech_sec + pause
         duration_frames = max(int(round(total_sec * fps)), fps)  # never shorter than 1s
 
         # Word timings (frames) relative to this line's local start, for karaoke captions.
-        word_frames = distribute_words(line["text"], speech_sec, fps)
+        # Uses the DISPLAYED (on-screen) text so the highlight matches what's shown.
+        word_frames = distribute_words(displayed, speech_sec, fps)
 
         timeline_lines.append(
             {
@@ -124,13 +130,16 @@ async def main():
                 "durationInFrames": duration_frames,
                 "speechFrames": int(round(speech_sec * fps)),
                 "audio": f"audio/{audio_name}",
-                "text": line["text"],
+                "text": displayed,
                 "asset": line.get("asset"),
                 "type": line.get("type", "image"),
                 "keywords": line.get("keywords", []),
                 # Optional richer-visual fields (backward compatible).
                 "layout": line.get("layout", "lower-third"),
                 "kicker": line.get("kicker"),
+                "stat": line.get("stat"),
+                "cite": line.get("cite"),
+                "items": line.get("items"),
                 "words": word_frames,
             }
         )

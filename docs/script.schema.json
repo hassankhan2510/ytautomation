@@ -33,12 +33,16 @@
         "type": "object",
         "required": ["text", "keywords", "type"],
         "properties": {
-          "text": { "type": "string", "minLength": 1 },
+          "text": { "type": "string", "minLength": 1, "description": "What is SPOKEN (TTS). May be Hindi/Urdu." },
+          "caption": { "type": ["string", "null"], "description": "What is SHOWN on screen (English). Defaults to text. REQUIRED when voice is not English." },
           "keywords": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
           "asset": { "type": ["string", "null"] },
           "type": { "type": "string", "enum": ["image", "video"] },
-          "layout": { "type": "string", "enum": ["lower-third", "center", "title"], "default": "lower-third" },
-          "kicker": { "type": ["string", "null"] }
+          "layout": { "type": "string", "enum": ["lower-third", "center", "title", "stat", "quote", "bullets"], "default": "lower-third" },
+          "kicker": { "type": ["string", "null"], "description": "Short label above text; also the heading for a bullets scene" },
+          "stat": { "type": ["string", "null"], "description": "For layout=stat: the big figure to display, e.g. \"$9,000,000,000\"" },
+          "cite": { "type": ["string", "null"], "description": "For layout=quote: the attribution line" },
+          "items": { "type": ["array", "null"], "items": { "type": "string" }, "description": "For layout=bullets: the list items (2-5)" }
         }
       }
     }

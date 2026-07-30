@@ -65,15 +65,24 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
     "requireResearch": true
   },
   "lines": [
-    { "text": "one spoken sentence",
+    { "text": "one spoken sentence",         // SPOKEN (TTS); may be Hindi/Urdu
+      "caption": "English on-screen text",   // optional; REQUIRED if voice is not en-*
       "keywords": ["visual search term"],
-      "asset": "optional_file.jpg",  // omit to auto-fetch from keywords
+      "asset": "optional_file.jpg",           // omit to auto-fetch from keywords
       "type": "image|video",
-      "layout": "lower-third|center|title",   // optional, default lower-third
-      "kicker": "OPTIONAL ACT LABEL" }
+      "layout": "lower-third|center|title|stat|quote|bullets",  // optional, default lower-third
+      "kicker": "OPTIONAL LABEL",             // also the heading for a bullets scene
+      "stat": "$9B → $0",                     // only for layout: stat
+      "cite": "attribution",                  // only for layout: quote
+      "items": ["point one", "point two"] }   // only for layout: bullets
   ]
 }
 ```
+
+**Languages:** set `meta.voice` to a Hindi/Urdu voice (e.g. `ur-PK-AsadNeural`, `hi-IN-MadhurNeural`)
+and write `text` in that language. On-screen text stays **English** via `caption` — the validator
+forces an English `caption` on every line when the voice isn't English, so foreign script never
+shows on screen. See `docs/COMPONENT_CATALOG.md` for the scene blocks (stat/quote/bullets).
 
 ## Where things live
 

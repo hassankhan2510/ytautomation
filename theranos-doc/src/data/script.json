@@ -45,7 +45,7 @@
     { "text": "It is contaminated with interstitial fluid and cellular debris from the tissue damage of the prick.", "keywords": ["blood cells microscope"], "asset": "blood_drop.mp4", "type": "video" },
     { "text": "Furthermore, you cannot run two hundred distinct chemical assays on just fifty microliters of liquid.", "keywords": ["laboratory test tubes"], "asset": "lab.jpg", "type": "image" },
     { "text": "When scientists tried to dilute the microscopic blood samples to make them stretch, the chemistry broke down.", "keywords": ["laboratory pipette liquid"], "asset": "lab.jpg", "type": "image" },
-    { "text": "The Edison was physically, biologically, and mathematically incapable of doing what Holmes promised.", "keywords": ["dark digital grid"], "asset": "dark_grid.mp4", "type": "video" },
+    { "text": "The Edison was physically, biologically, and mathematically incapable of doing what Holmes promised.", "keywords": ["dark digital grid"], "asset": "dark_grid.mp4", "type": "video", "layout": "bullets", "kicker": "The Verdict", "items": ["Physically impossible", "Biologically impossible", "Mathematically impossible"] },
 
     { "text": "To hide the failure, Theranos resorted to massive, coordinated fraud across their entire operation.", "keywords": ["dark digital grid cyber"], "asset": "dark_grid.mp4", "type": "video" },
     { "text": "They secretly bought commercial Siemens blood analyzers and hid them in a separate basement lab.", "keywords": ["hidden laboratory dark"], "asset": "dark_grid.mp4", "type": "video" },
@@ -60,12 +60,12 @@
     { "text": "Despite Holmes deploying elite lawyers to kill the story, Carreyrou published the devastating expose in 2015.", "keywords": ["newspaper headline"], "asset": "newspaper.jpg", "type": "image" },
 
     { "text": "The article destroyed the illusion instantly. Medical agencies raided the labs and banned Holmes from operating.", "keywords": ["courthouse building", "court steps"], "asset": "court.jpg", "type": "image" },
-    { "text": "The nine billion dollar valuation evaporated to zero overnight. The emperor had no clothes.", "keywords": ["money burning stock crash"], "asset": "money.jpg", "type": "image" },
+    { "text": "The nine billion dollar valuation evaporated to zero overnight. The emperor had no clothes.", "keywords": ["money burning stock crash"], "asset": "money.jpg", "type": "image", "layout": "stat", "stat": "$9B → $0" },
     { "text": "In 2018, Elizabeth Holmes and her chief operating officer, Sunny Balwani, were indicted on federal wire fraud charges.", "keywords": ["courthouse columns"], "asset": "court.jpg", "type": "image" },
     { "text": "After a highly publicized trial, Holmes was found guilty and sentenced to eleven years in federal prison.", "keywords": ["courthouse gavel justice"], "asset": "court.jpg", "type": "image" },
     { "text": "Theranos remains the ultimate cautionary tale of what happens when Silicon Valley hustle collides with human biology.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video" },
 
-    { "text": "You cannot patch a biological failure with a software update.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center" },
+    { "text": "You cannot patch a biological failure with a software update.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video", "layout": "quote", "cite": "The lesson of Theranos" },
     { "text": "When deep tech founders lie to investors, they lose money. When they lie to patients, they lose lives.", "keywords": ["silicon valley skyline night"], "asset": "sv_skyline.mp4", "type": "video" },
     { "text": "The Theranos disaster fundamentally changed how venture capitalists evaluate biotech startups forever.", "keywords": ["money finance dark"], "asset": "money.jpg", "type": "image" },
     { "text": "But the allure of the visionary founder remains. The valley is always waiting for its next messiah.", "keywords": ["steve jobs silhouette"], "asset": "steve_jobs.jpg", "type": "image" },

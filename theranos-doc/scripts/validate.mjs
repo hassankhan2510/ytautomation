@@ -92,7 +92,8 @@ function main() {
     if (!l || typeof l.text !== "string" || !l.text.trim()) badLines.push(`#${i} empty text`);
     else if (!Array.isArray(l.keywords) || l.keywords.length < 1) badLines.push(`#${i} no keywords`);
     else if (l.type && !["image", "video"].includes(l.type)) badLines.push(`#${i} bad type "${l.type}"`);
-    else if (l.layout && !["lower-third", "center", "title"].includes(l.layout)) badLines.push(`#${i} bad layout "${l.layout}"`);
+    else if (l.layout && !["lower-third", "center", "title", "stat", "quote", "bullets"].includes(l.layout)) badLines.push(`#${i} bad layout "${l.layout}"`);
+    else if (l.layout === "bullets" && (!Array.isArray(l.items) || l.items.length < 2)) badLines.push(`#${i} bullets layout needs an "items" array (>=2)`);
   });
   gate("every line complete", badLines.length === 0, badLines.length ? badLines.slice(0, 5).join("; ") : "all lines have text + keywords + valid type/layout");
 
@@ -132,6 +133,17 @@ function main() {
     const hasKicker = lines.some((l) => l.kicker);
     gate("layout variety", hasEmphasis && hasKicker,
       hasEmphasis && hasKicker ? "has center/title + kicker" : `needs ≥1 center-or-title (${hasEmphasis}) AND ≥1 kicker (${hasKicker})`);
+  }
+
+  // ---- 5b. LANGUAGE: non-English voice must ship English on-screen text --
+  // The user's rule: Hindi/Urdu VOICE is fine, but on-screen text stays English.
+  const voice = meta.voice || "";
+  if (voice && !voice.startsWith("en-")) {
+    const noCaption = lines.filter((l) => !l.caption || !String(l.caption).trim()).length;
+    gate("english captions", noCaption === 0,
+      noCaption === 0
+        ? `non-English voice "${voice}" — all lines have an English caption`
+        : `voice is "${voice}" (not English) but ${noCaption} line(s) lack an English "caption" — on-screen text would show the spoken language`);
   }
 
   // ---- 6. HOOK: first line must grab, not ramble -------------------------

@@ -11,7 +11,9 @@ the system stays reliable and how the AI is prevented from being lazy.
 - **accentColor valid** — `#rrggbb`.
 - **tags ≥ 3**.
 - **lines present** and **every line complete** — each has non-empty `text`, ≥1 `keywords`, and a
-  valid `type`/`layout`.
+  valid `type`/`layout`. A `bullets` layout must include an `items` array (≥2).
+- **english captions** — if `meta.voice` is not English (`en-*`), every line must have an English
+  `caption`. This enforces the rule: Hindi/Urdu **voice** is fine, but on-screen **text** stays English.
 
 ## Anti-laziness gates (the AI actually did the work)
 

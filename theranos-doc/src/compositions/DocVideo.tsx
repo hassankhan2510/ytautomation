@@ -9,6 +9,7 @@ import {
 import timeline from "../data/timeline.json";
 import { Background, BgSegment } from "../components/Background";
 import { Caption, Word, Layout } from "../components/Caption";
+import { Stat, Quote, Bullets } from "../components/SceneBlocks";
 import { Grain } from "../components/Grain";
 
 type TimelineLine = {
@@ -19,8 +20,11 @@ type TimelineLine = {
   text: string;
   asset: string | null;
   type: "image" | "video";
-  layout?: Layout;
+  layout?: Layout | "stat" | "quote" | "bullets";
   kicker?: string | null;
+  stat?: string | null;
+  cite?: string | null;
+  items?: string[] | null;
   words: Word[];
 };
 
@@ -67,16 +71,42 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
           durationInFrames={line.durationInFrames}
         >
           <Audio src={staticFile(line.audio)} />
-          <Caption
-            words={line.words}
-            fallbackText={line.text}
-            kicker={line.kicker}
-            layout={line.layout}
-            accent={accent}
-            fontSize={fontSize}
-            maxWidth={maxWidth}
-            portrait={portrait}
-          />
+          {line.layout === "stat" ? (
+            <Stat
+              stat={line.stat || line.text}
+              label={line.text}
+              accent={accent}
+              fontSize={fontSize}
+              portrait={portrait}
+            />
+          ) : line.layout === "quote" ? (
+            <Quote
+              text={line.text}
+              cite={line.cite}
+              accent={accent}
+              fontSize={fontSize}
+              portrait={portrait}
+            />
+          ) : line.layout === "bullets" ? (
+            <Bullets
+              heading={line.kicker}
+              items={line.items || []}
+              accent={accent}
+              fontSize={fontSize}
+              portrait={portrait}
+            />
+          ) : (
+            <Caption
+              words={line.words}
+              fallbackText={line.text}
+              kicker={line.kicker}
+              layout={line.layout as Layout}
+              accent={accent}
+              fontSize={fontSize}
+              maxWidth={maxWidth}
+              portrait={portrait}
+            />
+          )}
         </Sequence>
       ))}
 
