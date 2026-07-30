@@ -12,21 +12,136 @@
     "pauseBetweenLinesSec": 0.3,
     "accentColor": "#16a34a",
     "description": "Two childhood friends built a startup that lets Pakistan's small shopkeepers order stock, take payments, and get credit from their phones. The Bazaar story. (Urdu narration, English captions.)",
-    "tags": ["pakistan", "startups", "bazaar", "business", "urdu"],
+    "tags": [
+      "pakistan",
+      "startups",
+      "bazaar",
+      "business",
+      "urdu"
+    ],
     "researchFile": "research.md",
     "requireResearch": false
   },
   "lines": [
-    { "text": "دو بچپن کے دوست پاکستان کی کریانہ دکانوں کو ڈیجیٹل بنا رہے ہیں۔", "caption": "Two childhood friends are digitizing Pakistan's corner shops.", "keywords": ["pakistan city street shops"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center", "kicker": "PAKISTAN STARTUPS" },
-    { "text": "دو ہزار بیس میں انہوں نے بازار نامی سٹارٹ اپ بنایا۔", "caption": "In 2020, they founded a startup called Bazaar.", "keywords": ["startup office desk"], "asset": null, "type": "image", "layout": "lower-third" },
-    { "text": "بازار کے بانی حمزہ جاوید اور سعد جنگدا ہیں۔", "caption": "Bazaar's founders: Hamza Jawaid & Saad Jangda.", "keywords": ["two founders portrait"], "asset": null, "type": "image", "layout": "nametag", "name": "Hamza Jawaid & Saad Jangda", "role": "Co-founders, Bazaar" },
-    { "text": "بازار ایک بی ٹو بی مارکیٹ پلیس ہے۔", "caption": "Bazaar is a B2B marketplace.", "keywords": ["warehouse logistics"], "asset": "office.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "یہ چھوٹی کریانہ دکانوں کو سستا سامان پہنچاتا ہے۔", "caption": "It supplies small kiryana stores with cheaper stock.", "keywords": ["grocery store shelves"], "asset": "walgreens.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "دو ہزار اکیس میں بازار نے تیس ملین ڈالر جمع کیے۔", "caption": "raised in a Series A round, 2021", "keywords": ["venture capital money"], "asset": "money.jpg", "type": "image", "layout": "stat", "stat": "$30M" },
-    { "text": "لیکن بازار صرف سامان بیچنے تک محدود نہیں رہا۔", "caption": "But Bazaar didn't stop at selling stock.", "keywords": ["idea growth dark"], "asset": null, "type": "image", "layout": "center" },
-    { "text": "اس نے دکانداروں کو ادائیگی اور قرض کی سہولت بھی دی۔", "caption": "It added digital payments and credit for shopkeepers.", "keywords": ["mobile payment"], "asset": null, "type": "image", "layout": "lower-third" },
-    { "text": "دو ہزار پچیس میں بازار نے فِن ٹیک کمپنی کینو خرید لی۔", "caption": "In 2025, Bazaar acquired fintech company Keenu.", "keywords": ["fintech network abstract"], "asset": "dark_grid.mp4", "type": "video", "layout": "lower-third" },
-    { "text": "آج بازار سپلائی، ادائیگی اور قرض تینوں فراہم کرتا ہے۔", "caption": "Bazaar today", "keywords": ["digital platform"], "asset": null, "type": "image", "layout": "bullets", "kicker": "Bazaar today", "items": ["Wholesale supply", "Digital payments", "Credit for shops"] },
-    { "text": "ایک چھوٹی دکان بھی ٹیکنالوجی سے بڑی ہو سکتی ہے۔", "caption": "Even a corner shop can grow with technology.", "keywords": ["pakistan skyline sunrise"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center" }
+    {
+      "text": "دو بچپن کے دوست پاکستان کی کریانہ دکانوں کو ڈیجیٹل بنا رہے ہیں۔",
+      "caption": "Two childhood friends are digitizing Pakistan's corner shops.",
+      "keywords": [
+        "pakistan city street shops"
+      ],
+      "asset": "bazaar_pakistan_city_street_shops.mp4",
+      "type": "video",
+      "layout": "center",
+      "kicker": "PAKISTAN STARTUPS"
+    },
+    {
+      "text": "دو ہزار بیس میں انہوں نے بازار نامی سٹارٹ اپ بنایا۔",
+      "caption": "In 2020, they founded a startup called Bazaar.",
+      "keywords": [
+        "startup office desk"
+      ],
+      "asset": "bazaar_startup_office_desk.jpg",
+      "type": "image",
+      "layout": "lower-third"
+    },
+    {
+      "text": "بازار کے بانی حمزہ جاوید اور سعد جنگدا ہیں۔",
+      "caption": "Bazaar's founders: Hamza Jawaid & Saad Jangda.",
+      "keywords": [
+        "two founders portrait"
+      ],
+      "asset": "bazaar_two_founders_portrait.jpg",
+      "type": "image",
+      "layout": "nametag",
+      "name": "Hamza Jawaid & Saad Jangda",
+      "role": "Co-founders, Bazaar"
+    },
+    {
+      "text": "بازار ایک بی ٹو بی مارکیٹ پلیس ہے۔",
+      "caption": "Bazaar is a B2B marketplace.",
+      "keywords": [
+        "warehouse logistics"
+      ],
+      "asset": "bazaar_warehouse_logistics.jpg",
+      "type": "image",
+      "layout": "lower-third"
+    },
+    {
+      "text": "یہ چھوٹی کریانہ دکانوں کو سستا سامان پہنچاتا ہے۔",
+      "caption": "It supplies small kiryana stores with cheaper stock.",
+      "keywords": [
+        "grocery store shelves"
+      ],
+      "asset": "bazaar_grocery_store_shelves.jpg",
+      "type": "image",
+      "layout": "lower-third"
+    },
+    {
+      "text": "دو ہزار اکیس میں بازار نے تیس ملین ڈالر جمع کیے۔",
+      "caption": "raised in a Series A round, 2021",
+      "keywords": [
+        "venture capital money"
+      ],
+      "asset": "bazaar_venture_capital_money.jpg",
+      "type": "image",
+      "layout": "stat",
+      "stat": "$30M"
+    },
+    {
+      "text": "لیکن بازار صرف سامان بیچنے تک محدود نہیں رہا۔",
+      "caption": "But Bazaar didn't stop at selling stock.",
+      "keywords": [
+        "idea growth dark"
+      ],
+      "asset": "bazaar_idea_growth_dark.jpg",
+      "type": "image",
+      "layout": "center"
+    },
+    {
+      "text": "اس نے دکانداروں کو ادائیگی اور قرض کی سہولت بھی دی۔",
+      "caption": "It added digital payments and credit for shopkeepers.",
+      "keywords": [
+        "mobile payment"
+      ],
+      "asset": "bazaar_mobile_payment.jpg",
+      "type": "image",
+      "layout": "lower-third"
+    },
+    {
+      "text": "دو ہزار پچیس میں بازار نے فِن ٹیک کمپنی کینو خرید لی۔",
+      "caption": "In 2025, Bazaar acquired fintech company Keenu.",
+      "keywords": [
+        "fintech network abstract"
+      ],
+      "asset": "bazaar_fintech_network_abstract.mp4",
+      "type": "video",
+      "layout": "lower-third"
+    },
+    {
+      "text": "آج بازار سپلائی، ادائیگی اور قرض تینوں فراہم کرتا ہے۔",
+      "caption": "Bazaar today",
+      "keywords": [
+        "digital platform"
+      ],
+      "asset": "bazaar_digital_platform.jpg",
+      "type": "image",
+      "layout": "bullets",
+      "kicker": "Bazaar today",
+      "items": [
+        "Wholesale supply",
+        "Digital payments",
+        "Credit for shops"
+      ]
+    },
+    {
+      "text": "ایک چھوٹی دکان بھی ٹیکنالوجی سے بڑی ہو سکتی ہے۔",
+      "caption": "Even a corner shop can grow with technology.",
+      "keywords": [
+        "pakistan skyline sunrise"
+      ],
+      "asset": "bazaar_pakistan_skyline_sunrise.mp4",
+      "type": "video",
+      "layout": "center"
+    }
   ]
 }

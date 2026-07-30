@@ -12,21 +12,137 @@
     "pauseBetweenLinesSec": 0.3,
     "accentColor": "#16a34a",
     "description": "How a ride-hailing startup co-founded by a Pakistani became a $3 billion exit — and launched a whole generation of founders. The Careem story. (Urdu narration, English captions.)",
-    "tags": ["pakistan", "startups", "careem", "business", "urdu"],
+    "tags": [
+      "pakistan",
+      "startups",
+      "careem",
+      "business",
+      "urdu"
+    ],
     "researchFile": "research.md",
     "requireResearch": false
   },
   "lines": [
-    { "text": "پاکستان کی سب سے بڑی سٹارٹ اپ لہر کیسے شروع ہوئی؟", "caption": "How did Pakistan's biggest startup wave begin?", "keywords": ["pakistan city skyline night"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center", "kicker": "PAKISTAN STARTUPS" },
-    { "text": "دو ہزار بارہ میں ایک رائیڈ ہیلنگ سٹارٹ اپ بنی: کریم۔", "caption": "In 2012, a ride-hailing startup was born: Careem.", "keywords": ["ride hailing app phone"], "asset": null, "type": "image", "layout": "lower-third" },
-    { "text": "اس کے شریک بانی مدثر شیخا ایک پاکستانی تھے۔", "caption": "Co-founder Mudassir Sheikha is Pakistani.", "keywords": ["startup founder portrait"], "asset": null, "type": "image", "layout": "nametag", "name": "Mudassir Sheikha", "role": "Co-founder, Careem" },
-    { "text": "کریم نے پاکستان اور مشرق وسطیٰ میں تیزی سے ترقی کی۔", "caption": "Careem spread fast across Pakistan and the Middle East.", "keywords": ["modern office team"], "asset": "office.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "پھر دو ہزار بیس میں اوبر نے کریم کو خرید لیا۔", "caption": "Then in 2020, Uber acquired Careem.", "keywords": ["money deal handshake"], "asset": "money.jpg", "type": "image", "layout": "stat", "stat": "$3.1B" },
-    { "text": "لیکن اصل کہانی اس سودے کے بعد شروع ہوتی ہے۔", "caption": "But the real story starts after the sale.", "keywords": ["idea lightbulb dark"], "asset": null, "type": "image", "layout": "center" },
-    { "text": "کریم کے سابق ملازمین نے ایک نئی سٹارٹ اپ لہر شروع کی۔", "caption": "Former Careem staff launched a wave of new startups.", "keywords": ["tech network abstract"], "asset": "dark_grid.mp4", "type": "video", "layout": "lower-third" },
-    { "text": "سو سے زیادہ نئی کمپنیاں کریم کے لوگوں نے بنائیں۔", "caption": "companies founded by Careem alumni", "keywords": ["startup growth chart"], "asset": null, "type": "image", "layout": "stat", "stat": "100+" },
-    { "text": "پاکستان میں اسے کریم مافیا کہا جاتا ہے۔", "caption": "In Pakistan, they call it the 'Careem Mafia'.", "keywords": ["team silhouette"], "asset": null, "type": "image", "layout": "lower-third" },
-    { "text": "انہوں نے فِن ٹیک، ڈیلیوری اور بی ٹو بی کمپنیاں بنائیں۔", "caption": "What the Careem Mafia built", "keywords": ["fintech delivery apps"], "asset": null, "type": "image", "layout": "bullets", "kicker": "The Careem Mafia built", "items": ["Fintech apps", "Delivery startups", "B2B marketplaces"] },
-    { "text": "ایک کمپنی ختم ہو سکتی ہے، مگر اثر باقی رہتا ہے۔", "caption": "A company can end — but its impact remains.", "keywords": ["pakistan skyline sunrise"], "asset": "sv_skyline.mp4", "type": "video", "layout": "center" }
+    {
+      "text": "پاکستان کی سب سے بڑی سٹارٹ اپ لہر کیسے شروع ہوئی؟",
+      "caption": "How did Pakistan's biggest startup wave begin?",
+      "keywords": [
+        "pakistan city skyline night"
+      ],
+      "asset": "careem_pakistan_city_skyline_night.mp4",
+      "type": "video",
+      "layout": "center",
+      "kicker": "PAKISTAN STARTUPS"
+    },
+    {
+      "text": "دو ہزار بارہ میں ایک رائیڈ ہیلنگ سٹارٹ اپ بنی: کریم۔",
+      "caption": "In 2012, a ride-hailing startup was born: Careem.",
+      "keywords": [
+        "ride hailing app phone"
+      ],
+      "asset": "careem_ride_hailing_app_phone.jpg",
+      "type": "image",
+      "layout": "lower-third"
+    },
+    {
+      "text": "اس کے شریک بانی مدثر شیخا ایک پاکستانی تھے۔",
+      "caption": "Co-founder Mudassir Sheikha is Pakistani.",
+      "keywords": [
+        "startup founder portrait"
+      ],
+      "asset": "careem_startup_founder_portrait.jpg",
+      "type": "image",
+      "layout": "nametag",
+      "name": "Mudassir Sheikha",
+      "role": "Co-founder, Careem"
+    },
+    {
+      "text": "کریم نے پاکستان اور مشرق وسطیٰ میں تیزی سے ترقی کی۔",
+      "caption": "Careem spread fast across Pakistan and the Middle East.",
+      "keywords": [
+        "modern office team"
+      ],
+      "asset": "careem_modern_office_team.jpg",
+      "type": "image",
+      "layout": "lower-third"
+    },
+    {
+      "text": "پھر دو ہزار بیس میں اوبر نے کریم کو خرید لیا۔",
+      "caption": "Then in 2020, Uber acquired Careem.",
+      "keywords": [
+        "money deal handshake"
+      ],
+      "asset": "careem_money_deal_handshake.jpg",
+      "type": "image",
+      "layout": "stat",
+      "stat": "$3.1B"
+    },
+    {
+      "text": "لیکن اصل کہانی اس سودے کے بعد شروع ہوتی ہے۔",
+      "caption": "But the real story starts after the sale.",
+      "keywords": [
+        "idea lightbulb dark"
+      ],
+      "asset": "careem_idea_lightbulb_dark.jpg",
+      "type": "image",
+      "layout": "center"
+    },
+    {
+      "text": "کریم کے سابق ملازمین نے ایک نئی سٹارٹ اپ لہر شروع کی۔",
+      "caption": "Former Careem staff launched a wave of new startups.",
+      "keywords": [
+        "tech network abstract"
+      ],
+      "asset": "careem_tech_network_abstract.mp4",
+      "type": "video",
+      "layout": "lower-third"
+    },
+    {
+      "text": "سو سے زیادہ نئی کمپنیاں کریم کے لوگوں نے بنائیں۔",
+      "caption": "companies founded by Careem alumni",
+      "keywords": [
+        "startup growth chart"
+      ],
+      "asset": "careem_startup_growth_chart.jpg",
+      "type": "image",
+      "layout": "stat",
+      "stat": "100+"
+    },
+    {
+      "text": "پاکستان میں اسے کریم مافیا کہا جاتا ہے۔",
+      "caption": "In Pakistan, they call it the 'Careem Mafia'.",
+      "keywords": [
+        "team silhouette"
+      ],
+      "asset": "careem_team_silhouette.jpg",
+      "type": "image",
+      "layout": "lower-third"
+    },
+    {
+      "text": "انہوں نے فِن ٹیک، ڈیلیوری اور بی ٹو بی کمپنیاں بنائیں۔",
+      "caption": "What the Careem Mafia built",
+      "keywords": [
+        "fintech delivery apps"
+      ],
+      "asset": "careem_fintech_delivery_apps.jpg",
+      "type": "image",
+      "layout": "bullets",
+      "kicker": "The Careem Mafia built",
+      "items": [
+        "Fintech apps",
+        "Delivery startups",
+        "B2B marketplaces"
+      ]
+    },
+    {
+      "text": "ایک کمپنی ختم ہو سکتی ہے، مگر اثر باقی رہتا ہے۔",
+      "caption": "A company can end — but its impact remains.",
+      "keywords": [
+        "pakistan skyline sunrise"
+      ],
+      "asset": "careem_pakistan_skyline_sunrise.mp4",
+      "type": "video",
+      "layout": "center"
+    }
   ]
 }
