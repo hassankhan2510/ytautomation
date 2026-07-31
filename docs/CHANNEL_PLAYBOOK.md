@@ -107,6 +107,27 @@ space & hardware. **❌ DON'T:** "Top 10 Scariest Robots", superficial tech news
 
 ---
 
+## 4. TIL (Today I Learned) — Curiosity / Facts (`facts`)
+**Promise:** bite-sized "whoa, I didn't know that" facts. The mass-reach, near-autonomous channel.
+**Audience:** everyone. **Language:** English + Urdu/Hindi. **Format:** shorts-first, daily. **Low CPM —
+this is reach, subscribers, and top-of-funnel, not money.**
+
+**✅ DO:** genuinely surprising, TRUE, shareable facts. **❌ DON'T:** fake/exaggerated "facts" (they get
+community-noted and kill trust), rage/fear bait.
+
+**Pillars:** (1) nature & animals, (2) space & universe, (3) the human body, (4) world/geography,
+(5) history oddities.
+**Format:** one punchy fact per short — hook → the fact → the "why it's wild".
+
+**Idea bank:** "The animal that never dies", "Your body glows in the dark", "A planet made of diamond",
+"Honey never spoils", "A day on Venus is longer than its year", "The Sahara was once green",
+"Octopuses have three hearts", "There's a lake that turns animals to stone".
+
+**Autonomy:** lowest stakes → the channel you can run almost fully hands-off (daily auto-short).
+Keep facts *true* (a quick sanity check is enough — no deep verification like Syndar).
+
+> Note: `finance` channel name — "The Compound" is taken; use **Money Mechanics / Basis / The Fine Print**.
+
 ## How to turn an idea into a video
 
 1. Pick a channel + an idea (or Pillar × Format × Trigger).
