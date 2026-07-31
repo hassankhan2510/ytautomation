@@ -11,7 +11,7 @@
       "properties": {
         "title": { "type": "string", "minLength": 8 },
         "topic": { "type": "string", "minLength": 8 },
-        "niche": { "type": "string", "enum": ["space", "business", "ai"] },
+        "niche": { "type": "string", "enum": ["space", "business", "ai", "finance", "history", "truecrime", "science", "psychology", "geography", "motivation"] },
         "channel": { "type": "string", "minLength": 2 },
         "platform": { "type": "string", "enum": ["youtube-long", "shorts", "reel", "linkedin"] },
         "targetSeconds": { "type": "integer", "minimum": 15 },
