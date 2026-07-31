@@ -1,7 +1,9 @@
 /**
  * AUTO-WRITER: turn a channel (+ optional topic) into ready-to-render job files, using a
- * FREE Groq model. Anti-hallucination via Wikipedia grounding. Script-aware shorts: a second
- * pass selects the most hook-worthy moments FROM the long script (never a random time-cut).
+ * FREE Groq model. Anti-hallucination via Wikipedia grounding.
+ *   MODE=long+shorts : long video, then a second pass derives hook-worthy shorts FROM it.
+ *   MODE=long        : long video only.
+ *   MODE=shorts      : reels written DIRECTLY from the topic — no long video (one call, faster).
  *
  *   CHANNEL=syndar TOPIC="why cameras fail in the dark" GROQ_API_KEY=xxx node scripts/generate_script.mjs
  *   node scripts/generate_script.mjs --dry            # no API — canned sample, tests the plumbing
@@ -300,6 +302,33 @@ async function main() {
   fs.writeFileSync(path.join(JOBS, `${CHANNEL}.research.md`), research.join("\n"));
 
   const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}`;
+
+  // SHORTS-ONLY: write standalone reels DIRECTLY from the topic — no long video first.
+  // One Groq call instead of two, so it's noticeably faster.
+  if (!isTIL && MODE === "shorts") {
+    const n = cfg.makeShorts || 3;
+    const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}`;
+    const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${TOPIC || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
+    let written = 0;
+    let shortsModel;
+    try {
+      shortsModel = DRY ? drySample().shorts : await callGroq(nativeSystem, nativePrompt);
+    } catch (e) {
+      console.error(`Shorts generation failed: ${e.message}`);
+      shortsModel = { shorts: [] };
+    }
+    (shortsModel.shorts || []).forEach((sh, i) => {
+      const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
+      const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || TOPIC, true, researchFile);
+      if (shl.length >= 3) { writeJob(`${CHANNEL}_short_${i + 1}`, meta, shl); written++; }
+    });
+    if (written === 0) {
+      console.error("Groq returned no usable shorts. The free model can be flaky — just re-run.");
+      process.exit(1);
+    }
+    console.log(`\nDone (${written} short${written > 1 ? "s" : ""}, no long). Render with:  npm run batch -- --only=${CHANNEL}\n`);
+    return;
+  }
 
   // 2) long (or TIL single short)
   const lineTarget = isTIL ? "8-11 short punchy" : "30-42";
