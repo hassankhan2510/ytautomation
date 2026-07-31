@@ -287,10 +287,13 @@ async function main() {
   fs.mkdirSync(JOBS, { recursive: true });
   const nichePack = readNichePack(cfg.niche);
   const isTIL = cfg.makeShorts === 0;
-  // MODE: "long+shorts" (default) | "long" | "shorts". Shorts are always derived from the long.
+  // MODE: "long+shorts" (default) | "long" | "shorts".
+  //   long / long+shorts -> write a long script (long+shorts also derives shorts FROM it).
+  //   shorts             -> write vertical reels DIRECTLY (no long is generated) — faster, fewer tokens.
   const MODE = (process.env.MODE || "long+shorts").toLowerCase();
-  const writeLong = isTIL || MODE !== "shorts";
-  const wantShorts = !isTIL && MODE !== "long" && cfg.makeShorts > 0;
+  const shortsOnly = !isTIL && MODE === "shorts" && cfg.makeShorts > 0;
+  const writeLong = isTIL || MODE === "long" || MODE === "long+shorts";
+  const wantDerivedShorts = !isTIL && MODE === "long+shorts" && cfg.makeShorts > 0;
 
   // 1) grounding
   let g = [];
@@ -305,7 +308,7 @@ async function main() {
 
   // SHORTS-ONLY: write standalone reels DIRECTLY from the topic — no long video first.
   // One Groq call instead of two, so it's noticeably faster.
-  if (!isTIL && MODE === "shorts") {
+  if (shortsOnly) {
     const n = cfg.makeShorts || 3;
     const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}`;
     const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${TOPIC || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
@@ -341,8 +344,8 @@ async function main() {
   const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, TOPIC, isTIL, researchFile);
   if (writeLong && longLines.length) { writeJob(CHANNEL, longMeta, longLines); written++; }
 
-  // 3) script-aware shorts (derived FROM the long; only for long-form channels)
-  if (wantShorts) {
+  // 3) script-aware shorts (derived FROM the long; only for long+shorts mode)
+  if (wantDerivedShorts) {
     const shortsSystem = `You turn a long video script into short vertical reels. Pick the ${cfg.makeShorts} MOST hook-worthy, self-contained, valuable moments from the script and rewrite each as a punchy standalone reel. Do NOT cut randomly — choose the segments that hook and deliver value. ${RULES}${langRule(cfg.language)}`;
     const shortsPrompt = `Here is the long script's lines:\n${JSON.stringify((longModel.lines || []).map((l) => l.text || l.caption))}\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines as in the shape] } x${cfg.makeShorts} ] }`;
     let shortsModel;
