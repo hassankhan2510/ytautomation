@@ -12,21 +12,21 @@
     "voiceRate": "+18%",
     "pauseBetweenLinesSec": 0.15,
     "accentColor": "#3b82f6",
-    "description": "In 2024, a small Pakistani cubesat reached the Moon and sent back its own images. The story of iCube-Qamar. (Hindi narration, English captions.)",
+    "description": "In 2024, a small Pakistani cubesat reached the Moon and sent back its own images. The story of iCube-Qamar. (Hindi-English narration, English captions.)",
     "tags": ["pakistan", "space", "moon", "icube qamar", "hindi"],
     "researchFile": "research.md",
     "requireResearch": false
   },
   "lines": [
-    { "text": "क्या आप जानते हैं, पाकिस्तान चाँद तक पहुँच चुका है?", "caption": "Did you know Pakistan has reached the Moon?", "keywords": ["moon surface craters"], "asset": "moon_moon_surface.mp4", "type": "video", "layout": "center", "kicker": "PAKISTAN IN SPACE" },
-    { "text": "साल दो हज़ार चौबीस में पाकिस्तान ने अपना पहला चंद्र मिशन भेजा।", "caption": "In 2024, Pakistan launched its first lunar mission.", "keywords": ["rocket launch night"], "asset": "moon_rocket_launch.mp4", "type": "video", "layout": "lower-third" },
-    { "text": "इस सैटेलाइट का नाम था, आई क्यूब क़मर।", "caption": "The satellite was named iCube-Qamar.", "keywords": ["cubesat satellite"], "asset": "moon_cubesat.jpg", "type": "image", "layout": "nametag", "name": "iCube-Qamar", "role": "Pakistan's first lunar satellite" },
-    { "text": "इसे चीन के चांग ए छह रॉकेट के साथ अंतरिक्ष में भेजा गया।", "caption": "It launched aboard China's Chang'e-6 mission.", "keywords": ["chinese rocket launch"], "asset": "moon_change_rocket.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "आठ मई को यह चाँद की कक्षा में पहुँच गया।", "caption": "On May 8, it entered the Moon's orbit.", "keywords": ["satellite orbiting moon"], "asset": "moon_orbit.mp4", "type": "video", "layout": "lower-third" },
-    { "text": "इसे पाकिस्तान और चीन की यूनिवर्सिटियों ने मिलकर बनाया।", "caption": "Built by Pakistani and Chinese institutions.", "keywords": ["satellite engineers lab"], "asset": "moon_satellite_lab.jpg", "type": "image", "layout": "bullets", "kicker": "Who built it", "items": ["Institute of Space Technology", "SUPARCO, Pakistan", "Shanghai Jiao Tong University"] },
-    { "text": "इसके कैमरों ने दो सौ किलोमीटर से चाँद की तस्वीरें भेजीं।", "caption": "altitude its cameras photographed the Moon from", "keywords": ["moon from orbit"], "asset": "moon_from_orbit.jpg", "type": "image", "layout": "stat", "stat": "200 km" },
-    { "text": "पहली बार पाकिस्तान के पास अपनी चाँद की तस्वीरें थीं।", "caption": "For the first time, Pakistan had its own Moon images.", "keywords": ["lunar surface photo"], "asset": "moon_lunar_photo.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "यह एक छोटे बजट में बहुत बड़ी उपलब्धि थी।", "caption": "A huge achievement on a small budget.", "keywords": ["stars galaxy night"], "asset": "moon_stars.mp4", "type": "video", "layout": "center" },
-    { "text": "अब अंतरिक्ष सिर्फ़ बड़े देशों का खेल नहीं रहा।", "caption": "Space is no longer just a game for big nations.", "keywords": ["earth from space blue"], "asset": "moon_earth_space.mp4", "type": "video", "layout": "center" }
+    { "text": "क्या आप जानते हैं, Pakistan Moon तक पहुँच चुका है?", "caption": "Did you know Pakistan has reached the Moon?", "keywords": ["moon surface craters"], "asset": "moon_moon_surface.mp4", "type": "video", "layout": "center", "kicker": "PAKISTAN IN SPACE" },
+    { "text": "साल दो हज़ार चौबीस में Pakistan ने अपना पहला lunar mission भेजा।", "caption": "In 2024, Pakistan launched its first lunar mission.", "keywords": ["rocket launch night"], "asset": "moon_rocket_launch.mp4", "type": "video", "layout": "lower-third" },
+    { "text": "इस satellite का नाम था, iCube Qamar।", "caption": "The satellite was named iCube-Qamar.", "keywords": ["cubesat satellite"], "asset": "moon_cubesat.jpg", "type": "image", "layout": "nametag", "name": "iCube-Qamar", "role": "Pakistan's first lunar satellite" },
+    { "text": "इसे China के Chang e 6 rocket के साथ space में भेजा गया।", "caption": "It launched aboard China's Chang'e-6 mission.", "keywords": ["chinese rocket launch"], "asset": "moon_change_rocket.jpg", "type": "image", "layout": "lower-third" },
+    { "text": "आठ May को यह Moon की orbit में पहुँच गया।", "caption": "On May 8, it entered the Moon's orbit.", "keywords": ["satellite orbiting moon"], "asset": "moon_orbit.mp4", "type": "video", "layout": "lower-third" },
+    { "text": "इसे Pakistan और China की universities ने मिलकर बनाया।", "caption": "Built by Pakistani and Chinese institutions.", "keywords": ["satellite engineers lab"], "asset": "moon_satellite_lab.jpg", "type": "image", "layout": "bullets", "kicker": "Who built it", "items": ["Institute of Space Technology", "SUPARCO, Pakistan", "Shanghai Jiao Tong University"] },
+    { "text": "इसके cameras ने दो सौ kilometre से Moon की तस्वीरें भेजीं।", "caption": "altitude its cameras photographed the Moon from", "keywords": ["moon from orbit"], "asset": "moon_from_orbit.jpg", "type": "image", "layout": "stat", "stat": "200 km" },
+    { "text": "पहली बार Pakistan के पास अपनी Moon की तस्वीरें थीं।", "caption": "For the first time, Pakistan had its own Moon images.", "keywords": ["lunar surface photo"], "asset": "moon_lunar_photo.jpg", "type": "image", "layout": "lower-third" },
+    { "text": "यह एक छोटे budget में बहुत बड़ी achievement थी।", "caption": "A huge achievement on a small budget.", "keywords": ["stars galaxy night"], "asset": "moon_stars.mp4", "type": "video", "layout": "center" },
+    { "text": "अब space सिर्फ़ बड़े देशों का game नहीं रहा।", "caption": "Space is no longer just a game for big nations.", "keywords": ["earth from space blue"], "asset": "moon_earth_space.mp4", "type": "video", "layout": "center" }
   ]
 }

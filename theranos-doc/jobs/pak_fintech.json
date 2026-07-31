@@ -12,133 +12,22 @@
     "pauseBetweenLinesSec": 0.15,
     "voiceRate": "+18%",
     "accentColor": "#16a34a",
-    "description": "Most of Pakistan's startup money is now flowing into fintech — and everyone's asking who becomes the country's first unicorn. The fintech boom explained. (Urdu narration, English captions.)",
-    "tags": [
-      "pakistan",
-      "startups",
-      "fintech",
-      "business",
-      "urdu"
-    ],
+    "description": "Most of Pakistan's startup money is now flowing into fintech — and everyone's asking who becomes the country's first unicorn. The fintech boom explained. (Urdu-English narration, English captions.)",
+    "tags": ["pakistan", "startups", "fintech", "business", "urdu"],
     "researchFile": "research.md",
     "requireResearch": false
   },
   "lines": [
-    {
-      "text": "پاکستان میں پیسے کا مستقبل تیزی سے بدل رہا ہے۔",
-      "caption": "The future of money is changing fast in Pakistan.",
-      "keywords": [
-        "digital payment pakistan"
-      ],
-      "asset": "pf_digital_payment_pakistan.mp4",
-      "type": "video",
-      "layout": "center",
-      "kicker": "PAKISTAN STARTUPS"
-    },
-    {
-      "text": "آج زیادہ تر سرمایہ کاری فِن ٹیک میں جا رہی ہے۔",
-      "caption": "Today, most startup funding flows into fintech.",
-      "keywords": [
-        "fintech data network"
-      ],
-      "asset": "pf_fintech_data_network.mp4",
-      "type": "video",
-      "layout": "lower-third"
-    },
-    {
-      "text": "دو ہزار چوبیس میں اسّی فیصد سرمایہ فِن ٹیک کو ملا۔",
-      "caption": "of 2024 startup funding went to fintech",
-      "keywords": [
-        "pie chart finance"
-      ],
-      "asset": "pf_pie_chart_finance.jpg",
-      "type": "image",
-      "layout": "stat",
-      "stat": "80%+"
-    },
-    {
-      "text": "دو ہزار پندرہ سے اب تک ساڑھے چار سو فِن ٹیک کمپنیاں بنیں۔",
-      "caption": "fintech startups launched since 2015",
-      "keywords": [
-        "startups team office"
-      ],
-      "asset": "pf_startups_team_office.jpg",
-      "type": "image",
-      "layout": "stat",
-      "stat": "450+"
-    },
-    {
-      "text": "ان کمپنیوں نے مل کر انتالیس کروڑ ڈالر جمع کیے۔",
-      "caption": "raised by Pakistani fintechs since 2015",
-      "keywords": [
-        "money investment"
-      ],
-      "asset": "pf_money_investment.jpg",
-      "type": "image",
-      "layout": "stat",
-      "stat": "$391M"
-    },
-    {
-      "text": "اس کی ایک بڑی مثال صدا پے ہے۔",
-      "caption": "One standout example is SadaPay.",
-      "keywords": [
-        "mobile wallet app"
-      ],
-      "asset": "pf_mobile_wallet_app.jpg",
-      "type": "image",
-      "layout": "lower-third"
-    },
-    {
-      "text": "صدا پے نے پاکستان کی سب سے بڑی سیڈ فنڈنگ حاصل کی۔",
-      "caption": "SadaPay raised Pakistan's largest-ever seed round",
-      "keywords": [
-        "startup funding"
-      ],
-      "asset": "pf_startup_funding.jpg",
-      "type": "image",
-      "layout": "stat",
-      "stat": "$7.2M"
-    },
-    {
-      "text": "بعد میں ترکی کی کمپنی پاپارا نے صدا پے کو خرید لیا۔",
-      "caption": "Turkey's Papara later acquired SadaPay.",
-      "keywords": [
-        "acquisition handshake"
-      ],
-      "asset": "pf_acquisition_handshake.mp4",
-      "type": "video",
-      "layout": "lower-third"
-    },
-    {
-      "text": "اب پورا ملک ایک ہی سوال پوچھ رہا ہے۔",
-      "caption": "Now the whole country is asking one question.",
-      "keywords": [
-        "question dark"
-      ],
-      "asset": "pf_question_dark.jpg",
-      "type": "image",
-      "layout": "center"
-    },
-    {
-      "text": "پاکستان کا پہلا یونیکارن کون بنے گا؟",
-      "caption": "Who will become Pakistan's first unicorn?",
-      "keywords": [
-        "unicorn startup billion"
-      ],
-      "asset": "pf_unicorn_startup_billion.jpg",
-      "type": "image",
-      "layout": "quote",
-      "cite": "Pakistan's next big race"
-    },
-    {
-      "text": "فی الحال، فِن ٹیک یہ دوڑ جیت رہا ہے۔",
-      "caption": "For now, fintech is winning that race.",
-      "keywords": [
-        "pakistan skyline future"
-      ],
-      "asset": "pf_pakistan_skyline_future.mp4",
-      "type": "video",
-      "layout": "center"
-    }
+    { "text": "Pakistan میں money کا future تیزی سے بدل رہا ہے۔", "caption": "The future of money is changing fast in Pakistan.", "keywords": ["digital payment pakistan"], "asset": "pf_digital_payment_pakistan.mp4", "type": "video", "layout": "center", "kicker": "PAKISTAN STARTUPS" },
+    { "text": "آج زیادہ تر investment fintech میں جا رہی ہے۔", "caption": "Today, most startup funding flows into fintech.", "keywords": ["fintech data network"], "asset": "pf_fintech_data_network.mp4", "type": "video", "layout": "lower-third" },
+    { "text": "دو ہزار چوبیس میں اسّی percent funding fintech کو ملا۔", "caption": "of 2024 startup funding went to fintech", "keywords": ["pie chart finance"], "asset": "pf_pie_chart_finance.jpg", "type": "image", "layout": "stat", "stat": "80%+" },
+    { "text": "دو ہزار پندرہ سے اب تک ساڑھے چار سو fintech companies بنیں۔", "caption": "fintech startups launched since 2015", "keywords": ["startups team office"], "asset": "pf_startups_team_office.jpg", "type": "image", "layout": "stat", "stat": "450+" },
+    { "text": "ان companies نے مل کر انتالیس کروڑ dollar raise کیے۔", "caption": "raised by Pakistani fintechs since 2015", "keywords": ["money investment"], "asset": "pf_money_investment.jpg", "type": "image", "layout": "stat", "stat": "$391M" },
+    { "text": "اس کی ایک بڑی example SadaPay ہے۔", "caption": "One standout example is SadaPay.", "keywords": ["mobile wallet app"], "asset": "pf_mobile_wallet_app.jpg", "type": "image", "layout": "lower-third" },
+    { "text": "SadaPay نے Pakistan کی سب سے بڑی seed funding حاصل کی۔", "caption": "SadaPay raised Pakistan's largest-ever seed round", "keywords": ["startup funding"], "asset": "pf_startup_funding.jpg", "type": "image", "layout": "stat", "stat": "$7.2M" },
+    { "text": "بعد میں Turkey کی company Papara نے SadaPay کو acquire کر لیا۔", "caption": "Turkey's Papara later acquired SadaPay.", "keywords": ["acquisition handshake"], "asset": "pf_acquisition_handshake.mp4", "type": "video", "layout": "lower-third" },
+    { "text": "اب پورا ملک ایک ہی question پوچھ رہا ہے۔", "caption": "Now the whole country is asking one question.", "keywords": ["question dark"], "asset": "pf_question_dark.jpg", "type": "image", "layout": "center" },
+    { "text": "Pakistan کا پہلا unicorn کون بنے گا؟", "caption": "Who will become Pakistan's first unicorn?", "keywords": ["unicorn startup billion"], "asset": "pf_unicorn_startup_billion.jpg", "type": "image", "layout": "quote", "cite": "Pakistan's next big race" },
+    { "text": "فی الحال، fintech یہ race جیت رہا ہے۔", "caption": "For now, fintech is winning that race.", "keywords": ["pakistan skyline future"], "asset": "pf_pakistan_skyline_future.mp4", "type": "video", "layout": "center" }
   ]
 }

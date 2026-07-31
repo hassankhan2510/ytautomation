@@ -12,21 +12,21 @@
     "voiceRate": "+18%",
     "pauseBetweenLinesSec": 0.15,
     "accentColor": "#3b82f6",
-    "description": "From a rocket launched in 1962 to a planned astronaut in 2026 — Pakistan's quiet climb to the stars. (Hindi narration, English captions.)",
+    "description": "From a rocket launched in 1962 to a planned astronaut in 2026 — Pakistan's quiet climb to the stars. (Hindi-English narration, English captions.)",
     "tags": ["pakistan", "space", "suparco", "astronaut", "hindi"],
     "researchFile": "research.md",
     "requireResearch": false
   },
   "lines": [
-    { "text": "पाकिस्तान का अंतरिक्ष सफ़र आपकी सोच से भी पुराना है।", "caption": "Pakistan's space journey is older than you think.", "keywords": ["stars galaxy space"], "asset": "journey_stars.mp4", "type": "video", "layout": "center", "kicker": "PAKISTAN IN SPACE" },
-    { "text": "पाकिस्तान ने अपना स्पेस प्रोग्राम उन्नीस सौ इकसठ में शुरू किया।", "caption": "Pakistan began its space program in 1961.", "keywords": ["vintage rocket launch"], "asset": "journey_vintage_rocket.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "इसके पहले प्रमुख नोबेल विजेता डॉक्टर अब्दुस सलाम थे।", "caption": "Its first head: Nobel laureate Dr. Abdus Salam.", "keywords": ["scientist portrait vintage"], "asset": "journey_scientist.jpg", "type": "image", "layout": "nametag", "name": "Dr. Abdus Salam", "role": "Nobel laureate, first SUPARCO chief" },
-    { "text": "पाकिस्तान अंतरिक्ष शुरू करने वाले पहले दस देशों में से एक था।", "caption": "Pakistan was among the first 10 nations in space", "keywords": ["earth globe space"], "asset": "journey_earth_globe.jpg", "type": "image", "layout": "stat", "stat": "Top 10" },
-    { "text": "उन्नीस सौ बासठ में इसने अपना पहला रॉकेट रहबर छोड़ा।", "caption": "In 1962, it launched its first rocket, Rehbar.", "keywords": ["rocket launching sky"], "asset": "journey_rocket.mp4", "type": "video", "layout": "lower-third" },
-    { "text": "फिर एक के बाद एक बड़ी कामयाबियाँ आईं।", "caption": "Then came milestone after milestone.", "keywords": ["satellite orbit earth"], "asset": "journey_timeline.jpg", "type": "image", "layout": "timeline", "events": [{ "label": "2018", "text": "PRSS-1 remote-sensing satellite" }, { "label": "2024", "text": "PAKSAT-MM1 communications satellite" }, { "label": "2024", "text": "iCube-Qamar reaches the Moon" }, { "label": "2026", "text": "First astronaut to Tiangong (planned)" }] },
-    { "text": "अब पाकिस्तान अपना पहला अंतरिक्ष यात्री भेजने वाला है।", "caption": "Now Pakistan is set to send its first astronaut.", "keywords": ["astronaut spacewalk"], "asset": "journey_astronaut.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "यह मिशन दो हज़ार छब्बीस में चीन के स्पेस स्टेशन पर होगा।", "caption": "planned mission to China's Tiangong station", "keywords": ["space station orbit"], "asset": "journey_space_station.jpg", "type": "image", "layout": "stat", "stat": "2026" },
-    { "text": "वह चीन के स्टेशन पर जाने वाला पहला विदेशी होगा।", "caption": "He will be the first foreigner aboard China's station.", "keywords": ["chinese space station tiangong"], "asset": "journey_tiangong.jpg", "type": "image", "layout": "lower-third" },
-    { "text": "एक छोटे बजट से सितारों तक — यह पाकिस्तान की कहानी है।", "caption": "From a small budget to the stars — that's Pakistan's story.", "keywords": ["milky way galaxy stars"], "asset": "journey_galaxy.mp4", "type": "video", "layout": "center" }
+    { "text": "Pakistan का space सफ़र आपकी सोच से भी पुराना है।", "caption": "Pakistan's space journey is older than you think.", "keywords": ["stars galaxy space"], "asset": "journey_stars.mp4", "type": "video", "layout": "center", "kicker": "PAKISTAN IN SPACE" },
+    { "text": "Pakistan ने अपना space program उन्नीस सौ इकसठ में शुरू किया।", "caption": "Pakistan began its space program in 1961.", "keywords": ["vintage rocket launch"], "asset": "journey_vintage_rocket.jpg", "type": "image", "layout": "lower-third" },
+    { "text": "इसके पहले head, Nobel winner Dr. Abdus Salam थे।", "caption": "Its first head: Nobel laureate Dr. Abdus Salam.", "keywords": ["scientist portrait vintage"], "asset": "journey_scientist.jpg", "type": "image", "layout": "nametag", "name": "Dr. Abdus Salam", "role": "Nobel laureate, first SUPARCO chief" },
+    { "text": "Pakistan space शुरू करने वाले पहले दस countries में से एक था।", "caption": "Pakistan was among the first 10 nations in space", "keywords": ["earth globe space"], "asset": "journey_earth_globe.jpg", "type": "image", "layout": "stat", "stat": "Top 10" },
+    { "text": "उन्नीस सौ बासठ में इसने अपना पहला rocket Rehbar launch किया।", "caption": "In 1962, it launched its first rocket, Rehbar.", "keywords": ["rocket launching sky"], "asset": "journey_rocket.mp4", "type": "video", "layout": "lower-third" },
+    { "text": "फिर एक के बाद एक बड़ी achievements आईं।", "caption": "Then came milestone after milestone.", "keywords": ["satellite orbit earth"], "asset": "journey_timeline.jpg", "type": "image", "layout": "timeline", "events": [{ "label": "2018", "text": "PRSS-1 remote-sensing satellite" }, { "label": "2024", "text": "PAKSAT-MM1 communications satellite" }, { "label": "2024", "text": "iCube-Qamar reaches the Moon" }, { "label": "2026", "text": "First astronaut to Tiangong (planned)" }] },
+    { "text": "अब Pakistan अपना पहला astronaut भेजने वाला है।", "caption": "Now Pakistan is set to send its first astronaut.", "keywords": ["astronaut spacewalk"], "asset": "journey_astronaut.jpg", "type": "image", "layout": "lower-third" },
+    { "text": "यह mission दो हज़ार छब्बीस में China के space station पर होगा।", "caption": "planned mission to China's Tiangong station", "keywords": ["space station orbit"], "asset": "journey_space_station.jpg", "type": "image", "layout": "stat", "stat": "2026" },
+    { "text": "वह China के station पर जाने वाला पहला foreigner होगा।", "caption": "He will be the first foreigner aboard China's station.", "keywords": ["chinese space station tiangong"], "asset": "journey_tiangong.jpg", "type": "image", "layout": "lower-third" },
+    { "text": "एक छोटे budget से stars तक — यह Pakistan की कहानी है।", "caption": "From a small budget to the stars — that's Pakistan's story.", "keywords": ["milky way galaxy stars"], "asset": "journey_galaxy.mp4", "type": "video", "layout": "center" }
   ]
 }
