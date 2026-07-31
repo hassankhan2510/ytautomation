@@ -7,6 +7,15 @@ on:
         description: "Topic (e.g. 'Why Airlift raised $85M and collapsed')"
         required: true
         type: string
+      format:
+        description: "What to make"
+        required: true
+        default: "long+shorts"
+        type: choice
+        options:
+          - "long+shorts"
+          - "long"
+          - "shorts"
 
 jobs:
   make:
@@ -39,6 +48,7 @@ jobs:
         env:
           CHANNEL: cohortzero
           TOPIC: ${{ github.event.inputs.topic }}
+          MODE: ${{ github.event.inputs.format }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs

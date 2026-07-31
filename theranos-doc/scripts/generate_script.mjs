@@ -218,6 +218,10 @@ async function main() {
   fs.mkdirSync(JOBS, { recursive: true });
   const nichePack = readNichePack(cfg.niche);
   const isTIL = cfg.makeShorts === 0;
+  // MODE: "long+shorts" (default) | "long" | "shorts". Shorts are always derived from the long.
+  const MODE = (process.env.MODE || "long+shorts").toLowerCase();
+  const writeLong = isTIL || MODE !== "shorts";
+  const wantShorts = !isTIL && MODE !== "long" && cfg.makeShorts > 0;
 
   // 1) grounding
   let g = [];
@@ -237,10 +241,10 @@ async function main() {
 
   const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
   const longMeta = finalizeMeta(longModel, cfg, TOPIC, isTIL, researchFile);
-  writeJob(CHANNEL, longMeta, longModel.lines || []);
+  if (writeLong) writeJob(CHANNEL, longMeta, longModel.lines || []);
 
-  // 3) script-aware shorts (only for long-form channels)
-  if (!isTIL && cfg.makeShorts > 0) {
+  // 3) script-aware shorts (derived FROM the long; only for long-form channels)
+  if (wantShorts) {
     const shortsSystem = `You turn a long video script into short vertical reels. Pick the ${cfg.makeShorts} MOST hook-worthy, self-contained, valuable moments from the script and rewrite each as a punchy standalone reel. Do NOT cut randomly — choose the segments that hook and deliver value. ${RULES}${langRule(cfg.language)}`;
     const shortsPrompt = `Here is the long script's lines:\n${JSON.stringify((longModel.lines || []).map((l) => l.text || l.caption))}\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines as in the shape] } x${cfg.makeShorts} ] }`;
     let shortsModel;
