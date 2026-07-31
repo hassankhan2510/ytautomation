@@ -1,0 +1,19 @@
+=== PUBLISH KIT ===
+Platform: reel    Niche: business    Language voice: ur-PK-AsadNeural
+
+BEST TITLE:
+  Careem کی کامیابی اور مجرمانہ سرگرمی
+
+ALTERNATIVE TITLES (A/B pick one):
+  1. Careem کی کامیابی اور خطرہ
+  2. Careem mafia کی کامیابی
+  3. Careem mafia کی مجرمانہ سرگرمی
+
+DESCRIPTION:
+  Careem کی کامیابی اور اس کے نتیجے میں سامنے آنے والی مجرمانہ سرگرمیوں پر ایک نظر
+
+HASHTAGS:
+  #Careem #ridehailing
+
+TAGS (comma-separated):
+  Careem, مجرمانہ_سرگرمی, غیر_قانونی_کاروبار
