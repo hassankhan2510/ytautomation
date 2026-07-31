@@ -39,6 +39,9 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
    duration (see pacing). Vary layouts, add kickers, spell numbers out for TTS.
 4. **Validate.** Run `npm run validate`. Fix `script.json` until it prints "All gates passed."
    Never skip or work around a failing gate.
+4b. **Write a rank-fast title.** `meta.title` = the single strongest, high-CTR, search-friendly
+   title, plus 3–6 `titleOptions` and 5–12 `hashtags`. Follow `docs/TITLES.md` (keyword + curiosity +
+   specificity). This is 50% of whether the video ranks.
 5. **Prepare.** Run `npm run prepare-video` (voiceover → assets → compress; re-checks real
    duration against the audio).
 6. **Preview or render.**
@@ -51,7 +54,10 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
 ```jsonc
 {
   "meta": {
-    "title", "topic",
+    "title",                          // the single BEST rank-fast, high-CTR title (see docs/TITLES.md)
+    "titleOptions": ["3-6 alternative rank-fast titles to A/B pick from"],
+    "hashtags": ["5-12", "post", "hashtags"],
+    "topic",
     "niche": "space|business|ai",
     "channel": "space|business|...",
     "platform": "youtube-long|shorts|reel|linkedin",

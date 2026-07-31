@@ -73,10 +73,12 @@ jobs:
           esac
           echo "Rendering ${{ matrix.name }} as $COMP ($PLATFORM)"
           npx remotion render "$COMP" "out/${{ matrix.name }}.mp4" --concurrency=2
+      - name: Publish kit (title, description, hashtags)
+        run: node scripts/publish_kit.mjs "jobs/${{ matrix.name }}.json" "out/${{ matrix.name }}.txt"
       - uses: actions/upload-artifact@v4
         with:
           name: video-${{ matrix.name }}
-          path: theranos-doc/out/${{ matrix.name }}.mp4
+          path: theranos-doc/out/${{ matrix.name }}.*
           retention-days: 7
 
   # Gather every rendered video and commit them into the repo's out/ folder,
@@ -96,18 +98,18 @@ jobs:
       - name: Move videos into out/
         run: |
           mkdir -p out
-          find _artifacts -name '*.mp4' -exec cp {} out/ \; 2>/dev/null || true
+          find _artifacts -type f \( -name '*.mp4' -o -name '*.txt' \) -exec cp {} out/ \; 2>/dev/null || true
           rm -rf _artifacts
           echo "Videos ready:" && ls -la out || true
       - name: Commit videos to repo
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add out/*.mp4 2>/dev/null || true
+          git add out/*.mp4 out/*.txt 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "No videos to commit."; exit 0
           fi
-          git commit -m "Add rendered videos [skip ci]"
+          git commit -m "Add rendered videos + publish kits [skip ci]"
           # Retry against concurrent pushes (code commits may move main meanwhile).
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin main && git push origin main; then

@@ -9,7 +9,9 @@
       "type": "object",
       "required": ["title", "topic", "niche", "channel", "platform", "targetSeconds", "style", "voice", "accentColor", "description", "tags", "researchFile"],
       "properties": {
-        "title": { "type": "string", "minLength": 8 },
+        "title": { "type": "string", "minLength": 8, "description": "The single BEST rank-fast, high-CTR title (see docs/TITLES.md)" },
+        "titleOptions": { "type": "array", "items": { "type": "string" }, "description": "3-6 alternative rank-fast titles to A/B choose from" },
+        "hashtags": { "type": "array", "items": { "type": "string" }, "description": "5-12 hashtags for the post (without the # is fine)" },
         "topic": { "type": "string", "minLength": 8 },
         "niche": { "type": "string", "enum": ["space", "business", "ai", "finance", "history", "truecrime", "science", "psychology", "geography", "motivation"] },
         "channel": { "type": "string", "minLength": 2 },
