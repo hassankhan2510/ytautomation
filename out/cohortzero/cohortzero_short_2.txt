@@ -2,18 +2,18 @@
 Platform: reel    Niche: business    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  What Went Wrong at Airlift
+  The Warning Signs: How Airlift's $85M Funding Hid Deeper Issues
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Airlift's Downfall
-  2. Startup Failure Analysis
-  3. Lessons from Airlift
+  1. Airlift's $85M Blind Spot: What Went Unseen
+  2. The $85M Warning: Airlift's Collapse and What We Can Learn
+  3. Uncovering Airlift's $85M Facade: A Cautionary Tale
 
 DESCRIPTION:
-  Analyze Airlift's mistakes to grow your business
+  Dive into the story of Airlift, a company that secured $85M in funding but ultimately failed. What were the warning signs that were missed?
 
 HASHTAGS:
-  #startups #failure #entrepreneurship #businesslessons #growth
+  #StartupLessons #Airlift #VentureCapital #BusinessIntelligence #FailureAnalysis
 
 TAGS (comma-separated):
-  startup, analysis, growth
+  Startup, Failure Analysis, Venture Capital

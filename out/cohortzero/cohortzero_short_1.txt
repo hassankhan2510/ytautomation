@@ -2,18 +2,18 @@
 Platform: reel    Niche: business    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  Airlift's Eighty Five Million Dollar Failure
+  Airlift's $85M Mirage: How a Unicorn Lost Its Magic
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Airlift's Rise and Fall
-  2. Startup Success to Collapse
-  3. The Airlift Story
+  1. The $85M Collapse: Airlift's Cautionary Tale
+  2. Airlift's Rise and Fall: A $85M Lesson
+  3. Unicorns Don't Last: Airlift's $85M Story
 
 DESCRIPTION:
-  Learn from Airlift's mistakes to avoid startup failure
+  Explore the shocking collapse of Airlift, a startup that raised $85M and still failed. What went wrong?
 
 HASHTAGS:
-  #startups #funding #entrepreneurship #businessfailure #lessonslearned
+  #Airlift #StartupFail #UnicornCollapse #VentureCapital #BusinessLessons
 
 TAGS (comma-separated):
-  startup, failure, entrepreneurship
+  Startup, Failure, Venture Capital

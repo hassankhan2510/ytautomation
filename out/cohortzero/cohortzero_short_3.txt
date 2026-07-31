@@ -2,18 +2,18 @@
 Platform: reel    Niche: business    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  Turning Failure into Success
+  From $85M to Zero: Uncovering the Real Reasons Behind Airlift's Collapse
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Airlift's Legacy
-  2. Startup Failure to Success
-  3. Learning from Airlift
+  1. Airlift's $85M Downfall: What Really Happened
+  2. The $85M Question: Uncovering Airlift's Demise
+  3. Airlift's Rise and Fall: The Untold Story of $85M
 
 DESCRIPTION:
-  Transform Airlift's failure into your success story
+  Get the inside story on Airlift's shocking collapse from $85M in funding to bankruptcy. What were the real reasons behind its demise?
 
 HASHTAGS:
-  #startups #success #entrepreneurship #businessgrowth #resilience
+  #Airlift #StartupFailure #VentureCapital #BusinessInvestigation #LessonsLearned
 
 TAGS (comma-separated):
-  startup, success, resilience
+  Startup, Investigation, Venture Capital
