@@ -4,6 +4,10 @@ name: "Channel — TIL (auto daily)"
 on:
   workflow_dispatch:
     inputs:
+      topics:
+        description: "Optional — ONE short each. Separate with ;  (leave blank to let the AI pick a fact)"
+        required: false
+        type: string
       language:
         description: "Language"
         required: true
@@ -46,6 +50,7 @@ jobs:
       - name: Write script (Groq)
         env:
           CHANNEL: til
+          TOPICS: ${{ github.event.inputs.topics }}
           LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}

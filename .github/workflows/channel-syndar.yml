@@ -6,8 +6,8 @@ name: "Channel — Syndar (deep tech) [VERIFY before publishing]"
 on:
   workflow_dispatch:
     inputs:
-      topic:
-        description: "Topic (e.g. 'Why cameras fail in the dark and how radar fixes it')"
+      topics:
+        description: "Topics — ONE video each. Separate multiple with ;  (e.g. 'Why cameras fail in the dark; How radar sees through dust; SLAM in GPS-denied mines')"
         required: true
         type: string
       format:
@@ -59,7 +59,7 @@ jobs:
       - name: Write script + shorts (Groq, Wikipedia-grounded)
         env:
           CHANNEL: syndar
-          TOPIC: ${{ github.event.inputs.topic }}
+          TOPICS: ${{ github.event.inputs.topics }}
           MODE: ${{ github.event.inputs.format }}
           LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

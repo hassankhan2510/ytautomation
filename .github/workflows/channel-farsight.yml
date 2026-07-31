@@ -3,8 +3,8 @@ name: "Channel — Farsight (finance)"
 on:
   workflow_dispatch:
     inputs:
-      topic:
-        description: "Topic (e.g. 'How inflation quietly steals your money')"
+      topics:
+        description: "Topics — ONE video each. Separate multiple with ;  (e.g. 'How inflation steals your money; The truth about index funds; Why most traders lose')"
         required: true
         type: string
       format:
@@ -56,7 +56,7 @@ jobs:
       - name: Write script + shorts (Groq, Wikipedia-grounded)
         env:
           CHANNEL: farsight
-          TOPIC: ${{ github.event.inputs.topic }}
+          TOPICS: ${{ github.event.inputs.topics }}
           MODE: ${{ github.event.inputs.format }}
           LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

@@ -295,85 +295,104 @@ async function main() {
   const writeLong = isTIL || MODE === "long" || MODE === "long+shorts";
   const wantDerivedShorts = !isTIL && MODE === "long+shorts" && cfg.makeShorts > 0;
 
-  // 1) grounding
-  let g = [];
-  if (cfg.ground && TOPIC && !DRY) g = await ground(TOPIC);
-  const research = ["# Research (auto-grounded)\n"];
-  if (g.length) g.forEach((x) => research.push(`- ${x.title}: ${x.extract}\n  Source: ${x.url}`));
-  else research.push("- (no external grounding — verify facts before publishing)");
+  // TOPICS: a batch queue — one topic PER VIDEO. Enter several (one per line, or separated by
+  // ";" / "|") and each becomes its own video (long) or its own set of reels (shorts). Falls back
+  // to the single TOPIC env, or "" (the channel auto-picks). Queue 5, sleep, wake up to 5 videos.
+  const rawTopics = (process.env.TOPICS || TOPIC || "").trim();
+  const topics = rawTopics
+    ? rawTopics.split(/[\n;|]+/).map((t) => t.trim()).filter(Boolean)
+    : [""];
+  const multi = topics.length > 1;
   const researchFile = "research.md";
-  fs.writeFileSync(path.join(JOBS, `${CHANNEL}.research.md`), research.join("\n"));
 
   const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}`;
 
-  // SHORTS-ONLY: write standalone reels DIRECTLY from the topic — no long video first.
-  // One Groq call instead of two, so it's noticeably faster.
-  if (shortsOnly) {
-    const n = cfg.makeShorts || 3;
-    const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}`;
-    const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${TOPIC || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
+  console.log(`Channel ${CHANNEL} | mode ${MODE} | ${topics.length} topic(s) queued`);
+  let totalWritten = 0;
+
+  for (let ti = 0; ti < topics.length; ti++) {
+    const topic = topics[ti];
+    // Job name prefix. Single topic -> just the channel (unchanged, backward compatible).
+    // Multiple topics -> channel_NN_<topic-slug>, still starting with the channel so
+    // `--only=<channel>` and the `out/<channel>*` delivery glob both still match every job.
+    const prefix = multi
+      ? `${CHANNEL}_${String(ti + 1).padStart(2, "0")}_${slug(topic)}`.slice(0, 60)
+      : CHANNEL;
+    if (multi) console.log(`\n--- [${ti + 1}/${topics.length}] ${topic} -> ${prefix} ---`);
+
+    // grounding (per topic)
+    let g = [];
+    if (cfg.ground && topic && !DRY) g = await ground(topic);
+    const research = ["# Research (auto-grounded)\n"];
+    if (g.length) g.forEach((x) => research.push(`- ${x.title}: ${x.extract}\n  Source: ${x.url}`));
+    else research.push("- (no external grounding — verify facts before publishing)");
+    fs.writeFileSync(path.join(JOBS, `${prefix}.research.md`), research.join("\n"));
+
     let written = 0;
-    let shortsModel;
-    try {
-      shortsModel = DRY ? drySample().shorts : await callGroq(nativeSystem, nativePrompt);
-    } catch (e) {
-      console.error(`Shorts generation failed: ${e.message}`);
-      shortsModel = { shorts: [] };
+
+    if (shortsOnly) {
+      // SHORTS-ONLY: write standalone reels DIRECTLY from the topic — no long video first.
+      const n = cfg.makeShorts || 3;
+      const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}`;
+      const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
+      let shortsModel;
+      try {
+        shortsModel = DRY ? drySample().shorts : await callGroq(nativeSystem, nativePrompt);
+      } catch (e) {
+        console.error(`  ! shorts generation failed (${e.message}).`);
+        shortsModel = { shorts: [] };
+      }
+      (shortsModel.shorts || []).forEach((sh, i) => {
+        const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
+        const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || topic, true, researchFile);
+        if (shl.length >= 3) { writeJob(`${prefix}_short_${i + 1}`, meta, shl); written++; }
+      });
+    } else {
+      // LONG (or TIL single short), plus derived shorts for long+shorts mode.
+      const lineTarget = isTIL ? "8-11 short punchy" : "30-42";
+      const funnel = cfg.funnel ? `\nEnd with a final line that is a soft CTA: "${cfg.funnel}"` : "";
+      const longPrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${lineTarget} lines.${funnel}\nReturn the JSON now.`;
+
+      const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
+      const longLines = sanitizeLines(getLines(longModel), { language: cfg.language, longForm: !isTIL });
+      const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, topic, isTIL, researchFile);
+      if (writeLong && longLines.length) { writeJob(prefix, longMeta, longLines); written++; }
+
+      if (wantDerivedShorts) {
+        const shortsSystem = `You turn a long video script into short vertical reels. Pick the ${cfg.makeShorts} MOST hook-worthy, self-contained, valuable moments from the script and rewrite each as a punchy standalone reel. Do NOT cut randomly — choose the segments that hook and deliver value. ${RULES}${langRule(cfg.language)}`;
+        const shortsPrompt = `Here is the long script's lines:\n${JSON.stringify((longModel.lines || []).map((l) => l.text || l.caption))}\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines as in the shape] } x${cfg.makeShorts} ] }`;
+        let shortsModel;
+        try {
+          shortsModel = DRY ? drySample().shorts : await callGroq(shortsSystem, shortsPrompt);
+        } catch (e) {
+          console.log(`  ! shorts generation failed (${e.message}) — long video still produced.`);
+          shortsModel = { shorts: [] };
+        }
+        (shortsModel.shorts || []).forEach((sh, i) => {
+          const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
+          const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || topic, true, researchFile);
+          if (shl.length >= 3) { writeJob(`${prefix}_short_${i + 1}`, meta, shl); written++; }
+        });
+
+        // Never leave the render step with nothing: fall back to the long.
+        if (written === 0 && longLines.length) {
+          writeJob(prefix, longMeta, longLines);
+          written++;
+          console.log("  (fallback) wrote the long video since no shorts were produced");
+        }
+      }
     }
-    (shortsModel.shorts || []).forEach((sh, i) => {
-      const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
-      const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || TOPIC, true, researchFile);
-      if (shl.length >= 3) { writeJob(`${CHANNEL}_short_${i + 1}`, meta, shl); written++; }
-    });
-    if (written === 0) {
-      console.error("Groq returned no usable shorts. The free model can be flaky — just re-run.");
-      process.exit(1);
-    }
-    console.log(`\nDone (${written} short${written > 1 ? "s" : ""}, no long). Render with:  npm run batch -- --only=${CHANNEL}\n`);
-    return;
+
+    if (written === 0) console.error(`  ! no usable content for topic "${topic || "(auto)"}" — skipped.`);
+    totalWritten += written;
   }
 
-  // 2) long (or TIL single short)
-  const lineTarget = isTIL ? "8-11 short punchy" : "30-42";
-  const funnel = cfg.funnel ? `\nEnd with a final line that is a soft CTA: "${cfg.funnel}"` : "";
-  const longPrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${TOPIC || "(you choose a strong, specific topic in this niche)"}\nWrite ${lineTarget} lines.${funnel}\nReturn the JSON now.`;
-
-  let written = 0;
-  const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
-  const longLines = sanitizeLines(getLines(longModel), { language: cfg.language, longForm: !isTIL });
-  const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, TOPIC, isTIL, researchFile);
-  if (writeLong && longLines.length) { writeJob(CHANNEL, longMeta, longLines); written++; }
-
-  // 3) script-aware shorts (derived FROM the long; only for long+shorts mode)
-  if (wantDerivedShorts) {
-    const shortsSystem = `You turn a long video script into short vertical reels. Pick the ${cfg.makeShorts} MOST hook-worthy, self-contained, valuable moments from the script and rewrite each as a punchy standalone reel. Do NOT cut randomly — choose the segments that hook and deliver value. ${RULES}${langRule(cfg.language)}`;
-    const shortsPrompt = `Here is the long script's lines:\n${JSON.stringify((longModel.lines || []).map((l) => l.text || l.caption))}\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines as in the shape] } x${cfg.makeShorts} ] }`;
-    let shortsModel;
-    try {
-      shortsModel = DRY ? drySample().shorts : await callGroq(shortsSystem, shortsPrompt);
-    } catch (e) {
-      console.log(`  ! shorts generation failed (${e.message}) — long video still produced.`);
-      shortsModel = { shorts: [] };
-    }
-    (shortsModel.shorts || []).forEach((sh, i) => {
-      const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
-      const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || TOPIC, true, researchFile);
-      if (shl.length >= 3) { writeJob(`${CHANNEL}_short_${i + 1}`, meta, shl); written++; }
-    });
-  }
-
-  // Never leave the render step with nothing: fall back to the long, or fail loudly.
-  if (written === 0 && longLines.length) {
-    writeJob(CHANNEL, longMeta, longLines);
-    written++;
-    console.log("  (fallback) wrote the long video since no shorts were produced");
-  }
-  if (written === 0) {
-    console.error("Groq returned no usable content. The free model can be flaky — just re-run.");
+  if (totalWritten === 0) {
+    console.error("Groq returned no usable content for any topic. The free model can be flaky — just re-run.");
     process.exit(1);
   }
 
-  console.log(`\nDone. Render with:  npm run batch -- --only=${CHANNEL}\n`);
+  console.log(`\nDone. ${totalWritten} job(s) across ${topics.length} topic(s). Render with:  npm run batch -- --only=${CHANNEL}\n`);
 }
 
 main().catch((e) => { console.error("generate_script failed:", e.message); process.exit(1); });

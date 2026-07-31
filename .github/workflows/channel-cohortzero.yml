@@ -3,8 +3,8 @@ name: "Channel — Cohort Zero (business)"
 on:
   workflow_dispatch:
     inputs:
-      topic:
-        description: "Topic (e.g. 'Why Airlift raised $85M and collapsed')"
+      topics:
+        description: "Topics — ONE video each. Separate multiple with ;  (e.g. 'Why Airlift collapsed; How Careem beat Uber; The Daraz playbook')"
         required: true
         type: string
       format:
@@ -56,7 +56,7 @@ jobs:
       - name: Write script + shorts (Groq, Wikipedia-grounded)
         env:
           CHANNEL: cohortzero
-          TOPIC: ${{ github.event.inputs.topic }}
+          TOPICS: ${{ github.event.inputs.topics }}
           MODE: ${{ github.event.inputs.format }}
           LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
