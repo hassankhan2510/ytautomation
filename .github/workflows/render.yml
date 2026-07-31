@@ -91,6 +91,10 @@ jobs:
           cp theranos-doc/out/*.mp4 out/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git pull --rebase origin main || true
-          git add out/*.mp4 || true
-          git diff --cached --quiet || (git commit -m "Add rendered video [skip ci]" && git push)
+          git add out/*.mp4 2>/dev/null || true
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -m "Add rendered video [skip ci]"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash origin main && git push origin main; then exit 0; fi
+            echo "Push race, retry $i..."; sleep 6
+          done

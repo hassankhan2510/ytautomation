@@ -27,7 +27,7 @@ jobs:
     timeout-minutes: 180
     strategy:
       fail-fast: false
-      max-parallel: 10
+      max-parallel: 3
       matrix:
         name: ${{ fromJSON(needs.discover.outputs.jobs) }}
     defaults:
@@ -97,16 +97,22 @@ jobs:
         run: |
           mkdir -p out
           find _artifacts -name '*.mp4' -exec cp {} out/ \; 2>/dev/null || true
+          rm -rf _artifacts
           echo "Videos ready:" && ls -la out || true
       - name: Commit videos to repo
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git pull --rebase origin main || true
-          git add out/*.mp4 || true
+          git add out/*.mp4 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "No videos to commit."
-          else
-            git commit -m "Add rendered videos [skip ci]"
-            git push
+            echo "No videos to commit."; exit 0
           fi
+          git commit -m "Add rendered videos [skip ci]"
+          # Retry against concurrent pushes (code commits may move main meanwhile).
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash origin main && git push origin main; then
+              echo "Pushed."; exit 0
+            fi
+            echo "Push race, retry $i..."; sleep 6
+          done
+          echo "Could not push videos after retries."; exit 1
