@@ -43,18 +43,31 @@ async def synthesize(text: str, voice: str, out_path: str, rate: str = "+0%"):
     carries the real spoken offset + duration per sentence. We use the end of the
     last sentence as the true spoken length. Returns (speech_sec, word_frames_unset).
     """
-    communicate = edge_tts.Communicate(text, voice, rate=rate)
-    last_end_sec = 0.0
-    got_timing = False
-    with open(out_path, "wb") as f:
-        async for chunk in communicate.stream():
-            if chunk["type"] == "audio":
-                f.write(chunk["data"])
-            elif chunk["type"] in ("SentenceBoundary", "WordBoundary"):
-                got_timing = True
-                end = (chunk["offset"] + chunk["duration"]) / TICKS_PER_SECOND
-                last_end_sec = max(last_end_sec, end)
-    return last_end_sec if got_timing else 0.0
+    # edge-tts occasionally returns no audio (transient, worse under parallel load).
+    # Retry a few times with backoff before giving up.
+    last_error = None
+    for attempt in range(5):
+        try:
+            communicate = edge_tts.Communicate(text, voice, rate=rate)
+            audio = bytearray()
+            last_end_sec = 0.0
+            got_timing = False
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio += chunk["data"]
+                elif chunk["type"] in ("SentenceBoundary", "WordBoundary"):
+                    got_timing = True
+                    end = (chunk["offset"] + chunk["duration"]) / TICKS_PER_SECOND
+                    last_end_sec = max(last_end_sec, end)
+            if not audio:
+                raise RuntimeError("no audio bytes received")
+            with open(out_path, "wb") as f:
+                f.write(audio)
+            return last_end_sec if got_timing else 0.0
+        except Exception as e:  # NoAudioReceived, network blips, etc.
+            last_error = e
+            await asyncio.sleep(1.5 * (attempt + 1))
+    raise RuntimeError(f"TTS failed after 5 retries: {last_error}")
 
 
 def distribute_words(text: str, speech_sec: float, fps: int):
