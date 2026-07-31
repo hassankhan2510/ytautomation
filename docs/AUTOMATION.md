@@ -21,7 +21,8 @@ click Run (or, for TIL, it runs itself daily). Finished videos + publish kits la
 
 To make a video: Actions → the channel → **Run workflow** → (type a topic for the 3 research
 channels) → Run. When it finishes, the MP4(s) + a `.txt` publish kit (title, alt titles, description,
-hashtags) are committed to **`out/`**. Download from GitHub, upload to the platform.
+hashtags) are committed to that channel's own folder — **`out/syndar/`, `out/cohortzero/`,
+`out/farsight/`, `out/til/`**. Download from GitHub, upload to the platform.
 
 ## How each run works
 1. **Grounding (anti-hallucination):** for research channels, it pulls real Wikipedia summaries for

@@ -59,12 +59,12 @@ jobs:
       - name: Deliver to out/
         working-directory: ${{ github.workspace }}
         run: |
-          mkdir -p out
-          cp theranos-doc/out/cohortzero*.mp4 out/ 2>/dev/null || true
-          cp theranos-doc/out/cohortzero*.txt out/ 2>/dev/null || true
+          mkdir -p out/cohortzero
+          cp theranos-doc/out/cohortzero*.mp4 out/cohortzero/ 2>/dev/null || true
+          cp theranos-doc/out/cohortzero*.txt out/cohortzero/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add out/cohortzero*.mp4 out/cohortzero*.txt 2>/dev/null || true
+          git add out/cohortzero 2>/dev/null || true
           if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
           git commit -m "Cohort Zero: auto video + shorts [skip ci]"
           for i in 1 2 3 4 5; do

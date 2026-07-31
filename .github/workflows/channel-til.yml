@@ -46,12 +46,12 @@ jobs:
       - name: Deliver to out/
         working-directory: ${{ github.workspace }}
         run: |
-          mkdir -p out
-          cp theranos-doc/out/til*.mp4 out/ 2>/dev/null || true
-          cp theranos-doc/out/til*.txt out/ 2>/dev/null || true
+          mkdir -p out/til
+          cp theranos-doc/out/til*.mp4 out/til/ 2>/dev/null || true
+          cp theranos-doc/out/til*.txt out/til/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add out/til*.mp4 out/til*.txt 2>/dev/null || true
+          git add out/til 2>/dev/null || true
           if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
           git commit -m "TIL: auto video [skip ci]"
           for i in 1 2 3 4 5; do
