@@ -16,7 +16,7 @@ engine (in `theranos-doc/`, name is legacy) renders that data into MP4s for any 
 ## The brief you will receive
 
 ```
-Channel/Niche: space | business | ai | robotics | finance | history | truecrime | science | psychology | geography | motivation
+Channel/Niche: space | business | ai | robotics | deeptech | finance | history | truecrime | science | psychology | geography | motivation
 Topic:         <subject>
 Platform:      youtube-long | shorts | reel | linkedin
 Duration:      e.g. 6 min  /  60 sec
