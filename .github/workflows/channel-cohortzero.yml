@@ -16,6 +16,15 @@ on:
           - "long+shorts"
           - "long"
           - "shorts"
+      language:
+        description: "Language"
+        required: true
+        default: "English"
+        type: choice
+        options:
+          - "English"
+          - "Urdish"
+          - "Hinglish"
 
 jobs:
   make:
@@ -49,6 +58,7 @@ jobs:
           CHANNEL: cohortzero
           TOPIC: ${{ github.event.inputs.topic }}
           MODE: ${{ github.event.inputs.format }}
+          LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs

@@ -215,6 +215,17 @@ function drySample() {
 async function main() {
   if (!CHANNEL) { console.error("Set CHANNEL=syndar|cohortzero|farsight|til"); process.exit(1); }
   const cfg = loadConfig();
+  // LANGUAGE dropdown override (English | Urdish | Hinglish). Picks language + the matching voice.
+  const LANG = (process.env.LANGUAGE || "").toLowerCase();
+  if (LANG.startsWith("urd") || LANG === "ur") {
+    cfg.language = "ur";
+    cfg.voice = "ur-PK-AsadNeural";
+  } else if (LANG.startsWith("hing") || LANG === "hi") {
+    cfg.language = "hi";
+    cfg.voice = "hi-IN-MadhurNeural";
+  } else if (LANG.startsWith("eng") || LANG === "en") {
+    cfg.language = "en"; // keep the channel's English voice from config
+  }
   fs.mkdirSync(JOBS, { recursive: true });
   const nichePack = readNichePack(cfg.niche);
   const isTIL = cfg.makeShorts === 0;

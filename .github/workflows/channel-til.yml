@@ -3,8 +3,18 @@ name: "Channel — TIL (auto daily)"
 # Fully autonomous: Groq invents a valuable fact, the machine builds a short, and it lands in out/.
 on:
   workflow_dispatch:
+    inputs:
+      language:
+        description: "Language"
+        required: true
+        default: "English"
+        type: choice
+        options:
+          - "English"
+          - "Urdish"
+          - "Hinglish"
   schedule:
-    - cron: "0 6 * * *" # every day 06:00 UTC
+    - cron: "0 6 * * *" # every day 06:00 UTC (defaults to English)
 
 jobs:
   make:
@@ -36,6 +46,7 @@ jobs:
       - name: Write script (Groq)
         env:
           CHANNEL: til
+          LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs
