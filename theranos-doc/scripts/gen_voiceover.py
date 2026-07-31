@@ -35,14 +35,15 @@ AUDIO_DIR = os.path.join(ROOT, "public", "audio")
 TICKS_PER_SECOND = 10_000_000
 
 
-async def synthesize(text: str, voice: str, out_path: str):
-    """Generate one mp3 and capture timing.
+async def synthesize(text: str, voice: str, out_path: str, rate: str = "+0%"):
+    """Generate one mp3 and capture timing. `rate` speeds up/slows the voice
+    (e.g. "+15%" for a snappier, modern delivery).
 
     Edge neural voices emit SentenceBoundary (not WordBoundary) metadata, which
     carries the real spoken offset + duration per sentence. We use the end of the
     last sentence as the true spoken length. Returns (speech_sec, word_frames_unset).
     """
-    communicate = edge_tts.Communicate(text, voice)
+    communicate = edge_tts.Communicate(text, voice, rate=rate)
     last_end_sec = 0.0
     got_timing = False
     with open(out_path, "wb") as f:
@@ -91,7 +92,8 @@ async def main():
     meta = script.get("meta", {})
     fps = int(meta.get("fps", 30))
     voice = meta.get("voice", "en-US-GuyNeural")
-    pause = float(meta.get("pauseBetweenLinesSec", 0.35))
+    rate = meta.get("voiceRate", "+10%")  # snappier default; override per video
+    pause = float(meta.get("pauseBetweenLinesSec", 0.25))  # less dead air between scenes
     lines = script["lines"]
 
     os.makedirs(AUDIO_DIR, exist_ok=True)
@@ -110,7 +112,7 @@ async def main():
         spoken = line["text"]
         displayed = line.get("caption") or line["text"]
 
-        speech_sec = await synthesize(spoken, voice, out_path)
+        speech_sec = await synthesize(spoken, voice, out_path, rate)
 
         # Fallback estimate if the service returned no timing metadata at all.
         if speech_sec <= 0:
@@ -194,7 +196,7 @@ async def main():
     target = (float(target) / 60.0) if target else meta.get("targetDurationMin")
     if target:
         target = float(target)
-        floor = target * 0.85  # allow 15% under for TTS pacing; less than that is a fail
+        floor = target * 0.75  # tolerate faster pacing; line-count gate guards laziness
         avg_sec_per_line = (cursor_frame / fps) / max(len(lines), 1)
         if mins < floor:
             missing_min = target - mins

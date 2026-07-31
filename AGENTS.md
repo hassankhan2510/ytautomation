@@ -58,8 +58,9 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
     "targetSeconds": 360,            // drives the anti-laziness duration gate
     "fps": 30,
     "style", "voice",                // from the niche pack
+    "voiceRate": "+18%",             // speech speed: +18% snappy reels, +10% long-form, +0% slow
     "accentColor": "#rrggbb",        // from the niche pack
-    "pauseBetweenLinesSec": 0.35,
+    "pauseBetweenLinesSec": 0.15,    // gap between scenes: ~0.15 reels, ~0.25 long-form
     "music": "cinematic_bed.mp3",    // OPTIONAL: calm/ambient bed in public/music/ (never club/EDM). Omit for none.
     "musicVolume": 0.14,             // low, sits under the voice
     "description", "tags": [">= 3"],

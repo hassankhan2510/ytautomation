@@ -9,7 +9,8 @@
     "fps": 30,
     "style": "modern-explainer",
     "voice": "ur-PK-AsadNeural",
-    "pauseBetweenLinesSec": 0.3,
+    "pauseBetweenLinesSec": 0.15,
+    "voiceRate": "+18%",
     "accentColor": "#16a34a",
     "description": "Most of Pakistan's startup money is now flowing into fintech — and everyone's asking who becomes the country's first unicorn. The fintech boom explained. (Urdu narration, English captions.)",
     "tags": [
