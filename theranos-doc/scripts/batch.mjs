@@ -91,6 +91,12 @@ function main() {
         const frames = SAMPLE ? " --frames=0-45" : "";
         run(`npx remotion render ${comp} ${outFile}${frames} --concurrency=4`);
 
+        // Copy-paste publish kit (title/description/hashtags) next to the video.
+        try {
+          run(`node scripts/publish_kit.mjs src/data/script.json out/${name}.txt`);
+        } catch {
+          /* kit is best-effort */
+        }
         results.push(`OK   ${name} -> ${outFile}`);
       } catch (e) {
         results.push(`FAIL ${name} (${String(e.message).split("\n")[0]})`);

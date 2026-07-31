@@ -1,0 +1,55 @@
+{
+  "syndar": {
+    "niche": "deeptech",
+    "platform": "youtube-long",
+    "targetSeconds": 300,
+    "voice": "en-US-EricNeural",
+    "voiceRate": "+8%",
+    "accentColor": "#22d3ee",
+    "language": "en",
+    "makeShorts": 3,
+    "requireResearch": true,
+    "ground": true,
+    "review": true,
+    "funnel": "If you're building autonomy where cameras fail, see what we're building at Syndar — link below."
+  },
+  "cohortzero": {
+    "niche": "business",
+    "platform": "youtube-long",
+    "targetSeconds": 240,
+    "voice": "en-US-GuyNeural",
+    "voiceRate": "+10%",
+    "accentColor": "#e11d48",
+    "language": "en",
+    "makeShorts": 3,
+    "requireResearch": true,
+    "ground": true,
+    "review": false
+  },
+  "farsight": {
+    "niche": "finance",
+    "platform": "youtube-long",
+    "targetSeconds": 240,
+    "voice": "en-US-GuyNeural",
+    "voiceRate": "+10%",
+    "accentColor": "#10b981",
+    "language": "en",
+    "makeShorts": 3,
+    "requireResearch": true,
+    "ground": true,
+    "review": false
+  },
+  "til": {
+    "niche": "facts",
+    "platform": "shorts",
+    "targetSeconds": 40,
+    "voice": "en-US-GuyNeural",
+    "voiceRate": "+15%",
+    "accentColor": "#f59e0b",
+    "language": "en",
+    "makeShorts": 0,
+    "requireResearch": false,
+    "ground": true,
+    "review": false
+  }
+}

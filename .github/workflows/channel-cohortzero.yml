@@ -1,0 +1,63 @@
+name: "Channel — Cohort Zero (business)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Topic (e.g. 'Why Airlift raised $85M and collapsed')"
+        required: true
+        type: string
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: theranos-doc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: theranos-doc/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install headless-Chrome libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji
+      - run: npm ci
+      - run: pip install edge-tts
+      - name: Write script + shorts (Groq, Wikipedia-grounded)
+        env:
+          CHANNEL: cohortzero
+          TOPIC: ${{ github.event.inputs.topic }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: node scripts/generate_script.mjs
+      - name: Render long + shorts
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: npm run batch -- --only=cohortzero
+      - name: Deliver to out/
+        working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p out
+          cp theranos-doc/out/cohortzero*.mp4 out/ 2>/dev/null || true
+          cp theranos-doc/out/cohortzero*.txt out/ 2>/dev/null || true
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add out/cohortzero*.mp4 out/cohortzero*.txt 2>/dev/null || true
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -m "Cohort Zero: auto video + shorts [skip ci]"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash origin main && git push origin main; then exit 0; fi
+            echo "retry $i"; sleep 6
+          done
