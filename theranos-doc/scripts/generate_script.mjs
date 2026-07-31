@@ -181,6 +181,13 @@ function sanitizeLines(lines, { language, longForm }) {
   return clean;
 }
 
+// LLMs sometimes nest the array under a different key — find it wherever it is.
+function getLines(m) {
+  if (!m) return [];
+  for (const k of ["lines", "scenes", "script", "segments"]) if (Array.isArray(m[k])) return m[k];
+  return [];
+}
+
 function finalizeMeta(model, cfg, topic, isShort, researchFile) {
   const platform = isShort ? (cfg.platform === "youtube-long" ? "reel" : cfg.platform) : cfg.platform;
   const spl = SEC_PER_LINE[platform] || 7;
@@ -290,10 +297,11 @@ async function main() {
   const funnel = cfg.funnel ? `\nEnd with a final line that is a soft CTA: "${cfg.funnel}"` : "";
   const longPrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${TOPIC || "(you choose a strong, specific topic in this niche)"}\nWrite ${lineTarget} lines.${funnel}\nReturn the JSON now.`;
 
+  let written = 0;
   const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
-  longModel.lines = sanitizeLines(longModel.lines || [], { language: cfg.language, longForm: !isTIL });
-  const longMeta = finalizeMeta(longModel, cfg, TOPIC, isTIL, researchFile);
-  if (writeLong) writeJob(CHANNEL, longMeta, longModel.lines);
+  const longLines = sanitizeLines(getLines(longModel), { language: cfg.language, longForm: !isTIL });
+  const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, TOPIC, isTIL, researchFile);
+  if (writeLong && longLines.length) { writeJob(CHANNEL, longMeta, longLines); written++; }
 
   // 3) script-aware shorts (derived FROM the long; only for long-form channels)
   if (wantShorts) {
@@ -307,10 +315,21 @@ async function main() {
       shortsModel = { shorts: [] };
     }
     (shortsModel.shorts || []).forEach((sh, i) => {
-      sh.lines = sanitizeLines(sh.lines || [], { language: cfg.language, longForm: false });
-      const meta = finalizeMeta(sh, cfg, sh.title || TOPIC, true, researchFile);
-      if (sh.lines.length >= 3) writeJob(`${CHANNEL}_short_${i + 1}`, meta, sh.lines);
+      const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
+      const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || TOPIC, true, researchFile);
+      if (shl.length >= 3) { writeJob(`${CHANNEL}_short_${i + 1}`, meta, shl); written++; }
     });
+  }
+
+  // Never leave the render step with nothing: fall back to the long, or fail loudly.
+  if (written === 0 && longLines.length) {
+    writeJob(CHANNEL, longMeta, longLines);
+    written++;
+    console.log("  (fallback) wrote the long video since no shorts were produced");
+  }
+  if (written === 0) {
+    console.error("Groq returned no usable content. The free model can be flaky — just re-run.");
+    process.exit(1);
   }
 
   console.log(`\nDone. Render with:  npm run batch -- --only=${CHANNEL}\n`);
