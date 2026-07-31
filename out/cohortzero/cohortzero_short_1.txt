@@ -1,19 +1,19 @@
 === PUBLISH KIT ===
-Platform: reel    Niche: business    Language voice: ur-PK-AsadNeural
+Platform: reel    Niche: business    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  Careem کی کامیابی اور خطرہ
+  Airlift's Eighty Five Million Dollar Failure
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Careem کی کامیابی اور مجرمانہ سرگرمی
-  2. Careem mafia کی طاقت
-  3. Careem کی کامیابی اور غیر قانونی کاروبار
+  1. Airlift's Rise and Fall
+  2. Startup Success to Collapse
+  3. The Airlift Story
 
 DESCRIPTION:
-  Careem کی کامیابی اور اس کے نتیجے میں سامنے آنے والی مجرمانہ سرگرمیوں پر ایک نظر
+  Learn from Airlift's mistakes to avoid startup failure
 
 HASHTAGS:
-  #Careem #Uber
+  #startups #funding #entrepreneurship #businessfailure #lessonslearned
 
 TAGS (comma-separated):
-  Careem, مجرمانہ_سرگرمی, غیر_قانونی_کاروبار
+  startup, failure, entrepreneurship

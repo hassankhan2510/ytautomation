@@ -1,0 +1,19 @@
+=== PUBLISH KIT ===
+Platform: reel    Niche: business    Language voice: en-US-GuyNeural
+
+BEST TITLE:
+  What Went Wrong at Airlift
+
+ALTERNATIVE TITLES (A/B pick one):
+  1. Airlift's Downfall
+  2. Startup Failure Analysis
+  3. Lessons from Airlift
+
+DESCRIPTION:
+  Analyze Airlift's mistakes to grow your business
+
+HASHTAGS:
+  #startups #failure #entrepreneurship #businesslessons #growth
+
+TAGS (comma-separated):
+  startup, analysis, growth

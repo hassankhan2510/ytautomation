@@ -1,19 +1,19 @@
 === PUBLISH KIT ===
-Platform: reel    Niche: business    Language voice: ur-PK-AsadNeural
+Platform: reel    Niche: business    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  Careem کی کامیابی اور مجرمانہ سرگرمی
+  Turning Failure into Success
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Careem کی کامیابی اور خطرہ
-  2. Careem mafia کی کامیابی
-  3. Careem mafia کی مجرمانہ سرگرمی
+  1. Airlift's Legacy
+  2. Startup Failure to Success
+  3. Learning from Airlift
 
 DESCRIPTION:
-  Careem کی کامیابی اور اس کے نتیجے میں سامنے آنے والی مجرمانہ سرگرمیوں پر ایک نظر
+  Transform Airlift's failure into your success story
 
 HASHTAGS:
-  #Careem #ridehailing
+  #startups #success #entrepreneurship #businessgrowth #resilience
 
 TAGS (comma-separated):
-  Careem, مجرمانہ_سرگرمی, غیر_قانونی_کاروبار
+  startup, success, resilience
