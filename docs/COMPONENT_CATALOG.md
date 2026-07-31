@@ -54,10 +54,15 @@ composes these building blocks by setting fields in `script.json`. This is why v
 
 ## Languages (Hindi / Urdu voice, English on screen)
 
-Set `meta.voice` to any Edge voice (e.g. `ur-PK-AsadNeural`, `hi-IN-MadhurNeural`). Then per line,
-put the **spoken** words in `text` (that language's script) and the **English on-screen** words in
-`caption`. The validator REQUIRES an English `caption` on every line whenever the voice isn't
-English, so Hindi/Urdu text can never accidentally appear on screen.
+Set `meta.voice` to any Edge voice (e.g. `ur-PK-AsadNeural`, `hi-IN-MadhurNeural`). Per line, put the
+**spoken** words in `text` and the **English on-screen** words in `caption`. The validator REQUIRES an
+English `caption` on every line when the voice isn't English, so foreign script never shows on screen.
+
+**Urdu → Urdish, Hindi → Hinglish (default):** write the spoken `text` as natural code-switching —
+native script with common English words kept in English inline (`Uber نے Careem کو acquire کیا`,
+`Pakistan Moon तक पहुँच गया`). Keep English words in Latin script; do NOT write Roman Urdu/Hindi
+(the voice needs native script); keep years/large numbers as script words. This sounds authentic to
+Desi audiences; pure formal Urdu/Hindi sounds stiff.
 
 ## Always-on (automatic, no config)
 

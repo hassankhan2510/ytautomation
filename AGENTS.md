@@ -90,10 +90,19 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
 ```
 See `docs/COMPONENT_CATALOG.md` for when to use each of the 13 layouts.
 
-**Languages:** set `meta.voice` to a Hindi/Urdu voice (e.g. `ur-PK-AsadNeural`, `hi-IN-MadhurNeural`)
-and write `text` in that language. On-screen text stays **English** via `caption` — the validator
-forces an English `caption` on every line when the voice isn't English, so foreign script never
-shows on screen. See `docs/COMPONENT_CATALOG.md` for the scene blocks (stat/quote/bullets).
+**Languages (IMPORTANT — Urdu/Hindi default to code-switching):**
+- Set `meta.voice` to the language voice (`ur-PK-AsadNeural`, `hi-IN-MadhurNeural`).
+- When the user asks for **Urdu**, write the spoken `text` in natural **Urdish** — Urdu script with
+  common English words kept in English inline (startup, company, fund, acquire, mission, technology,
+  brand names, etc.). When they ask for **Hindi**, write **Hinglish** the same way. This is how real
+  Desi creators talk; pure formal Urdu/Hindi sounds stiff.
+- Rules: keep English words in **Latin script inline** (e.g. `Uber نے Careem کو acquire کیا`). Do NOT
+  write Roman Urdu/Hindi (the neural voice needs native script). Keep years/large numbers as script
+  words for reliable pronunciation. Symbols and the big figures go in the `stat`/`caption` fields, not
+  the spoken text.
+- On-screen text stays **English** via `caption` — the validator forces an English `caption` on every
+  line when the voice isn't English, so Urdu/Hindi script never shows on screen.
+- See `docs/COMPONENT_CATALOG.md` for the scene blocks.
 
 ## Where things live
 
