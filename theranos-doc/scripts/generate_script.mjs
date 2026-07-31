@@ -141,6 +141,46 @@ function slug(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "").slice(0, 40) || "clip";
 }
 
+// LLMs don't follow schemas perfectly. Coerce output so it always passes validation + renders:
+// drop empty lines, fix bad layouts, downgrade data-blocks missing their required field, ensure captions.
+const OK_LAYOUTS = ["lower-third", "center", "title", "stat", "quote", "bullets", "chart", "timeline", "meter", "nametag", "map", "compare"];
+function sanitizeLines(lines, { language, longForm }) {
+  const clean = [];
+  for (const l of Array.isArray(lines) ? lines : []) {
+    if (!l || typeof l.text !== "string" || !l.text.trim()) continue;
+    const line = { text: l.text.trim() };
+    line.keywords = Array.isArray(l.keywords) && l.keywords.length ? l.keywords.slice(0, 2).map(String) : ["abstract dark background"];
+    line.type = l.type === "video" ? "video" : "image";
+    let layout = OK_LAYOUTS.includes(l.layout) ? l.layout : "lower-third";
+    if (layout === "bullets" && !(Array.isArray(l.items) && l.items.length >= 2)) layout = "lower-third";
+    else if (layout === "chart" && !(Array.isArray(l.chart) && l.chart.length >= 2)) layout = "lower-third";
+    else if (layout === "timeline" && !(Array.isArray(l.events) && l.events.length >= 2)) layout = "lower-third";
+    else if (layout === "stat" && !(l.stat && String(l.stat).trim())) layout = "lower-third";
+    else if (layout === "nametag" && !(l.name && String(l.name).trim())) layout = "lower-third";
+    else if (layout === "meter" && typeof l.percent !== "number") layout = "lower-third";
+    else if (layout === "map" && !(l.location && String(l.location).trim())) layout = "lower-third";
+    else if (layout === "compare" && !(l.compare && l.compare.left && l.compare.right)) layout = "lower-third";
+    line.layout = layout;
+    if (l.kicker) line.kicker = String(l.kicker);
+    if (layout === "stat") line.stat = String(l.stat);
+    if (layout === "quote" && l.cite) line.cite = String(l.cite);
+    if (layout === "bullets") line.items = l.items.slice(0, 5).map(String);
+    if (layout === "nametag") { line.name = String(l.name); if (l.role) line.role = String(l.role); }
+    if (layout === "timeline") line.events = l.events.slice(0, 6);
+    if (layout === "chart") line.chart = l.chart.slice(0, 6);
+    if (layout === "meter") line.percent = Number(l.percent);
+    if (layout === "map") { line.location = String(l.location); if (l.coords) line.coords = String(l.coords); }
+    if (language !== "en") line.caption = l.caption && String(l.caption).trim() ? String(l.caption) : l.text;
+    else if (l.caption) line.caption = String(l.caption);
+    clean.push(line);
+  }
+  if (longForm && clean.length >= 6) {
+    if (!clean.some((c) => c.layout === "center" || c.layout === "title")) clean[0].layout = "center";
+    if (!clean.some((c) => c.kicker)) clean[0].kicker = "STORY";
+  }
+  return clean;
+}
+
 function finalizeMeta(model, cfg, topic, isShort, researchFile) {
   const platform = isShort ? (cfg.platform === "youtube-long" ? "reel" : cfg.platform) : cfg.platform;
   const spl = SEC_PER_LINE[platform] || 7;
@@ -251,8 +291,9 @@ async function main() {
   const longPrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${TOPIC || "(you choose a strong, specific topic in this niche)"}\nWrite ${lineTarget} lines.${funnel}\nReturn the JSON now.`;
 
   const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
+  longModel.lines = sanitizeLines(longModel.lines || [], { language: cfg.language, longForm: !isTIL });
   const longMeta = finalizeMeta(longModel, cfg, TOPIC, isTIL, researchFile);
-  if (writeLong) writeJob(CHANNEL, longMeta, longModel.lines || []);
+  if (writeLong) writeJob(CHANNEL, longMeta, longModel.lines);
 
   // 3) script-aware shorts (derived FROM the long; only for long-form channels)
   if (wantShorts) {
@@ -266,8 +307,9 @@ async function main() {
       shortsModel = { shorts: [] };
     }
     (shortsModel.shorts || []).forEach((sh, i) => {
+      sh.lines = sanitizeLines(sh.lines || [], { language: cfg.language, longForm: false });
       const meta = finalizeMeta(sh, cfg, sh.title || TOPIC, true, researchFile);
-      writeJob(`${CHANNEL}_short_${i + 1}`, meta, sh.lines || []);
+      if (sh.lines.length >= 3) writeJob(`${CHANNEL}_short_${i + 1}`, meta, sh.lines);
     });
   }
 

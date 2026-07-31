@@ -30,7 +30,10 @@ const SAMPLE = process.argv.includes("--sample");
 const onlyArg = process.argv.find((a) => a.startsWith("--only="));
 const only = onlyArg ? onlyArg.split("=")[1] : null;
 
-const ENV = { ...process.env, TMP: "D:/remotion-temp", TEMP: "D:/remotion-temp", TMPDIR: "D:/remotion-temp" };
+// Windows: route scratch off the full C: drive. Linux (CI): use the default temp.
+const ENV = process.platform === "win32"
+  ? { ...process.env, TMP: "D:/remotion-temp", TEMP: "D:/remotion-temp", TMPDIR: "D:/remotion-temp" }
+  : { ...process.env };
 const COMP = { "youtube-long": "YouTube", shorts: "Shorts", reel: "Shorts", linkedin: "Square" };
 
 function run(cmd) {
@@ -111,6 +114,13 @@ function main() {
   console.log("\n================ BATCH SUMMARY ================");
   results.forEach((r) => console.log("  " + r));
   console.log("==============================================\n");
+
+  // Fail loudly if NOTHING rendered — otherwise the workflow shows a misleading green.
+  const okCount = results.filter((r) => r.startsWith("OK")).length;
+  if (okCount === 0) {
+    console.error("No videos were produced — all jobs failed. See the FAIL reasons above.");
+    process.exit(1);
+  }
 }
 
 main();
