@@ -149,7 +149,7 @@ function sanitizeLines(lines, { language, longForm }) {
   for (const l of Array.isArray(lines) ? lines : []) {
     if (!l || typeof l.text !== "string" || !l.text.trim()) continue;
     const line = { text: l.text.trim() };
-    line.keywords = Array.isArray(l.keywords) && l.keywords.length ? l.keywords.slice(0, 2).map(String) : ["abstract dark background"];
+    line.keywords = Array.isArray(l.keywords) && l.keywords.length ? l.keywords.slice(0, 2).map(String) : deriveKeywords(l.caption || l.text);
     line.type = l.type === "video" ? "video" : "image";
     let layout = OK_LAYOUTS.includes(l.layout) ? l.layout : "lower-third";
     if (layout === "bullets" && !(Array.isArray(l.items) && l.items.length >= 2)) layout = "lower-third";
@@ -186,6 +186,15 @@ function getLines(m) {
   if (!m) return [];
   for (const k of ["lines", "scenes", "script", "segments"]) if (Array.isArray(m[k])) return m[k];
   return [];
+}
+
+// If a line has no keywords, derive a varied, relevant search term from its own text
+// (English text/caption) — never fall back to one fixed background for every scene.
+const STOP = new Set("the a an and or but of to in on for with is are was were be been it its this that these those as at by from you your we our they their he she his her them how why what when who which will can could would has have had not no yes just very more most than then them into over about after before".split(" "));
+function deriveKeywords(text) {
+  const words = String(text || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/)
+    .filter((w) => w.length > 3 && !STOP.has(w));
+  return words.length ? [words.slice(0, 4).join(" ")] : ["cinematic background"];
 }
 
 function finalizeMeta(model, cfg, topic, isShort, researchFile) {

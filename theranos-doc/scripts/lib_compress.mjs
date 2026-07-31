@@ -12,12 +12,13 @@
 import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
+import os from "node:os";
 
 const VIDEO_EXT = new Set([".mp4", ".mov", ".webm", ".mkv"]);
 const IMAGE_EXT = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 
-// Route ffmpeg scratch files off the (nearly full) C: drive.
-const SCRATCH = "D:/remotion-temp";
+// Windows: route ffmpeg scratch off the (nearly full) C: drive. Linux (CI): use the system temp.
+const SCRATCH = process.platform === "win32" ? "D:/remotion-temp" : path.join(os.tmpdir(), "remotion-temp");
 const ENV = { ...process.env, TMP: SCRATCH, TEMP: SCRATCH, TMPDIR: SCRATCH };
 
 function ensureScratch() {
