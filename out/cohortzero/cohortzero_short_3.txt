@@ -2,18 +2,18 @@
 Platform: reel    Niche: business    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  From $85M to Zero: Uncovering the Real Reasons Behind Airlift's Collapse
+  What Really Caused Airlift's Downfall
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Airlift's $85M Downfall: What Really Happened
-  2. The $85M Question: Uncovering Airlift's Demise
-  3. Airlift's Rise and Fall: The Untold Story of $85M
+  1. The Real Reason Airlift Failed
+  2. Airlift's Collapse: What Went Wrong
+  3. The Inside Story of Airlift's Demise
 
 DESCRIPTION:
-  Get the inside story on Airlift's shocking collapse from $85M in funding to bankruptcy. What were the real reasons behind its demise?
+  An in-depth analysis of the factors that led to Airlift's collapse
 
 HASHTAGS:
-  #Airlift #StartupFailure #VentureCapital #BusinessInvestigation #LessonsLearned
+  #Airlift #BusinessFailure #AviationDisaster #Investigation #LessonLearned
 
 TAGS (comma-separated):
-  Startup, Investigation, Venture Capital
+  Business, Aviation, Investigation

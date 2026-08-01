@@ -2,18 +2,18 @@
 Platform: reel    Niche: business    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  The Warning Signs: How Airlift's $85M Funding Hid Deeper Issues
+  The Human Cost of Airlift's Collapse
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Airlift's $85M Blind Spot: What Went Unseen
-  2. The $85M Warning: Airlift's Collapse and What We Can Learn
-  3. Uncovering Airlift's $85M Facade: A Cautionary Tale
+  1. Airlift's Demise: A Human Tragedy
+  2. The Faces Behind Airlift's Failure
+  3. When Airlift Crashed: The Human Toll
 
 DESCRIPTION:
-  Dive into the story of Airlift, a company that secured $85M in funding but ultimately failed. What were the warning signs that were missed?
+  The personal stories of those affected by Airlift's collapse
 
 HASHTAGS:
-  #StartupLessons #Airlift #VentureCapital #BusinessIntelligence #FailureAnalysis
+  #Airlift #HumanCost #BusinessFailure #AviationDisaster #LessonLearned
 
 TAGS (comma-separated):
-  Startup, Failure Analysis, Venture Capital
+  Business, Aviation, HumanInterest
