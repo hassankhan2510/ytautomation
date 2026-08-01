@@ -2,18 +2,18 @@
 Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  The Mindset Shift That Can Save Struggling Traders
+  The Dark Side of Day Trading: What You Need to Know
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. The Trader's Mindset
-  2. From Losing to Winning
-  3. The Psychology of Trading
+  1. The Unseen Dangers of Day Trading
+  2. The Hidden Risks of Intra-Day Trading
+  3. The Untold Truth About Day Trading
 
 DESCRIPTION:
-  Discover the mindset shift that can transform a struggling trader into a successful one.
+  Discover the lesser-known risks and challenges associated with day trading and how to navigate them.
 
 HASHTAGS:
-  #tradingmindset #stockmarketpsychology #daytradingtips #tradereducation #investorconfidence
+  #daytrading #intradaytrading #stockmarket #tradingrisks #financialrisk
 
 TAGS (comma-separated):
-  trading, investing, psychology
+  daytrading, trading, finance

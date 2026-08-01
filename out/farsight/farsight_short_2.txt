@@ -2,18 +2,18 @@
 Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  The Hidden Costs That Kill Most Traders
+  The Psychology of Trading: Why Emotions Cost You Money
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. The Silent Killers of Trading
-  2. Why Traders Go Broke
-  3. The Unseen Dangers of Trading
+  1. The Hidden Dangers of Emotional Trading
+  2. How Your Feelings Can Empty Your Wallet
+  3. The High Cost of Impulsive Trading Decisions
 
 DESCRIPTION:
-  Learn about the hidden costs that can destroy a trader's chances of success.
+  Explore the psychological factors that influence trading decisions and learn how to overcome them.
 
 HASHTAGS:
-  #tradingcosts #stockmarketfees #daytradingexpenses #tradingpsychology #investorprotection
+  #tradingpsychology #emotionaltrading #investing #stockmarket #financialdiscipline
 
 TAGS (comma-separated):
-  trading, investing, fees
+  trading, psychology, finance
