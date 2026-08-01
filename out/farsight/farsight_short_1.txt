@@ -2,18 +2,18 @@
 Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  Nine Billion Dollars Invested Daily in Index Funds
+  Ninety Percent of Traders Lose: Here's Why
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. The Index Fund Revolution
-  2. Index Funds: A Nine Billion Dollar Secret
-  3. Why Index Funds Attract Nine Billion Dollars Daily
+  1. The Traders' Dirty Secret
+  2. Why Most Traders Fail
+  3. The Ugly Truth About Trading
 
 DESCRIPTION:
-  Discover the truth about index funds and why they attract nine billion dollars in investments daily.
+  Discover the shocking truth behind why most traders end up losing money.
 
 HASHTAGS:
-  #indexfunds #investing #stockmarket #finance #passiveincome
+  #tradinglosses #stockmarket #daytrading #tradingpsychology #investorawareness
 
 TAGS (comma-separated):
-  index funds, investing, stock market
+  trading, investing, riskmanagement

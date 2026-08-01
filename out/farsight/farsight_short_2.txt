@@ -2,18 +2,18 @@
 Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  The Hidden Truth About Index Fund Fees
+  The Hidden Costs That Kill Most Traders
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. Index Fund Fees: What You Need to Know
-  2. The Surprising Truth About Index Fund Fees
-  3. Why Index Fund Fees Matter to Your Investments
+  1. The Silent Killers of Trading
+  2. Why Traders Go Broke
+  3. The Unseen Dangers of Trading
 
 DESCRIPTION:
-  Learn the hidden truth about index fund fees and how they impact your investments.
+  Learn about the hidden costs that can destroy a trader's chances of success.
 
 HASHTAGS:
-  #indexfunds #investing #fees #finance #transparency
+  #tradingcosts #stockmarketfees #daytradingexpenses #tradingpsychology #investorprotection
 
 TAGS (comma-separated):
-  index funds, fees, investing
+  trading, investing, fees

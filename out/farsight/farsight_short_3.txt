@@ -2,18 +2,18 @@
 Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
 
 BEST TITLE:
-  Why Eighty Percent of Actively Managed Funds Fail to Beat Index Funds
+  The Mindset Shift That Can Save Struggling Traders
 
 ALTERNATIVE TITLES (A/B pick one):
-  1. The Index Fund Advantage
-  2. Why Actively Managed Funds Often Fail
-  3. The Eighty Percent Rule: Index Funds vs Actively Managed Funds
+  1. The Trader's Mindset
+  2. From Losing to Winning
+  3. The Psychology of Trading
 
 DESCRIPTION:
-  Discover why eighty percent of actively managed funds fail to beat index funds.
+  Discover the mindset shift that can transform a struggling trader into a successful one.
 
 HASHTAGS:
-  #indexfunds #investing #stockmarket #finance #passiveincome
+  #tradingmindset #stockmarketpsychology #daytradingtips #tradereducation #investorconfidence
 
 TAGS (comma-separated):
-  index funds, actively managed funds, investing
+  trading, investing, psychology
