@@ -92,6 +92,8 @@ jobs:
           mkdir -p out/farsight
           cp theranos-doc/out/farsight*.mp4 out/farsight/ 2>/dev/null || true
           cp theranos-doc/out/farsight*.txt out/farsight/ 2>/dev/null || true
+          cp theranos-doc/out/farsight*.jpg out/farsight/ 2>/dev/null || true
+          cp theranos-doc/out/farsight*.pdf out/farsight/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add out/farsight 2>/dev/null || true

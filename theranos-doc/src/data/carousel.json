@@ -1,0 +1,59 @@
+{
+  "accentColor": "#e11d48",
+  "brand": "BUSINESS",
+  "tagline": "",
+  "slides": [
+    {
+      "kind": "cover",
+      "headline": "Theranos: The $9 Billion Illusion",
+      "sub": "A 7-part breakdown"
+    },
+    {
+      "kind": "point",
+      "n": 1,
+      "headline": "Edison test reliability",
+      "body": "Because the blood was artificially diluted, the results were highly erratic and statistically invalid."
+    },
+    {
+      "kind": "point",
+      "n": 2,
+      "headline": "A Silicon Valley Story",
+      "body": "Silicon Valley is built on a single, intoxicating premise: that technology can solve any human problem."
+    },
+    {
+      "kind": "point",
+      "n": 3,
+      "headline": "The Pitch",
+      "body": "She dropped out of Stanford at nineteen with nothing but a patent application and an idea for a wearable patch."
+    },
+    {
+      "kind": "point",
+      "n": 4,
+      "headline": "Valuation ($M)",
+      "body": "Venture capitalists threw money at her without ever seeing a working prototype or validated scientific data."
+    },
+    {
+      "kind": "point",
+      "n": 5,
+      "headline": "The Deal",
+      "body": "The turning point came when Theranos partnered with Walgreens to roll out wellness centers nationwide."
+    },
+    {
+      "kind": "point",
+      "n": 6,
+      "headline": "The Verdict",
+      "body": "The Edison was physically, biologically, and mathematically incapable of doing what Holmes promised."
+    },
+    {
+      "kind": "point",
+      "n": 7,
+      "headline": "$9B → $0",
+      "body": "The nine billion dollar valuation evaporated to zero overnight. The emperor had no clothes."
+    },
+    {
+      "kind": "cta",
+      "headline": "Found this useful?",
+      "body": "How a Stanford dropout built a nine billion dollar company on a lie that endangered real patients' lives. The full story of Theranos, Elizabeth Holmes, and the fraud that changed Silicon Valley."
+    }
+  ]
+}

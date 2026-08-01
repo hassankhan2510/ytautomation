@@ -95,6 +95,8 @@ jobs:
           mkdir -p out/til
           cp theranos-doc/out/til*.mp4 out/til/ 2>/dev/null || true
           cp theranos-doc/out/til*.txt out/til/ 2>/dev/null || true
+          cp theranos-doc/out/til*.jpg out/til/ 2>/dev/null || true
+          cp theranos-doc/out/til*.pdf out/til/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add out/til 2>/dev/null || true

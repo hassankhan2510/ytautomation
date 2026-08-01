@@ -88,13 +88,6 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
   const tagline = tl.tagline || "";
   const outroFrom = introFrames + contentFrames;
 
-  // Play a soft whoosh whenever the BACKGROUND changes (not on every line) — feels like an edit.
-  const whooshAt = segments.slice(1).map((s) => s.from);
-  // Play a subtle tick when a number/stat/percent lands on screen.
-  const tickAt = lines
-    .filter((l) => ["stat", "meter", "chart"].includes(l.layout || "") || l.percent != null)
-    .map((l) => l.startFrame);
-
   const renderScene = (line: TimelineLine) => {
     const common = { accent, fontSize, portrait };
     switch (line.layout) {
@@ -139,11 +132,10 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
       {/* Optional low-volume background music bed under the whole video (incl. intro/outro) */}
       {music ? <Audio src={staticFile(music)} volume={musicVolume} loop /> : null}
 
-      {/* Intro logo sting + its riser SFX */}
+      {/* Intro logo sting (long-form only; skipped on shorts so it never blunts the hook) */}
       {introFrames > 0 ? (
         <Sequence from={0} durationInFrames={introFrames}>
           <Intro brand={brand} tagline={tagline} accent={accent} />
-          <Audio src={staticFile("sfx/riser.wav")} volume={0.5} />
         </Sequence>
       ) : null}
 
@@ -159,25 +151,12 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
             {renderScene(line)}
           </Sequence>
         ))}
-
-        {/* SFX: whoosh on background changes, tick on stat/number reveals */}
-        {whooshAt.map((f, i) => (
-          <Sequence key={`w${i}`} from={f} durationInFrames={14}>
-            <Audio src={staticFile("sfx/whoosh.wav")} volume={0.3} />
-          </Sequence>
-        ))}
-        {tickAt.map((f, i) => (
-          <Sequence key={`t${i}`} from={f} durationInFrames={6}>
-            <Audio src={staticFile("sfx/tick.wav")} volume={0.35} />
-          </Sequence>
-        ))}
       </Sequence>
 
       {/* Outro end-card */}
       {outroFrames > 0 ? (
         <Sequence from={outroFrom} durationInFrames={outroFrames}>
           <Outro brand={brand} tagline={tagline} accent={accent} />
-          <Audio src={staticFile("sfx/whoosh.wav")} volume={0.25} />
         </Sequence>
       ) : null}
 

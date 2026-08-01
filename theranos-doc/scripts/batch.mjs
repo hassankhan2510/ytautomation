@@ -114,7 +114,6 @@ function main() {
         run("python scripts/gen_voiceover.py");
         run("node scripts/fetch_assets.mjs");
         run("node scripts/compress_assets.mjs");
-        run("node scripts/make_sfx.mjs"); // ensure intro/tick/whoosh SFX exist (idempotent)
 
         const outFile = `out/${name}_${platform}.mp4`;
         const frames = SAMPLE ? " --frames=0-45" : "";
@@ -126,6 +125,14 @@ function main() {
           run(`node scripts/publish_kit.mjs src/data/script.json out/${name}.txt`);
         } catch {
           /* kit is best-effort */
+        }
+        // Repurpose the script into a LinkedIn/Instagram carousel (JPEG slides + PDF).
+        if (!SAMPLE) {
+          try {
+            run(`node scripts/make_carousel.mjs ${name}`);
+          } catch {
+            /* carousel is best-effort — the video still ships */
+          }
         }
         results.push(`OK   ${name} -> ${outFile}`);
       } catch (e) {

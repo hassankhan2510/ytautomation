@@ -304,10 +304,11 @@ async def main():
         else:
             print(f"NOTE: meta.music '{music_name}' not found in public/music/ — rendering without music.")
 
-    # Intro sting + outro end-card wrap the narration. Slightly shorter on vertical shorts.
+    # Outro end-card wraps the narration. Shorts get NO intro (a logo sting up front blunts the
+    # hook and viewers scroll); long-form keeps a short branded intro.
     platform = meta.get("platform", "youtube-long")
     is_short = platform in ("shorts", "reel")
-    intro_frames = int(round(fps * (0.8 if is_short else 1.1)))
+    intro_frames = 0 if is_short else int(round(fps * 1.1))
     outro_frames = int(round(fps * (1.8 if is_short else 2.6)))
     total_frames = intro_frames + cursor_frame + outro_frames
 

@@ -95,6 +95,8 @@ jobs:
           mkdir -p out/syndar
           cp theranos-doc/out/syndar*.mp4 out/syndar/ 2>/dev/null || true
           cp theranos-doc/out/syndar*.txt out/syndar/ 2>/dev/null || true
+          cp theranos-doc/out/syndar*.jpg out/syndar/ 2>/dev/null || true
+          cp theranos-doc/out/syndar*.pdf out/syndar/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add out/syndar 2>/dev/null || true

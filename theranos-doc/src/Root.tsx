@@ -1,11 +1,14 @@
 import React from "react";
 import { Composition } from "remotion";
 import { DocVideo } from "./compositions/DocVideo";
+import { Carousel } from "./compositions/Carousel";
 import timeline from "./data/timeline.json";
+import carousel from "./data/carousel.json";
 
 const fps = timeline.fps;
 const durationInFrames = timeline.totalDurationInFrames;
 const accent = timeline.accentColor || "#e11d48";
+const carouselSlides = Math.max(1, (carousel as { slides?: unknown[] }).slides?.length ?? 1);
 
 /**
  * One composition per platform aspect ratio. All read the SAME timeline + audio,
@@ -41,6 +44,15 @@ export const RemotionRoot: React.FC = () => {
         width={1080}
         height={1080}
         defaultProps={{ accent }}
+      />
+      {/* LinkedIn / Instagram carousel — one frame per slide (render with --sequence). */}
+      <Composition
+        id="Carousel"
+        component={Carousel}
+        durationInFrames={carouselSlides}
+        fps={fps}
+        width={1080}
+        height={1080}
       />
     </>
   );

@@ -92,6 +92,8 @@ jobs:
           mkdir -p out/cohortzero
           cp theranos-doc/out/cohortzero*.mp4 out/cohortzero/ 2>/dev/null || true
           cp theranos-doc/out/cohortzero*.txt out/cohortzero/ 2>/dev/null || true
+          cp theranos-doc/out/cohortzero*.jpg out/cohortzero/ 2>/dev/null || true
+          cp theranos-doc/out/cohortzero*.pdf out/cohortzero/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add out/cohortzero 2>/dev/null || true
