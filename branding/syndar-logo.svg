@@ -1,27 +1,36 @@
 <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Syndar">
   <rect width="512" height="512" rx="104" fill="#0A0A0B"/>
   <defs>
-    <radialGradient id="sweep" cx="256" cy="200" r="130" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#22D3EE" stop-opacity="0.55"/>
+    <radialGradient id="core" cx="256" cy="206" r="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#22D3EE" stop-opacity="0.35"/>
       <stop offset="1" stop-color="#22D3EE" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <!-- radar rings -->
-  <g fill="none" stroke="#22D3EE" stroke-width="2.5">
-    <circle cx="256" cy="200" r="126" opacity="0.22"/>
-    <circle cx="256" cy="200" r="86" opacity="0.42"/>
-    <circle cx="256" cy="200" r="46" opacity="0.7"/>
+  <!-- perception glow -->
+  <circle cx="256" cy="206" r="120" fill="url(#core)"/>
+  <!-- engineered hexagon frame (the physical / built world) -->
+  <polygon points="256,90 356,148 356,264 256,322 156,264 156,148"
+           fill="none" stroke="#22D3EE" stroke-width="8" stroke-linejoin="round"/>
+  <!-- sensor/AI hub: node with spokes to the vertices -->
+  <g stroke="#22D3EE" stroke-width="3" opacity="0.45">
+    <line x1="256" y1="206" x2="256" y2="90"/>
+    <line x1="256" y1="206" x2="356" y2="148"/>
+    <line x1="256" y1="206" x2="356" y2="264"/>
+    <line x1="256" y1="206" x2="256" y2="322"/>
+    <line x1="256" y1="206" x2="156" y2="264"/>
+    <line x1="256" y1="206" x2="156" y2="148"/>
   </g>
-  <!-- sweep wedge -->
-  <path d="M256 200 L256 74 A126 126 0 0 1 345 111 Z" fill="url(#sweep)"/>
-  <line x1="256" y1="200" x2="345" y2="111" stroke="#22D3EE" stroke-width="3.5" stroke-linecap="round"/>
-  <!-- target blips -->
-  <circle cx="256" cy="200" r="7" fill="#22D3EE"/>
-  <circle cx="312" cy="150" r="6.5" fill="#22D3EE"/>
-  <circle cx="206" cy="242" r="5" fill="#22D3EE" opacity="0.7"/>
+  <!-- intelligence core -->
+  <circle cx="256" cy="206" r="17" fill="#22D3EE"/>
+  <circle cx="256" cy="206" r="30" fill="none" stroke="#22D3EE" stroke-width="3" opacity="0.8"/>
+  <!-- signal / perception arcs radiating out one side -->
+  <g fill="none" stroke="#22D3EE" stroke-linecap="round" stroke-width="5">
+    <path d="M372 168 A150 150 0 0 1 372 244" opacity="0.8"/>
+    <path d="M398 150 A182 182 0 0 1 398 262" opacity="0.45"/>
+  </g>
   <!-- wordmark -->
-  <text x="256" y="420" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif"
+  <text x="256" y="416" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif"
         font-size="58" font-weight="800" letter-spacing="10" fill="#FFFFFF">SYNDAR</text>
-  <text x="256" y="454" text-anchor="middle" font-family="Inter, Arial, sans-serif"
-        font-size="17" font-weight="500" letter-spacing="4" fill="#9AA3AD">PERCEPTION WHERE CAMERAS FAIL</text>
+  <text x="256" y="450" text-anchor="middle" font-family="Inter, Arial, sans-serif"
+        font-size="17" font-weight="500" letter-spacing="5" fill="#9AA3AD">PHYSICAL AI · MACHINE PERCEPTION</text>
 </svg>
