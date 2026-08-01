@@ -31,6 +31,13 @@ Download from GitHub, upload to the platform.
 - **What to make** — `long`, `shorts`, or `long+shorts`. `shorts` writes reels **directly** (fast,
   one model call); `long+shorts` writes the long and then cuts shorts from its best moments.
 - **Language** — English, Urdish, or Hinglish (code-switched **voice**; on-screen text stays English).
+- **Voice** — how it's narrated:
+  - **Auto (natural)** — **Kokoro** neural voice for English, **edge-tts** for Urdu/Hindi. Free,
+    fast, fully cloud. This is the default.
+  - **My voice (Chatterbox clone)** — narrates in **your** voice from a clip you add to `voice/`
+    (see `theranos-doc/voice/README.md`). English only; Urdu/Hindi fall back to edge-tts. CPU-heavy
+    (~5–10 min/short, ~30–60 min/long) but still runs on the free public-repo CI.
+  - **Edge-tts** — the old robotic voice; fastest, kept as a fallback.
 
 ## How each run works
 The writer loops over **every topic you queued**, and for each one:

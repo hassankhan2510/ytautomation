@@ -29,11 +29,15 @@ const RESEARCH = path.join(ROOT, "src", "data", "research.md");
 const SAMPLE = process.argv.includes("--sample");
 const onlyArg = process.argv.find((a) => a.startsWith("--only="));
 const only = onlyArg ? onlyArg.split("=")[1] : null;
+// Voice engine: --voice=auto|kokoro|edge|myvoice (or the VOICE env). Cross-platform, so on
+// Windows PowerShell you don't have to fight inline env vars — just:  npm run batch -- --voice=myvoice
+const voiceArg = process.argv.find((a) => a.startsWith("--voice="));
+const VOICE = voiceArg ? voiceArg.split("=")[1] : process.env.VOICE || "auto";
 
 // Windows: route scratch off the full C: drive. Linux (CI): use the default temp.
 const ENV = process.platform === "win32"
-  ? { ...process.env, TMP: "D:/remotion-temp", TEMP: "D:/remotion-temp", TMPDIR: "D:/remotion-temp" }
-  : { ...process.env };
+  ? { ...process.env, VOICE, TMP: "D:/remotion-temp", TEMP: "D:/remotion-temp", TMPDIR: "D:/remotion-temp" }
+  : { ...process.env, VOICE };
 const COMP = { "youtube-long": "YouTube", shorts: "Shorts", reel: "Shorts", linkedin: "Square" };
 
 function run(cmd) {

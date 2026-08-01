@@ -216,6 +216,8 @@ function finalizeMeta(model, cfg, topic, isShort, researchFile) {
     style: cfg.niche,
     voice: cfg.voice,
     voiceRate: cfg.voiceRate,
+    kokoroVoice: cfg.kokoroVoice || "am_michael",
+    language: cfg.language || "en",
     pauseBetweenLinesSec: isShort ? 0.15 : 0.22,
     accentColor: cfg.accentColor,
     description: model.description || model.title || "",

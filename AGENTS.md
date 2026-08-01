@@ -63,7 +63,8 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
     "platform": "youtube-long|shorts|reel|linkedin",
     "targetSeconds": 360,            // drives the anti-laziness duration gate
     "fps": 30,
-    "style", "voice",                // from the niche pack
+    "style", "voice",                // from the niche pack ("voice" = edge-tts voice, used for ur/hi + Edge mode)
+    "kokoroVoice": "am_michael",     // Kokoro neural voice for English "Auto" mode (am_michael/am_onyx/am_fenrir/am_puck)
     "voiceRate": "+18%",             // speech speed: +18% snappy reels, +10% long-form, +0% slow
     "accentColor": "#rrggbb",        // from the niche pack
     "pauseBetweenLinesSec": 0.15,    // gap between scenes: ~0.15 reels, ~0.25 long-form
@@ -151,7 +152,8 @@ offload final renders to GitHub Actions.
   rejects short scripts — you cannot ship a 1-minute video when 6 was asked.
 - **No placeholders, no duplicate lines, real visual + layout variety.**
 - **Fix, don't bypass.** If a gate fails, fix the content. Never disable a check or fake a pass.
-- **$0 policy:** use only free tools (edge-tts, Pexels, GitHub Actions). Do not add paid services.
+- **$0 policy:** use only free tools. Voice = Kokoro (natural English, auto) / edge-tts (Urdu/Hindi) /
+  Chatterbox (your cloned voice, MIT — English). Visuals = Pexels. CI = GitHub Actions. No paid services.
 
 ## Cross-tool note
 
