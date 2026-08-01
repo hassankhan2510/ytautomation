@@ -75,7 +75,19 @@ def load_kokoro():
 def load_chatterbox():
     global _chatter_model
     if _chatter_model is None:
+        import torch  # noqa: WPS433
+
+        # On CPU-only runners the pretrained weights are CUDA-mapped; force CPU deserialization
+        # so torch.load doesn't choke trying to place tensors on a non-existent GPU.
+        _orig_load = torch.load
+
+        def _cpu_load(*a, **k):
+            k.setdefault("map_location", "cpu")
+            return _orig_load(*a, **k)
+
+        torch.load = _cpu_load
         from chatterbox.tts import ChatterboxTTS  # noqa: WPS433
+
         _chatter_model = ChatterboxTTS.from_pretrained(device="cpu")
     return _chatter_model
 
@@ -185,12 +197,14 @@ def choose_engine(meta) -> tuple[str, str | None]:
     if VOICE_MODE == "myvoice":
         ref = resolve_ref_voice(meta)
         try:
-            load_chatterbox()
             if not ref:
                 raise RuntimeError("no reference clip found (add voice/<channel>.wav or voice/me.wav)")
+            load_chatterbox()
             return "chatterbox", ref
         except Exception as e:
+            import traceback
             print(f"NOTE: 'my voice' unavailable ({e}). Falling back to edge-tts — this WON'T be your voice.")
+            print(traceback.format_exc())
             return "edge", None
 
     # "auto" or "kokoro": Kokoro for English, with edge-tts fallback.
