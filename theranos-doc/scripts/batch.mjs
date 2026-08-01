@@ -43,6 +43,27 @@ const COMP = { "youtube-long": "YouTube", shorts: "Shorts", reel: "Shorts", link
 function run(cmd) {
   execSync(cmd, { cwd: ROOT, env: ENV, stdio: "inherit" });
 }
+
+// Normalize the finished video's audio to -14 LUFS (YouTube's reference level) so every
+// video sits at a consistent, professional loudness. Uses the ffmpeg bundled with Remotion
+// (its build includes the loudnorm filter). Best-effort: on any failure the original is kept.
+function normalizeLoudness(outFile) {
+  const abs = path.join(ROOT, outFile);
+  if (!fs.existsSync(abs)) return;
+  const tmp = abs.replace(/\.mp4$/, ".norm.mp4");
+  try {
+    execSync(
+      `npx remotion ffmpeg -y -i "${abs}" -af loudnorm=I=-14:TP=-1.5:LRA=11 -c:v copy -c:a aac -b:a 192k "${tmp}"`,
+      { cwd: ROOT, env: ENV, stdio: "ignore" },
+    );
+    fs.rmSync(abs, { force: true });
+    fs.renameSync(tmp, abs);
+    console.log(`  ~ loudness normalized to -14 LUFS: ${outFile}`);
+  } catch (e) {
+    try { fs.rmSync(tmp, { force: true }); } catch { /* ignore */ }
+    console.log(`  ! loudness normalize skipped (${String(e.message).split("\n")[0]})`);
+  }
+}
 function backup(p) {
   if (fs.existsSync(p)) fs.copyFileSync(p, p + ".bak");
 }
@@ -93,10 +114,12 @@ function main() {
         run("python scripts/gen_voiceover.py");
         run("node scripts/fetch_assets.mjs");
         run("node scripts/compress_assets.mjs");
+        run("node scripts/make_sfx.mjs"); // ensure intro/tick/whoosh SFX exist (idempotent)
 
         const outFile = `out/${name}_${platform}.mp4`;
         const frames = SAMPLE ? " --frames=0-45" : "";
         run(`npx remotion render ${comp} ${outFile}${frames} --concurrency=4`);
+        if (!SAMPLE) normalizeLoudness(outFile);
 
         // Copy-paste publish kit (title/description/hashtags) next to the video.
         try {

@@ -304,11 +304,25 @@ async def main():
         else:
             print(f"NOTE: meta.music '{music_name}' not found in public/music/ — rendering without music.")
 
+    # Intro sting + outro end-card wrap the narration. Slightly shorter on vertical shorts.
+    platform = meta.get("platform", "youtube-long")
+    is_short = platform in ("shorts", "reel")
+    intro_frames = int(round(fps * (0.8 if is_short else 1.1)))
+    outro_frames = int(round(fps * (1.8 if is_short else 2.6)))
+    total_frames = intro_frames + cursor_frame + outro_frames
+
     timeline = {
         "fps": fps,
-        "totalDurationInFrames": cursor_frame,
-        "totalSeconds": round(cursor_frame / fps, 1),
+        "totalDurationInFrames": total_frames,
+        "contentDurationInFrames": cursor_frame,
+        "introFrames": intro_frames,
+        "outroFrames": outro_frames,
+        "totalSeconds": round(total_frames / fps, 1),
         "accentColor": meta.get("accentColor", "#e11d48"),
+        "brand": meta.get("brand", ""),
+        "tagline": meta.get("tagline", ""),
+        "title": meta.get("title", ""),
+        "channel": meta.get("channel", ""),
         "music": music_rel,
         "musicVolume": float(meta.get("musicVolume", 0.14)),
         "lines": timeline_lines,

@@ -42,8 +42,11 @@ Sometimes batched: *"3 reels for Instagram on topics A, B, C."* → do the full 
 4b. **Write a rank-fast title.** `meta.title` = the single strongest, high-CTR, search-friendly
    title, plus 3–6 `titleOptions` and 5–12 `hashtags`. Follow `docs/TITLES.md` (keyword + curiosity +
    specificity). This is 50% of whether the video ranks.
-5. **Prepare.** Run `npm run prepare-video` (voiceover → assets → compress; re-checks real
-   duration against the audio).
+5. **Prepare.** Run `npm run prepare-video` (voiceover → assets → compress → make-sfx; re-checks
+   real duration against the audio). Every video is auto-wrapped with a branded **intro sting +
+   outro end-card** (from `brand`/`tagline`/`accentColor` in the channel config), gets subtle
+   **SFX** (whoosh on background changes, tick on stat/number reveals), and is **loudness-normalized
+   to −14 LUFS** after render (in `batch`). These are automatic — the script author doesn't set them.
 6. **Preview or render.**
    - Preview live: `npm run dev` (instant, in browser).
    - Final file: `npm run render:youtube` / `render:shorts` / `render:square`

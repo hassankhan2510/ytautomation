@@ -12,6 +12,7 @@ import { Caption, Word, Layout } from "../components/Caption";
 import { Stat, Quote, Bullets } from "../components/SceneBlocks";
 import { Chart, Compare, Timeline, Meter, NameTag, MapLocator, Collage } from "../components/DataBlocks";
 import { Grain } from "../components/Grain";
+import { Intro, Outro } from "../components/Brand";
 
 type TimelineLine = {
   index: number;
@@ -71,6 +72,29 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
   const music = (timeline as { music?: string | null }).music;
   const musicVolume = (timeline as { musicVolume?: number }).musicVolume ?? 0.14;
 
+  // Branding + SFX wiring.
+  const tl = timeline as unknown as {
+    introFrames?: number;
+    outroFrames?: number;
+    contentDurationInFrames?: number;
+    totalDurationInFrames: number;
+    brand?: string;
+    tagline?: string;
+  };
+  const introFrames = tl.introFrames ?? 0;
+  const outroFrames = tl.outroFrames ?? 0;
+  const contentFrames = tl.contentDurationInFrames ?? tl.totalDurationInFrames - introFrames - outroFrames;
+  const brand = tl.brand || "";
+  const tagline = tl.tagline || "";
+  const outroFrom = introFrames + contentFrames;
+
+  // Play a soft whoosh whenever the BACKGROUND changes (not on every line) — feels like an edit.
+  const whooshAt = segments.slice(1).map((s) => s.from);
+  // Play a subtle tick when a number/stat/percent lands on screen.
+  const tickAt = lines
+    .filter((l) => ["stat", "meter", "chart"].includes(l.layout || "") || l.percent != null)
+    .map((l) => l.startFrame);
+
   const renderScene = (line: TimelineLine) => {
     const common = { accent, fontSize, portrait };
     switch (line.layout) {
@@ -112,21 +136,52 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
-      {/* Optional low-volume background music bed under the whole video */}
+      {/* Optional low-volume background music bed under the whole video (incl. intro/outro) */}
       {music ? <Audio src={staticFile(music)} volume={musicVolume} loop /> : null}
 
-      {/* Continuous background layer */}
-      <Background segments={segments} />
-
-      {/* Per-line narration + scene */}
-      {lines.map((line) => (
-        <Sequence key={line.index} from={line.startFrame} durationInFrames={line.durationInFrames}>
-          <Audio src={staticFile(line.audio)} />
-          {renderScene(line)}
+      {/* Intro logo sting + its riser SFX */}
+      {introFrames > 0 ? (
+        <Sequence from={0} durationInFrames={introFrames}>
+          <Intro brand={brand} tagline={tagline} accent={accent} />
+          <Audio src={staticFile("sfx/riser.wav")} volume={0.5} />
         </Sequence>
-      ))}
+      ) : null}
 
-      {/* Cinematic film grain */}
+      {/* Main content, offset to start after the intro */}
+      <Sequence from={introFrames} durationInFrames={contentFrames}>
+        {/* Continuous background layer */}
+        <Background segments={segments} />
+
+        {/* Per-line narration + scene */}
+        {lines.map((line) => (
+          <Sequence key={line.index} from={line.startFrame} durationInFrames={line.durationInFrames}>
+            <Audio src={staticFile(line.audio)} />
+            {renderScene(line)}
+          </Sequence>
+        ))}
+
+        {/* SFX: whoosh on background changes, tick on stat/number reveals */}
+        {whooshAt.map((f, i) => (
+          <Sequence key={`w${i}`} from={f} durationInFrames={14}>
+            <Audio src={staticFile("sfx/whoosh.wav")} volume={0.3} />
+          </Sequence>
+        ))}
+        {tickAt.map((f, i) => (
+          <Sequence key={`t${i}`} from={f} durationInFrames={6}>
+            <Audio src={staticFile("sfx/tick.wav")} volume={0.35} />
+          </Sequence>
+        ))}
+      </Sequence>
+
+      {/* Outro end-card */}
+      {outroFrames > 0 ? (
+        <Sequence from={outroFrom} durationInFrames={outroFrames}>
+          <Outro brand={brand} tagline={tagline} accent={accent} />
+          <Audio src={staticFile("sfx/whoosh.wav")} volume={0.25} />
+        </Sequence>
+      ) : null}
+
+      {/* Cinematic film grain over everything */}
       <Grain />
 
       {/* Cinematic vignette */}

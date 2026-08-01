@@ -12,7 +12,9 @@
     "requireResearch": true,
     "ground": true,
     "review": true,
-    "funnel": "If you're building autonomy where cameras fail, see what we're building at Syndar — link below."
+    "funnel": "If you're building autonomy where cameras fail, see what we're building at Syndar — link below.",
+    "brand": "SYNDAR",
+    "tagline": "Perception where cameras fail"
   },
   "cohortzero": {
     "niche": "business",
@@ -26,7 +28,9 @@
     "makeShorts": 3,
     "requireResearch": true,
     "ground": true,
-    "review": false
+    "review": false,
+    "brand": "COHORT ZERO",
+    "tagline": "Founders' files"
   },
   "farsight": {
     "niche": "finance",
@@ -40,7 +44,9 @@
     "makeShorts": 3,
     "requireResearch": true,
     "ground": true,
-    "review": false
+    "review": false,
+    "brand": "FARSIGHT",
+    "tagline": "Money, honestly"
   },
   "til": {
     "niche": "facts",
@@ -54,6 +60,8 @@
     "makeShorts": 0,
     "requireResearch": false,
     "ground": true,
-    "review": false
+    "review": false,
+    "brand": "TIL",
+    "tagline": "Today I learned"
   }
 }
