@@ -5,9 +5,18 @@ on:
   workflow_dispatch:
     inputs:
       topics:
-        description: "Optional — ONE short each. Separate with ;  (leave blank to let the AI pick a fact)"
+        description: "Optional — ONE video each. Separate with ;  (leave blank to let the AI pick a fact)"
         required: false
         type: string
+      format:
+        description: "What to make (TIL is a short by default; pick long for a deep-dive)"
+        required: true
+        default: "shorts"
+        type: choice
+        options:
+          - "shorts"
+          - "long"
+          - "long+shorts"
       language:
         description: "Language"
         required: true
@@ -32,7 +41,7 @@ on:
 jobs:
   make:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     permissions:
       contents: write
     defaults:
@@ -63,6 +72,7 @@ jobs:
         env:
           CHANNEL: til
           TOPICS: ${{ github.event.inputs.topics }}
+          MODE: ${{ github.event.inputs.format }}
           LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}

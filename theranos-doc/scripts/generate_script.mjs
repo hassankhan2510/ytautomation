@@ -289,13 +289,18 @@ async function main() {
   fs.mkdirSync(JOBS, { recursive: true });
   const nichePack = readNichePack(cfg.niche);
   const isTIL = cfg.makeShorts === 0;
-  // MODE: "long+shorts" (default) | "long" | "shorts".
+  // MODE: "long+shorts" | "long" | "shorts".  (TIL defaults to "shorts"; other channels to "long+shorts".)
   //   long / long+shorts -> write a long script (long+shorts also derives shorts FROM it).
   //   shorts             -> write vertical reels DIRECTLY (no long is generated) — faster, fewer tokens.
-  const MODE = (process.env.MODE || "long+shorts").toLowerCase();
-  const shortsOnly = !isTIL && MODE === "shorts" && cfg.makeShorts > 0;
-  const writeLong = isTIL || MODE === "long" || MODE === "long+shorts";
-  const wantDerivedShorts = !isTIL && MODE === "long+shorts" && cfg.makeShorts > 0;
+  const MODE = (process.env.MODE || (isTIL ? "shorts" : "long+shorts")).toLowerCase();
+  const longMode = MODE === "long" || MODE === "long+shorts";
+  // TIL normally makes ONE punchy short. It only becomes a long-form channel when you explicitly
+  // pick long / long+shorts — then it behaves like the others (youtube-long + 3 derived shorts).
+  const tilShort = isTIL && !longMode;
+  if (isTIL && longMode) { cfg.platform = "youtube-long"; cfg.makeShorts = 3; }
+  const shortsOnly = !tilShort && MODE === "shorts" && cfg.makeShorts > 0;
+  const writeLong = tilShort || MODE === "long" || MODE === "long+shorts";
+  const wantDerivedShorts = !tilShort && MODE === "long+shorts" && cfg.makeShorts > 0;
 
   // TOPICS: a batch queue — one topic PER VIDEO. Enter several (one per line, or separated by
   // ";" / "|") and each becomes its own video (long) or its own set of reels (shorts). Falls back
@@ -351,13 +356,13 @@ async function main() {
       });
     } else {
       // LONG (or TIL single short), plus derived shorts for long+shorts mode.
-      const lineTarget = isTIL ? "8-11 short punchy" : "30-42";
+      const lineTarget = tilShort ? "8-11 short punchy" : "30-42";
       const funnel = cfg.funnel ? `\nEnd with a final line that is a soft CTA: "${cfg.funnel}"` : "";
       const longPrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${lineTarget} lines.${funnel}\nReturn the JSON now.`;
 
       const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
-      const longLines = sanitizeLines(getLines(longModel), { language: cfg.language, longForm: !isTIL });
-      const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, topic, isTIL, researchFile);
+      const longLines = sanitizeLines(getLines(longModel), { language: cfg.language, longForm: !tilShort });
+      const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, topic, tilShort, researchFile);
       if (writeLong && longLines.length) { writeJob(prefix, longMeta, longLines); written++; }
 
       if (wantDerivedShorts) {

@@ -14,7 +14,7 @@ click Run (or, for TIL, it runs itself daily). Finished videos + publish kits la
 
 | Workflow | Channel | Trigger | Notes |
 |---|---|---|---|
-| **Channel — TIL** | `til` | **Daily (auto)** + manual | Fully autonomous. Groq invents a valuable fact; a short is built + delivered. |
+| **Channel — TIL** | `til` | **Daily (auto)** + manual | Autonomous. Groq invents a valuable fact; a short is built + delivered. Daily run = a short; on manual run you can also pick **long** / **long+shorts** for a deep-dive. |
 | **Channel — Cohort Zero** | `cohortzero` | Manual (enter topics) | Long video + 3 shorts. Wikipedia-grounded. |
 | **Channel — Farsight** | `farsight` | Manual (enter topics) | Long video + 3 shorts. Wikipedia-grounded. |
 | **Channel — Syndar** | `syndar` | Manual (enter topics) | Long + 3 shorts. **DRAFT — verify technical claims before uploading.** |
