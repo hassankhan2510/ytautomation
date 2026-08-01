@@ -16,12 +16,12 @@ click Run (or, for TIL, it runs itself daily). Finished videos + publish kits la
 |---|---|---|---|
 | **Channel — TIL** | `til` | **Daily (auto)** + manual | Autonomous. Groq invents a valuable fact; a short is built + delivered. Daily run = a short; on manual run you can also pick **long** / **long+shorts** for a deep-dive. |
 | **Channel — Cohort Zero** | `cohortzero` | Manual (enter topics) | Long video + 3 shorts. Wikipedia-grounded. |
-| **Channel — Farsight** | `farsight` | Manual (enter topics) | Long video + 3 shorts. Wikipedia-grounded. |
+| **Channel — Equitier** | `equitier` | Manual (enter topics) | Long video + 3 shorts. Wikipedia-grounded. |
 | **Channel — Syndar** | `syndar` | Manual (enter topics) | Long + 3 shorts. **DRAFT — verify technical claims before uploading.** |
 
 To make a video: Actions → the channel → **Run workflow** → fill in the fields → Run. When it
 finishes, each video is delivered as a **single `.zip`** in that channel's own folder — **`out/syndar/`,
-`out/cohortzero/`, `out/farsight/`, `out/til/`**. Each zip bundles everything for that one video:
+`out/cohortzero/`, `out/equitier/`, `out/til/`**. Each zip bundles everything for that one video:
 the **reel/MP4**, the **`.txt` publish kit** (title, alt titles, description, hashtags), the
 **carousel PDF** (LinkedIn), and the **slide JPGs** (Instagram). Download the zip, unzip, upload.
 

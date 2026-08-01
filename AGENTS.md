@@ -141,7 +141,7 @@ npm run batch            # render every jobs/*.json -> out/  (parallel on GitHub
 **Batch & Reels:** put one script per video in `jobs/`, or run `autocut` to cut a long-form into
 vertical reels; then `batch` renders them all. Full guide: `docs/BATCH.md`.
 
-**Full automation:** each channel (syndar, cohortzero, farsight, til) has its own GitHub Action that
+**Full automation:** each channel (syndar, cohortzero, equitier, til) has its own GitHub Action that
 uses **Groq (free)** to write the script + script-aware shorts, then renders and delivers to `out/`.
 Locally: `CHANNEL=<name> TOPIC="..." node scripts/generate_script.mjs` then `npm run batch -- --only=<name>`.
 Config in `channels/config.json`. Full guide: `docs/AUTOMATION.md`.

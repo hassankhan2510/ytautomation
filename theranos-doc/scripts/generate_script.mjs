@@ -275,7 +275,7 @@ function drySample() {
 
 /* ---------- main ---------- */
 async function main() {
-  if (!CHANNEL) { console.error("Set CHANNEL=syndar|cohortzero|farsight|til"); process.exit(1); }
+  if (!CHANNEL) { console.error("Set CHANNEL=syndar|cohortzero|equitier|til"); process.exit(1); }
   const cfg = loadConfig();
   // LANGUAGE dropdown override (English | Urdish | Hinglish). Picks language + the matching voice.
   const LANG = (process.env.LANGUAGE || "").toLowerCase();

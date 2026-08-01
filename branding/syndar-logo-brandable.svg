@@ -1,0 +1,21 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Syndar">
+  <rect width="512" height="512" rx="104" fill="#0A0A0B"/>
+  
+  <!-- Outer orbital ring with scanning sweep -->
+  <circle cx="256" cy="196" r="110" fill="none" stroke="#22D3EE" stroke-width="4" opacity="0.3"/>
+  <path d="M 256 86 A 110 110 0 0 1 356 246" fill="none" stroke="#22D3EE" stroke-width="8" stroke-linecap="round"/>
+  
+  <!-- Intersecting geometric waves -->
+  <path d="M 176 156 Q 256 196 336 156" fill="none" stroke="#22D3EE" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+  <path d="M 196 236 Q 256 196 316 236" fill="none" stroke="#22D3EE" stroke-width="12" stroke-linecap="round"/>
+  
+  <!-- Core node -->
+  <circle cx="256" cy="196" r="16" fill="#22D3EE"/>
+  <circle cx="256" cy="196" r="32" fill="none" stroke="#22D3EE" stroke-width="4"/>
+
+  <!-- wordmark -->
+  <text x="256" y="390" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif"
+        font-size="56" font-weight="800" letter-spacing="10" fill="#FFFFFF">SYNDAR</text>
+  <text x="256" y="436" text-anchor="middle" font-family="Inter, Arial, sans-serif"
+        font-size="16" font-weight="500" letter-spacing="5" fill="#22D3EE">PHYSICAL AI &amp; PERCEPTION</text>
+</svg>

@@ -1,0 +1,12 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Equitier">
+  <rect width="512" height="512" rx="104" fill="#0A0A0B"/>
+  
+  <!-- Geometric peak / chart icon (emerald green) -->
+  <path d="M136 266 L216 146 L266 216 L356 106" fill="none" stroke="#10B981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="356" cy="106" r="16" fill="#10B981"/>
+  <path d="M136 266 L216 146 L266 216 L356 106 L356 266 Z" fill="#10B981" opacity="0.1"/>
+
+  <!-- Wordmark -->
+  <text x="256" y="390" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif" font-size="56" font-weight="800" letter-spacing="8" fill="#FFFFFF">EQUITIER</text>
+  <text x="256" y="436" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" letter-spacing="5" fill="#9AA3AD">MONEY, HONESTLY</text>
+</svg>

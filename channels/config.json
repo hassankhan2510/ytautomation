@@ -32,7 +32,7 @@
     "brand": "COHORT ZERO",
     "tagline": "Founders' files"
   },
-  "farsight": {
+  "equitier": {
     "niche": "finance",
     "platform": "youtube-long",
     "targetSeconds": 240,
@@ -45,7 +45,7 @@
     "requireResearch": true,
     "ground": true,
     "review": false,
-    "brand": "FARSIGHT",
+    "brand": "EQUITIER",
     "tagline": "Money, honestly"
   },
   "til": {

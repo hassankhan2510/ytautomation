@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Export All PNGs</title>
+    <style>
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 20px; text-align: center; }
+        .canvas-container { display: inline-block; margin: 20px; text-align: center; background: #2a2a2a; padding: 20px; border-radius: 20px;}
+        canvas { border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .instructions { margin-bottom: 30px; }
+        h3 { margin-top: 15px; font-weight: normal; color: #ccc; }
+        button { background: #3B82F6; color: white; border: none; padding: 10px 20px; font-size: 16px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: bold; }
+        button:hover { background: #2563EB; }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h2>Your Brand Logos are Ready!</h2>
+        <p>Click the blue <b>"Download PNG"</b> buttons below each logo.</p>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="hassanCanvas" width="512" height="512"></canvas>
+        <h3>Hassan Ventures</h3>
+        <button onclick="downloadCanvas('hassanCanvas', 'hassan-ventures-logo.png')">Download PNG</button>
+    </div>
+    <div class="canvas-container">
+        <canvas id="syndarCanvas" width="512" height="512"></canvas>
+        <h3>Syndar</h3>
+        <button onclick="downloadCanvas('syndarCanvas', 'syndar-logo.png')">Download PNG</button>
+    </div>
+    <div class="canvas-container">
+        <canvas id="equitierCanvas" width="512" height="512"></canvas>
+        <h3>Equitier</h3>
+        <button onclick="downloadCanvas('equitierCanvas', 'equitier-logo.png')">Download PNG</button>
+    </div>
+    <div class="canvas-container">
+        <canvas id="cohortCanvas" width="512" height="512"></canvas>
+        <h3>Cohort Zero</h3>
+        <button onclick="downloadCanvas('cohortCanvas', 'cohortzero-logo.png')">Download PNG</button>
+    </div>
+    <div class="canvas-container">
+        <canvas id="tilCanvas" width="512" height="512"></canvas>
+        <h3>TIL</h3>
+        <button onclick="downloadCanvas('tilCanvas', 'til-logo.png')">Download PNG</button>
+    </div>
+
+    <script>
+        const hassanSVG = `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="104" fill="#0A0A0B"/><path d="M206 96 L206 236" fill="none" stroke="#3B82F6" stroke-width="28" stroke-linecap="round"/><path d="M306 96 L306 236" fill="none" stroke="#3B82F6" stroke-width="28" stroke-linecap="round"/><path d="M206 166 L306 166" fill="none" stroke="#3B82F6" stroke-width="28" stroke-linecap="round"/><path d="M206 236 L256 306 L306 236" fill="none" stroke="#3B82F6" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/><circle cx="256" cy="236" r="12" fill="#FFFFFF"/><text x="256" y="390" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif" font-size="44" font-weight="800" letter-spacing="5" fill="#FFFFFF">HASSAN VENTURES</text><text x="256" y="436" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" letter-spacing="5" fill="#9AA3AD">MEDIA &amp; DEEP TECH</text></svg>`;
+
+        const syndarSVG = `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="104" fill="#0A0A0B"/><circle cx="256" cy="196" r="110" fill="none" stroke="#22D3EE" stroke-width="4" opacity="0.3"/><path d="M 256 86 A 110 110 0 0 1 356 246" fill="none" stroke="#22D3EE" stroke-width="8" stroke-linecap="round"/><path d="M 176 156 Q 256 196 336 156" fill="none" stroke="#22D3EE" stroke-width="12" stroke-linecap="round" opacity="0.7"/><path d="M 196 236 Q 256 196 316 236" fill="none" stroke="#22D3EE" stroke-width="12" stroke-linecap="round"/><circle cx="256" cy="196" r="16" fill="#22D3EE"/><circle cx="256" cy="196" r="32" fill="none" stroke="#22D3EE" stroke-width="4"/><text x="256" y="390" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif" font-size="56" font-weight="800" letter-spacing="10" fill="#FFFFFF">SYNDAR</text><text x="256" y="436" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" letter-spacing="5" fill="#22D3EE">PHYSICAL AI &amp; PERCEPTION</text></svg>`;
+
+        const equitierSVG = `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="104" fill="#0A0A0B"/><path d="M136 266 L216 146 L266 216 L356 106" fill="none" stroke="#10B981" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/><circle cx="356" cy="106" r="16" fill="#10B981"/><path d="M136 266 L216 146 L266 216 L356 106 L356 266 Z" fill="#10B981" opacity="0.1"/><text x="256" y="390" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif" font-size="56" font-weight="800" letter-spacing="8" fill="#FFFFFF">EQUITIER</text><text x="256" y="436" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="16" font-weight="500" letter-spacing="5" fill="#9AA3AD">MONEY, HONESTLY</text></svg>`;
+
+        const cohortSVG = `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="104" fill="#0A0A0B"/><circle cx="256" cy="196" r="98" fill="none" stroke="#E11D48" stroke-width="24" stroke-linecap="round" stroke-dasharray="498 118" transform="rotate(-109 256 196)"/><circle cx="256" cy="98" r="12" fill="#E11D48"/><circle cx="256" cy="196" r="15" fill="#E11D48"/><text x="256" y="410" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif" font-size="50" font-weight="800" letter-spacing="6" fill="#FFFFFF">COHORT ZERO</text><text x="256" y="446" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="500" letter-spacing="6" fill="#9AA3AD">FOUNDERS' FILES</text></svg>`;
+
+        const tilSVG = `<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><rect width="512" height="512" rx="104" fill="#0A0A0B"/><g fill="#F59E0B"><path d="M256 78 l10 26 26 10 -26 10 -10 26 -10 -26 -26 -10 26 -10 z"/></g><text x="256" y="278" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif" font-size="150" font-weight="800" letter-spacing="6" fill="#FFFFFF">TIL</text><rect x="176" y="300" width="160" height="8" rx="4" fill="#F59E0B"/><text x="256" y="392" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="26" font-weight="700" letter-spacing="8" fill="#FFFFFF">TODAY I LEARNED</text><text x="256" y="430" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="17" font-weight="500" letter-spacing="4" fill="#9AA3AD">ONE FACT A DAY — AND THE WHY</text></svg>`;
+
+        function renderSVGToCanvas(svgString, canvasId) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0);
+                URL.revokeObjectURL(url);
+            };
+            img.src = url;
+        }
+
+        renderSVGToCanvas(hassanSVG, 'hassanCanvas');
+        renderSVGToCanvas(syndarSVG, 'syndarCanvas');
+        renderSVGToCanvas(equitierSVG, 'equitierCanvas');
+        renderSVGToCanvas(cohortSVG, 'cohortCanvas');
+        renderSVGToCanvas(tilSVG, 'tilCanvas');
+
+        function downloadCanvas(canvasId, filename) {
+            const canvas = document.getElementById(canvasId);
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# Brand Kit — Syndar · Cohort Zero · Farsight · TIL
+# Brand Kit — Syndar · Cohort Zero · Equitier · TIL
 
 Everything you need to set up each channel's pages (YouTube, Instagram, LinkedIn, TikTok, X).
 Copy-paste the blocks below. Logos are in this folder as `*-logo.svg` (open in a browser →
@@ -82,30 +82,30 @@ business strategy, why startups fail, unit economics, fundraising, entrepreneurs
 
 ---
 
-## 3) FARSIGHT — real finance
-**Accent:** `#10B981` (emerald) · **Logo:** `farsight-logo.svg` · **Cadence:** 2–3 / week
+## 3) EQUITIER — real finance
+**Accent:** `#10B981` (emerald) · **Logo:** `equitier-logo.svg` · **Cadence:** 2–3 / week
 
 **Tagline:** Money, honestly.
 
-**Handles:** `@farsight` · alt `@farsightmoney`, `@farsighthq`
+**Handles:** `@equitier` · alt `@equitierhq`, `@getequitier`
 
 **One-liner (bio, ≤150 chars):**
 > Money, honestly. How finance, markets & the economy actually work — no hype, no get-rich-quick grift.
 
 **YouTube "About" (long):**
-> Farsight is finance without the noise: how money, markets, investing, debt, and the economy really
+> Equitier is finance without the noise: how money, markets, investing, debt, and the economy really
 > work — explained honestly, with no get-rich-quick nonsense and nothing to sell you. Long-term
 > thinking for people who want to actually understand their money. Educational, not financial advice.
 
 **LinkedIn tagline + about:**
 > *Tagline:* Finance without the grift.
-> *About:* Farsight explains how money and markets work in plain, honest terms — investing, the
+> *About:* Equitier explains how money and markets work in plain, honest terms — investing, the
 > economy, and personal finance for the long term. Education first; no products, no hype.
 
 **Content pillars:** ① personal finance fundamentals ② investing & markets, explained ③ the economy
 & inflation ④ the psychology of money ⑤ debunking financial grift & scams.
 
-**Banner text:** FARSIGHT — Money, honestly.
+**Banner text:** EQUITIER — Money, honestly.
 
 **SEO tags/keywords:** personal finance, investing, stock market explained, economy, inflation,
 money management, financial literacy, index funds, compound interest, avoid scams.
@@ -150,7 +150,7 @@ space facts, fun facts, daily facts, mind blowing facts.
 |---|---|---|---|---|
 | Syndar | `#22D3EE` | @syndar | Perception where cameras fail | ~1 long / wk |
 | Cohort Zero | `#E11D48` | @cohortzero | Founders' files | 2–3 / wk |
-| Farsight | `#10B981` | @farsight | Money, honestly | 2–3 / wk |
+| Equitier | `#10B981` | @equitier | Money, honestly | 2–3 / wk |
 | TIL | `#F59E0B` | @til | Today I learned | daily |
 
 **Avatar tip:** open a `*-logo.svg` in your browser, zoom to fill, screenshot → crop square → upload.

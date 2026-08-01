@@ -1,4 +1,4 @@
-name: "Channel — Farsight (finance)"
+name: "Channel — Equitier (finance)"
 
 on:
   workflow_dispatch:
@@ -81,7 +81,7 @@ jobs:
         run: pip install chatterbox-tts peft resemble-perth
       - name: Write script + shorts (Groq, Wikipedia-grounded)
         env:
-          CHANNEL: farsight
+          CHANNEL: equitier
           TOPICS: ${{ github.event.inputs.topics }}
           MODE: ${{ github.event.inputs.format }}
           SHORTS: ${{ github.event.inputs.shorts_count }}
@@ -100,21 +100,21 @@ jobs:
             *)            export VOICE=auto ;;
           esac
           echo "Voice engine: $VOICE"
-          npm run batch -- --only=farsight
+          npm run batch -- --only=equitier
       - name: Deliver to out/
         working-directory: ${{ github.workspace }}
         run: |
-          mkdir -p out/farsight
-          cp theranos-doc/out/farsight*.zip out/farsight/ 2>/dev/null || true
-          cp theranos-doc/out/farsight*.mp4 out/farsight/ 2>/dev/null || true
-          cp theranos-doc/out/farsight*.txt out/farsight/ 2>/dev/null || true
-          cp theranos-doc/out/farsight*.jpg out/farsight/ 2>/dev/null || true
-          cp theranos-doc/out/farsight*.pdf out/farsight/ 2>/dev/null || true
+          mkdir -p out/equitier
+          cp theranos-doc/out/equitier*.zip out/equitier/ 2>/dev/null || true
+          cp theranos-doc/out/equitier*.mp4 out/equitier/ 2>/dev/null || true
+          cp theranos-doc/out/equitier*.txt out/equitier/ 2>/dev/null || true
+          cp theranos-doc/out/equitier*.jpg out/equitier/ 2>/dev/null || true
+          cp theranos-doc/out/equitier*.pdf out/equitier/ 2>/dev/null || true
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add out/farsight 2>/dev/null || true
+          git add out/equitier 2>/dev/null || true
           if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
-          git commit -m "Farsight: auto video + shorts [skip ci]"
+          git commit -m "Equitier: auto video + shorts [skip ci]"
           for i in 1 2 3 4 5; do
             if git pull --rebase --autostash origin main && git push origin main; then exit 0; fi
             echo "retry $i"; sleep 6
