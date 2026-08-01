@@ -73,7 +73,7 @@ jobs:
             *)            COMP=YouTube; OUT=video.mp4 ;;
           esac
           echo "Rendering $COMP -> out/$OUT"
-          npx remotion render "$COMP" "out/$OUT" --concurrency=2
+          npx remotion render "$COMP" "out/$OUT" --concurrency=4
 
       - name: Upload rendered video
         uses: actions/upload-artifact@v4
