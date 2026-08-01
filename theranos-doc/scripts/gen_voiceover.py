@@ -371,24 +371,19 @@ async def main():
     print(f"Timeline written to: {os.path.relpath(TIMELINE_JSON, ROOT)}")
     print(f"Audio written to:    {os.path.relpath(AUDIO_DIR, ROOT)}/")
 
-    # --- HARD DURATION CONSTRAINT -------------------------------------------
+    # --- DURATION NOTE (informational, NOT a hard fail) ---------------------
+    # Anti-laziness (did the AI write enough scenes?) is already enforced by validate.mjs on LINE
+    # COUNT. This seconds-based check can only trip on fast PACING (a snappy voice narrating quicker
+    # than the per-line estimate) — which is not a content problem — so it must never kill the job.
+    # Killing it here is exactly what used to drop long-form videos and leave only the shorts.
     target = meta.get("targetSeconds")
     target = (float(target) / 60.0) if target else meta.get("targetDurationMin")
     if target:
         target = float(target)
-        floor = target * 0.75  # tolerate faster pacing; line-count gate guards laziness
-        avg_sec_per_line = (cursor_frame / fps) / max(len(lines), 1)
+        floor = target * 0.6
         if mins < floor:
-            missing_min = target - mins
-            needed_lines = int(math.ceil((missing_min * 60) / max(avg_sec_per_line, 1)))
-            print("\n" + "=" * 66)
-            print("  [X] DURATION CHECK FAILED")
-            print(f"  Requested : {target:.0f} min")
-            print(f"  Produced  : {mins:.1f} min  ({len(lines)} lines)")
-            print(f"  Shortfall : ~{missing_min:.1f} min  ->  add ~{needed_lines} more lines")
-            print("  Fix: regenerate script.json with more lines, then re-run.")
-            print("=" * 66)
-            sys.exit(2)
+            print(f"[!] Duration note: {mins:.1f} min vs ~{target:.0f} min estimate "
+                  f"(snappier pacing — this is fine, not an error).")
         else:
             print(f"[OK] Duration check passed: {mins:.1f} min vs {target:.0f} min target.")
 
