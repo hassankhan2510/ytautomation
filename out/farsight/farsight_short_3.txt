@@ -1,0 +1,19 @@
+=== PUBLISH KIT ===
+Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
+
+BEST TITLE:
+  Why Eighty Percent of Actively Managed Funds Fail to Beat Index Funds
+
+ALTERNATIVE TITLES (A/B pick one):
+  1. The Index Fund Advantage
+  2. Why Actively Managed Funds Often Fail
+  3. The Eighty Percent Rule: Index Funds vs Actively Managed Funds
+
+DESCRIPTION:
+  Discover why eighty percent of actively managed funds fail to beat index funds.
+
+HASHTAGS:
+  #indexfunds #investing #stockmarket #finance #passiveincome
+
+TAGS (comma-separated):
+  index funds, actively managed funds, investing

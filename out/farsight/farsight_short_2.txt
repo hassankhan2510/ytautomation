@@ -1,0 +1,19 @@
+=== PUBLISH KIT ===
+Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
+
+BEST TITLE:
+  The Hidden Truth About Index Fund Fees
+
+ALTERNATIVE TITLES (A/B pick one):
+  1. Index Fund Fees: What You Need to Know
+  2. The Surprising Truth About Index Fund Fees
+  3. Why Index Fund Fees Matter to Your Investments
+
+DESCRIPTION:
+  Learn the hidden truth about index fund fees and how they impact your investments.
+
+HASHTAGS:
+  #indexfunds #investing #fees #finance #transparency
+
+TAGS (comma-separated):
+  index funds, fees, investing

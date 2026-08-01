@@ -1,0 +1,19 @@
+=== PUBLISH KIT ===
+Platform: reel    Niche: finance    Language voice: en-US-GuyNeural
+
+BEST TITLE:
+  Nine Billion Dollars Invested Daily in Index Funds
+
+ALTERNATIVE TITLES (A/B pick one):
+  1. The Index Fund Revolution
+  2. Index Funds: A Nine Billion Dollar Secret
+  3. Why Index Funds Attract Nine Billion Dollars Daily
+
+DESCRIPTION:
+  Discover the truth about index funds and why they attract nine billion dollars in investments daily.
+
+HASHTAGS:
+  #indexfunds #investing #stockmarket #finance #passiveincome
+
+TAGS (comma-separated):
+  index funds, investing, stock market
