@@ -86,6 +86,26 @@ def load_chatterbox():
             return _orig_load(*a, **k)
 
         torch.load = _cpu_load
+
+        # Chatterbox's audio watermarker (resemble-perth) ships broken on some CPU images:
+        # `perth.PerthImplicitWatermarker` resolves to None, so its constructor call blows up with
+        # "'NoneType' object is not callable". We don't need Resemble's provenance watermark on our
+        # own cloned voice, so swap in a no-op pass-through if the real one is missing.
+        try:
+            import perth  # noqa: WPS433
+
+            if getattr(perth, "PerthImplicitWatermarker", None) is None:
+                class _NoopWatermarker:  # pragma: no cover - trivial shim
+                    def apply_watermark(self, wav, sample_rate=None, **_):
+                        return wav
+
+                    def get_watermark(self, wav, sample_rate=None, **_):
+                        return None
+
+                perth.PerthImplicitWatermarker = _NoopWatermarker
+        except Exception:
+            pass
+
         from chatterbox.tts import ChatterboxTTS  # noqa: WPS433
 
         _chatter_model = ChatterboxTTS.from_pretrained(device="cpu")
