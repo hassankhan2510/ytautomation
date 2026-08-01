@@ -20,9 +20,10 @@ click Run (or, for TIL, it runs itself daily). Finished videos + publish kits la
 | **Channel — Syndar** | `syndar` | Manual (enter topics) | Long + 3 shorts. **DRAFT — verify technical claims before uploading.** |
 
 To make a video: Actions → the channel → **Run workflow** → fill in the fields → Run. When it
-finishes, the MP4(s) + a `.txt` publish kit (title, alt titles, description, hashtags) are committed
-to that channel's own folder — **`out/syndar/`, `out/cohortzero/`, `out/farsight/`, `out/til/`**.
-Download from GitHub, upload to the platform.
+finishes, each video is delivered as a **single `.zip`** in that channel's own folder — **`out/syndar/`,
+`out/cohortzero/`, `out/farsight/`, `out/til/`**. Each zip bundles everything for that one video:
+the **reel/MP4**, the **`.txt` publish kit** (title, alt titles, description, hashtags), the
+**carousel PDF** (LinkedIn), and the **slide JPGs** (Instagram). Download the zip, unzip, upload.
 
 ### The three dropdowns / fields
 - **Topics** — **one video per topic.** Enter one, or queue several by separating them with `;` —
@@ -30,6 +31,9 @@ Download from GitHub, upload to the platform.
   video (long) or its own set of reels (shorts). Queue five before bed, wake up to five finished.
 - **What to make** — `long`, `shorts`, or `long+shorts`. `shorts` writes reels **directly** (fast,
   one model call); `long+shorts` writes the long and then cuts shorts from its best moments.
+- **How many shorts per topic** — 1–5 (default **1**). Controls how many reels each topic produces
+  (in `shorts` mode) or how many are cut from the long (in `long+shorts`). Set it to 1 when you want
+  just one short on a topic. (TIL always makes one short — no such control.)
 - **Language** — English, Urdish, or Hinglish (code-switched **voice**; on-screen text stays English).
 - **Voice** — how it's narrated:
   - **Auto (natural)** — **Kokoro** neural voice for English, **edge-tts** for Urdu/Hindi. Free,

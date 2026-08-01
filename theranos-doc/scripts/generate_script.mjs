@@ -288,6 +288,12 @@ async function main() {
   } else if (LANG.startsWith("eng") || LANG === "en") {
     cfg.language = "en"; // keep the channel's English voice from config
   }
+  // "How many shorts" dropdown -> override the channel's default shorts-per-topic count.
+  // Guarded to channels that make shorts, so TIL (makeShorts 0) is never turned into a multi-short.
+  const nShorts = parseInt(process.env.SHORTS || "", 10);
+  if (!Number.isNaN(nShorts) && nShorts >= 1 && nShorts <= 10 && cfg.makeShorts > 0) {
+    cfg.makeShorts = nShorts;
+  }
   fs.mkdirSync(JOBS, { recursive: true });
   const nichePack = readNichePack(cfg.niche);
   const isTIL = cfg.makeShorts === 0;

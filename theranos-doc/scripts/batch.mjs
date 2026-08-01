@@ -19,6 +19,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { createZip } from "./lib_zip.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -64,6 +65,30 @@ function normalizeLoudness(outFile) {
     console.log(`  ! loudness normalize skipped (${String(e.message).split("\n")[0]})`);
   }
 }
+// Collect every deliverable belonging to <name> and zip them into out/<name>.zip, then remove the
+// loose files. Exact-prefix matching so a long job never sweeps up its own shorts' files.
+function bundleJob(name, platform) {
+  try {
+    const outDir = path.join(ROOT, "out");
+    if (!fs.existsSync(outDir)) return;
+    const slide = new RegExp(`^${name}_slide_\\d+\\.jpg$`);
+    const wanted = fs.readdirSync(outDir).filter(
+      (f) =>
+        f === `${name}_${platform}.mp4` ||
+        f === `${name}.txt` ||
+        f === `${name}_carousel.pdf` ||
+        slide.test(f),
+    );
+    if (!wanted.length) return;
+    const entries = wanted.map((f) => ({ name: f, data: fs.readFileSync(path.join(outDir, f)) }));
+    createZip(path.join(outDir, `${name}.zip`), entries);
+    for (const f of wanted) fs.rmSync(path.join(outDir, f), { force: true });
+    console.log(`  = out/${name}.zip  (${wanted.length} files bundled)`);
+  } catch (e) {
+    console.log(`  ! zip bundle failed (${String(e.message).split("\n")[0]}) — loose files kept.`);
+  }
+}
+
 function backup(p) {
   if (fs.existsSync(p)) fs.copyFileSync(p, p + ".bak");
 }
@@ -134,6 +159,9 @@ function main() {
             /* carousel is best-effort — the video still ships */
           }
         }
+        // Bundle ALL of this video's deliverables (reel + kit txt + carousel pdf + slides) into one
+        // zip, so the output folder is one file per video instead of a scatter of loose files.
+        if (!SAMPLE) bundleJob(name, platform);
         results.push(`OK   ${name} -> ${outFile}`);
       } catch (e) {
         results.push(`FAIL ${name} (${String(e.message).split("\n")[0]})`);

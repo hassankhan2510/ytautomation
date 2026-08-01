@@ -16,6 +16,17 @@ on:
           - "long+shorts"
           - "long"
           - "shorts"
+      shorts_count:
+        description: "How many shorts PER TOPIC (applies to shorts / long+shorts)"
+        required: true
+        default: "1"
+        type: choice
+        options:
+          - "1"
+          - "2"
+          - "3"
+          - "4"
+          - "5"
       language:
         description: "Language"
         required: true
@@ -70,6 +81,7 @@ jobs:
           CHANNEL: farsight
           TOPICS: ${{ github.event.inputs.topics }}
           MODE: ${{ github.event.inputs.format }}
+          SHORTS: ${{ github.event.inputs.shorts_count }}
           LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
@@ -90,6 +102,7 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           mkdir -p out/farsight
+          cp theranos-doc/out/farsight*.zip out/farsight/ 2>/dev/null || true
           cp theranos-doc/out/farsight*.mp4 out/farsight/ 2>/dev/null || true
           cp theranos-doc/out/farsight*.txt out/farsight/ 2>/dev/null || true
           cp theranos-doc/out/farsight*.jpg out/farsight/ 2>/dev/null || true
