@@ -75,7 +75,10 @@ jobs:
             libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
             libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng
       - run: npm ci
-      - run: pip install edge-tts kokoro soundfile
+      - run: pip install edge-tts
+      - name: Install Kokoro (only for the natural "Auto" English voice)
+        if: ${{ !contains(github.event.inputs.voice, 'My voice') && !contains(github.event.inputs.voice, 'Edge') }}
+        run: pip install kokoro soundfile
       - name: Install voice-clone deps (only when "My voice" is selected)
         if: contains(github.event.inputs.voice, 'My voice')
         run: pip install chatterbox-tts peft resemble-perth
