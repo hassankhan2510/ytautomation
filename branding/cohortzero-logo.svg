@@ -1,0 +1,15 @@
+<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cohort Zero">
+  <rect width="512" height="512" rx="104" fill="#0A0A0B"/>
+  <!-- the "0": a bold ring with a gap at the top -->
+  <circle cx="256" cy="196" r="98" fill="none" stroke="#E11D48" stroke-width="24"
+          stroke-linecap="round" stroke-dasharray="498 118" transform="rotate(-109 256 196)"/>
+  <!-- gap terminal dot -->
+  <circle cx="256" cy="98" r="12" fill="#E11D48"/>
+  <!-- inner mark: a small centered node (the "zero cohort") -->
+  <circle cx="256" cy="196" r="15" fill="#E11D48"/>
+  <!-- wordmark -->
+  <text x="256" y="410" text-anchor="middle" font-family="Inter, Montserrat, Arial, sans-serif"
+        font-size="50" font-weight="800" letter-spacing="6" fill="#FFFFFF">COHORT ZERO</text>
+  <text x="256" y="446" text-anchor="middle" font-family="Inter, Arial, sans-serif"
+        font-size="18" font-weight="500" letter-spacing="6" fill="#9AA3AD">FOUNDERS' FILES</text>
+</svg>
