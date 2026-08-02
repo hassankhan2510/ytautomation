@@ -96,7 +96,11 @@ Shape: { "title": string, "titleOptions": string[3-5], "hashtags": string[5-10],
     "kicker"?: string, "stat"?: string, "cite"?: string, "items"?: string[], "name"?: string, "role"?: string,
     "events"?: [{ "label": string, "text": string }], "percent"?: number } ] }
 RULES:
-- One idea per line; each line ~12-22 words of natural spoken narration. Every line must earn the next.
+- One idea per line. The HOOK (line 1) and the big emphasis cards ("center"/"title" layouts) are
+  short and punchy. But EVERY OTHER line must be a COMPLETE, informative sentence of 14-24 words that
+  actually explains or reveals something concrete — NOT a slogan, headline, or 3-5 word fragment.
+  A video made of short punchy fragments looks cheap and low-value; full, substantive sentences with
+  specifics are what make it worth watching. Every line must earn the next.
 - HOOK (line 1) is everything: open with a scroll-stopping hook — a surprising fact, a bold claim, a
   sharp question, or a "you've been doing X wrong" reversal. NO throat-clearing, no "in this video",
   no "have you ever wondered". Make the viewer NEED the next line in the first 3 seconds.
