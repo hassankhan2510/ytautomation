@@ -49,7 +49,12 @@
     "review": false,
     "brand": "EQUITIER",
     "tagline": "Money, honestly",
-    "thumbStyle": "financial district skyline with glowing green stock-market charts and money, professional, cinematic, moody depth of field"
+    "thumbStyle": "financial district skyline with glowing green stock-market charts and money, professional, cinematic, moody depth of field",
+    "links": {
+      "youtube": "https://www.youtube.com/@equitier",
+      "instagram": "https://www.instagram.com/equitier.co/",
+      "linkedin": "https://www.linkedin.com/company/equitier-capital/"
+    }
   },
   "til": {
     "niche": "facts",

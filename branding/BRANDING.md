@@ -87,7 +87,10 @@ business strategy, why startups fail, unit economics, fundraising, entrepreneurs
 
 **Tagline:** Money, honestly.
 
-**Handles:** `@equitier` · alt `@equitierhq`, `@getequitier`
+**Handles (live):** YouTube `@equitier` · Instagram `@equitier.co` · LinkedIn `equitier-capital`
+- https://www.youtube.com/@equitier
+- https://www.instagram.com/equitier.co/
+- https://www.linkedin.com/company/equitier-capital/
 
 **One-liner (bio, ≤150 chars):**
 > Money, honestly. How finance, markets & the economy actually work — no hype, no get-rich-quick grift.
@@ -150,7 +153,7 @@ space facts, fun facts, daily facts, mind blowing facts.
 |---|---|---|---|---|
 | Syndar | `#22D3EE` | @syndar | Perception where cameras fail | ~1 long / wk |
 | Cohort Zero | `#E11D48` | @cohortzero | Founders' files | 2–3 / wk |
-| Equitier | `#10B981` | @equitier | Money, honestly | 2–3 / wk |
+| Equitier | `#10B981` | @equitier (YT) / @equitier.co (IG) | Money, honestly | 2–3 / wk |
 | TIL | `#F59E0B` | @til | Today I learned | daily |
 
 **Avatar tip:** open a `*-logo.svg` in your browser, zoom to fill, screenshot → crop square → upload.

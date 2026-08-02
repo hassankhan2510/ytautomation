@@ -25,6 +25,23 @@ function main() {
     .map((t) => "#" + String(t).replace(/[^a-z0-9]/gi, ""))
     .filter((t) => t.length > 1);
 
+  // Social links (from the channel config) — appended to the description so every upload
+  // cross-promotes the other platforms.
+  const L = m.links || {};
+  const brand = m.brand || (m.channel || "").toUpperCase();
+  const linkLines = [];
+  if (L.youtube) linkLines.push(`Subscribe: ${L.youtube}`);
+  if (L.instagram) linkLines.push(`Instagram: ${L.instagram}`);
+  if (L.linkedin) linkLines.push(`LinkedIn: ${L.linkedin}`);
+
+  // The full, ready-to-paste YouTube description = script description + follow block + hashtags.
+  const descParts = [m.description || ""];
+  if (linkLines.length) {
+    descParts.push("", `Follow ${brand}:`, ...linkLines);
+  }
+  if (hashtags.length) descParts.push("", hashtags.slice(0, 8).join(" "));
+  const fullDescription = descParts.join("\n");
+
   const lines = [];
   lines.push("=== PUBLISH KIT ===");
   lines.push(`Platform: ${m.platform || "-"}    Niche: ${m.niche || "-"}    Language voice: ${m.voice || "-"}`);
@@ -37,8 +54,8 @@ function main() {
     m.titleOptions.forEach((t, i) => lines.push(`  ${i + 1}. ${t}`));
     lines.push("");
   }
-  lines.push("DESCRIPTION:");
-  lines.push(`  ${m.description || ""}`);
+  lines.push("DESCRIPTION (paste this whole block):");
+  lines.push(fullDescription.split("\n").map((x) => `  ${x}`).join("\n"));
   lines.push("");
   lines.push("HASHTAGS:");
   lines.push(`  ${hashtags.join(" ")}`);
