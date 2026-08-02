@@ -1,6 +1,7 @@
 /**
  * AUTO-WRITER: turn a channel (+ optional topic) into ready-to-render job files, using a
- * FREE Groq model. Anti-hallucination via Wikipedia grounding.
+ * FREE Groq model. Anti-hallucination via a multi-source research pass (see lib_research.mjs:
+ * query-expansion -> Wikipedia + DuckDuckGo (+ Hacker News) -> synthesized brief).
  *   MODE=long+shorts : long video, then a second pass derives hook-worthy shorts FROM it.
  *   MODE=long        : long video only.
  *   MODE=shorts      : reels written DIRECTLY from the topic — no long video (one call, faster).
@@ -15,6 +16,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { research } from "./lib_research.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -42,31 +44,6 @@ function loadConfig() {
 function readNichePack(niche) {
   const p = path.join(REPO, "docs", "NICHES", `${niche}.md`);
   return fs.existsSync(p) ? fs.readFileSync(p, "utf-8") : "";
-}
-
-/* ---------- Wikipedia grounding (free, anti-hallucination) ---------- */
-async function ground(topic) {
-  try {
-    const s = await fetch(
-      `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(topic)}&format=json&origin=*`,
-    );
-    const sd = await s.json();
-    const hits = (sd.query?.search || []).slice(0, 2);
-    const out = [];
-    for (const h of hits) {
-      const sum = await fetch(
-        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(h.title.replace(/ /g, "_"))}`,
-      );
-      if (!sum.ok) continue;
-      const d = await sum.json();
-      if (d.extract) {
-        out.push({ title: d.title, extract: d.extract, url: d.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(d.title)}` });
-      }
-    }
-    return out;
-  } catch {
-    return [];
-  }
 }
 
 /* ---------- Groq ---------- */
@@ -382,13 +359,22 @@ async function main() {
       : CHANNEL;
     if (multi) console.log(`\n--- [${ti + 1}/${topics.length}] ${topic} -> ${prefix} ---`);
 
-    // grounding (per topic)
+    // RESEARCH (per topic): expand into sub-questions, pull from Wikipedia + DuckDuckGo (+ Hacker
+    // News for tech), synthesize a brief. Best-effort — never blocks or breaks generation.
     let g = [];
-    if (cfg.ground && topic && !DRY) g = await ground(topic);
-    const research = ["# Research (auto-grounded)\n"];
-    if (g.length) g.forEach((x) => research.push(`- ${x.title}: ${x.extract}\n  Source: ${x.url}`));
-    else research.push("- (no external grounding — verify facts before publishing)");
-    fs.writeFileSync(path.join(JOBS, `${prefix}.research.md`), research.join("\n"));
+    if (cfg.ground && topic && !DRY) {
+      try {
+        const R = await research(topic, { niche: cfg.niche });
+        g = R.items || [];
+        if (g.length) console.log(`  research: ${g.length} facts from ${R.queries.length} sub-queries`);
+      } catch (e) {
+        console.log(`  ! research failed (${e.message}) — writing without grounding.`);
+      }
+    }
+    const researchLines = ["# Research (auto)\n"];
+    if (g.length) g.forEach((x) => researchLines.push(`- ${x.title ? x.title + ": " : ""}${x.extract}${x.url ? "\n  Source: " + x.url : ""}`));
+    else researchLines.push("- (no external grounding — verify facts before publishing)");
+    fs.writeFileSync(path.join(JOBS, `${prefix}.research.md`), researchLines.join("\n"));
 
     let written = 0;
 
