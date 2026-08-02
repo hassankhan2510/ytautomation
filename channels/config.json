@@ -15,7 +15,11 @@
     "funnel": "If you're building autonomy where cameras fail, see what we're building at Syndar — link below.",
     "brand": "SYNDAR",
     "tagline": "Perception where cameras fail",
-    "thumbStyle": "futuristic radar and sensor technology, robotics, sci-fi HUD interface, glowing cyan lights, cinematic, high-tech, dramatic"
+    "thumbStyle": "futuristic radar and sensor technology, robotics, sci-fi HUD interface, glowing cyan lights, cinematic, high-tech, dramatic",
+    "links": {
+      "youtube": "https://www.youtube.com/@syndar1",
+      "linkedin": "https://www.linkedin.com/company/syndar/"
+    }
   },
   "cohortzero": {
     "niche": "business",
