@@ -13,6 +13,7 @@ import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { buildChapters, buildDescription } from "./lib_description.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -45,30 +46,23 @@ function readMeta() {
   }
 }
 
+function readTimeline() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(ROOT, "src", "data", "timeline.json"), "utf-8"));
+  } catch {
+    return null;
+  }
+}
+
 function buildSnippet(meta) {
   const isShort = ["shorts", "reel"].includes(meta.platform);
-  const hashtags = (meta.hashtags || [])
-    .map((h) => "#" + String(h).replace(/[^a-z0-9]/gi, ""))
-    .filter((x) => x.length > 1);
-
   let title = String(meta.title || "Video");
   if (isShort && !/#shorts/i.test(title)) title = `${title.slice(0, 88)} #Shorts`;
   title = title.slice(0, 100);
 
-  const L = meta.links || {};
-  const linkLines = [];
-  if (L.youtube) linkLines.push(`Subscribe: ${L.youtube}`);
-  if (L.instagram) linkLines.push(`Instagram: ${L.instagram}`);
-  if (L.linkedin) linkLines.push(`LinkedIn: ${L.linkedin}`);
-
-  let desc = String(meta.description || meta.title || "");
-  if (linkLines.length) desc += `\n\nFollow ${meta.brand || CHANNEL.toUpperCase()}:\n${linkLines.join("\n")}`;
-  if (hashtags.length) desc += `\n\n${hashtags.slice(0, 8).join(" ")}`;
-  if (isShort) desc += "\n#Shorts";
-  desc = desc.slice(0, 4900);
-
+  const description = buildDescription(meta, buildChapters(readTimeline()));
   const tags = Array.isArray(meta.tags) ? meta.tags.slice(0, 15) : [];
-  return { title, description: desc, tags, categoryId: CATEGORY };
+  return { title, description, tags, categoryId: CATEGORY };
 }
 
 async function accessToken() {

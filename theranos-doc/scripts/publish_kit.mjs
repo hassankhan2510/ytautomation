@@ -10,6 +10,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { buildChapters, buildDescription } from "./lib_description.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -25,22 +26,15 @@ function main() {
     .map((t) => "#" + String(t).replace(/[^a-z0-9]/gi, ""))
     .filter((t) => t.length > 1);
 
-  // Social links (from the channel config) — appended to the description so every upload
-  // cross-promotes the other platforms.
-  const L = m.links || {};
-  const brand = m.brand || (m.channel || "").toUpperCase();
-  const linkLines = [];
-  if (L.youtube) linkLines.push(`Subscribe: ${L.youtube}`);
-  if (L.instagram) linkLines.push(`Instagram: ${L.instagram}`);
-  if (L.linkedin) linkLines.push(`LinkedIn: ${L.linkedin}`);
-
-  // The full, ready-to-paste YouTube description = script description + follow block + hashtags.
-  const descParts = [m.description || ""];
-  if (linkLines.length) {
-    descParts.push("", `Follow ${brand}:`, ...linkLines);
+  // The full, ready-to-paste YouTube description = SEO description + chapters (long-form) + follow
+  // block + hashtags. Chapters come from the rendered timeline's kicker/act markers if present.
+  let timeline = null;
+  try {
+    timeline = JSON.parse(fs.readFileSync(path.join(ROOT, "src", "data", "timeline.json"), "utf-8"));
+  } catch {
+    /* no timeline (e.g. running the kit standalone) — description just skips chapters */
   }
-  if (hashtags.length) descParts.push("", hashtags.slice(0, 8).join(" "));
-  const fullDescription = descParts.join("\n");
+  const fullDescription = buildDescription(m, buildChapters(timeline));
 
   const lines = [];
   lines.push("=== PUBLISH KIT ===");

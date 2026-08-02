@@ -56,18 +56,38 @@ const KenBurns: React.FC<{ src: string; durationInFrames: number; seed: number }
   );
 };
 
+const BASE_OPACITY = 0.5; // backgrounds sit under the captions
+const FADE_IN = 9; // scene fade-in frames
+const OVERLAP = 12; // frames each scene lingers into the next -> cross-dissolve
+
+/** Fades a scene in at its start and out into the next scene, for a smooth cross-dissolve. */
+const FadeLayer: React.FC<{ dur: number; overlap: number; children: React.ReactNode }> = ({
+  dur,
+  overlap,
+  children,
+}) => {
+  const frame = useCurrentFrame();
+  const fin = interpolate(frame, [0, FADE_IN], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const fout =
+    overlap > 0
+      ? interpolate(frame, [dur, dur + overlap], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })
+      : 1;
+  return <AbsoluteFill style={{ opacity: BASE_OPACITY * fin * fout }}>{children}</AbsoluteFill>;
+};
+
 /**
- * Renders one continuous background per group of consecutive same-asset lines,
- * so video loops and image pans run smoothly across scene changes.
+ * Renders one continuous background per group of consecutive same-asset lines. Each scene pans
+ * (Ken Burns) and cross-dissolves into the next instead of hard-cutting.
  */
 export const Background: React.FC<{ segments: BgSegment[] }> = ({ segments }) => {
   return (
     <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
       {segments.map((seg, i) => {
         const src = staticFile(`assets/${seg.asset}`);
+        const overlap = i === segments.length - 1 ? 0 : OVERLAP; // don't extend past the end
         return (
-          <Sequence key={i} from={seg.from} durationInFrames={seg.durationInFrames}>
-            <AbsoluteFill style={{ opacity: 0.5 }}>
+          <Sequence key={i} from={seg.from} durationInFrames={seg.durationInFrames + overlap}>
+            <FadeLayer dur={seg.durationInFrames} overlap={overlap}>
               {seg.type === "video" ? (
                 <Loop durationInFrames={VIDEO_LOOP_FRAMES}>
                   <OffthreadVideo
@@ -79,7 +99,7 @@ export const Background: React.FC<{ segments: BgSegment[] }> = ({ segments }) =>
               ) : (
                 <KenBurns src={src} durationInFrames={seg.durationInFrames} seed={i} />
               )}
-            </AbsoluteFill>
+            </FadeLayer>
           </Sequence>
         );
       })}

@@ -119,12 +119,31 @@ Shape: { "title": string, "titleOptions": string[3-5], "hashtags": string[5-10],
     "kicker"?: string, "stat"?: string, "cite"?: string, "items"?: string[], "name"?: string, "role"?: string,
     "events"?: [{ "label": string, "text": string }], "percent"?: number } ] }
 RULES:
-- One idea per line; each line ~12-22 words of spoken narration.
-- TITLE must be rank-fast: keyword + curiosity + specificity. titleOptions = varied alternatives.
+- One idea per line; each line ~12-22 words of natural spoken narration. Every line must earn the next.
+- HOOK (line 1) is everything: open with a scroll-stopping hook — a surprising fact, a bold claim, a
+  sharp question, or a "you've been doing X wrong" reversal. NO throat-clearing, no "in this video",
+  no "have you ever wondered". Make the viewer NEED the next line in the first 3 seconds.
+- RETENTION: plant open loops ("but there's a catch…", "and that's where it gets strange…") and pay
+  them off later. Tease what's coming. Cut every filler sentence. No fluff, no repetition, no summary
+  of what you just said.
+- SPECIFICITY beats everything: use concrete names, real numbers, dates, places, and examples — never
+  vague generalities ("many people", "a lot of money"). Specifics are what separate a real video from
+  generic AI slop. Only use facts supported by the grounding; do not invent statistics.
+- STRUCTURE: hook -> quick context -> escalating points/story with tension -> the payoff/insight ->
+  a short, natural CTA. For long-form, build in mini-cliffhangers so retention doesn't sag mid-video.
+- TITLE must be rank-fast: keyword + curiosity + specificity, ideally with a number or a bold promise.
+  titleOptions = genuinely different angles, not reworded copies.
+- DESCRIPTION = a real SEO YouTube description, 150-250 words in 2-3 short paragraphs. The FIRST
+  sentence is a keyword-rich hook (it shows in search results), then naturally weave in the main
+  keyword + related search terms a viewer would type, and end with a question or CTA. Plain text, no
+  hashtags inside it.
+- hashtags = 5-8 SPECIFIC, relevant tags (mix one or two broad with several niche ones). tags = 10-15
+  SEO keyword phrases people actually search.
 - Spell numbers/symbols for TTS ("nine billion", not "$9B"); put "$9B" only in a stat/caption field.
 - Use a MIX of layouts (this is what makes it look produced, not generic AI): mostly lower-third,
   but a "center" or "title" for the hook and big statements, at least one "stat", a "nametag" if a
-  person matters, one "bullets", and a "kicker" label on the first line of each act.
+  person matters, one "bullets", and a "kicker" label on the first line of each act/section (these
+  also become the video's chapters, so make them short and descriptive).
 - keywords = concrete stock-footage search terms (e.g. "rocket launch night").
 - thumb = the YouTube THUMBNAIL text, built for clicks: line1 + line2 are each 1-3 BIG punchy words
   (a curiosity gap or bold claim, NOT the full title — e.g. "INDEX FUNDS" / "BEAT THE PROS"), and
