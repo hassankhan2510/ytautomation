@@ -87,10 +87,10 @@ business strategy, why startups fail, unit economics, fundraising, entrepreneurs
 
 **Tagline:** Money, honestly.
 
-**Handles (live):** YouTube `@equitier` · Instagram `@equitier.co` · LinkedIn `equitier-capital`
+**Handles (live):** YouTube `@equitier` · Instagram `@equitier.co` · LinkedIn `equitier-co`
 - https://www.youtube.com/@equitier
 - https://www.instagram.com/equitier.co/
-- https://www.linkedin.com/company/equitier-capital/
+- https://www.linkedin.com/company/equitier-co/
 
 **One-liner (bio, ≤150 chars):**
 > Money, honestly. How finance, markets & the economy actually work — no hype, no get-rich-quick grift.
