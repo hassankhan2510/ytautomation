@@ -211,7 +211,11 @@ function finalizeMeta(model, cfg, topic, isShort, researchFile) {
     niche: cfg.niche,
     channel: CHANNEL,
     platform,
-    targetSeconds: Math.max(15, Math.round(lines.length * spl)),
+    // Long-form is authored to the channel's intended length (config targetSeconds). Shorts stay
+    // sized to their own line count.
+    targetSeconds: isShort
+      ? Math.max(15, Math.round(lines.length * spl))
+      : (cfg.targetSeconds || Math.max(60, Math.round(lines.length * spl))),
     fps: 30,
     style: cfg.niche,
     voice: cfg.voice,
@@ -310,6 +314,11 @@ async function main() {
   const writeLong = tilShort || MODE === "long" || MODE === "long+shorts";
   const wantDerivedShorts = !tilShort && MODE === "long+shorts" && cfg.makeShorts > 0;
 
+  // How many scenes a long needs to actually reach its target length. Snappy voices run ~4.8s per
+  // line (incl. the inter-line pause), so a 4-min (240s) long needs ~50 lines, a 5-min one ~63.
+  const LONG_SEC_PER_LINE = 4.8;
+  const neededLong = Math.max(34, Math.ceil((cfg.targetSeconds || 240) / LONG_SEC_PER_LINE));
+
   // TOPICS: a batch queue — one topic PER VIDEO. Enter several (one per line, or separated by
   // ";" / "|") and each becomes its own video (long) or its own set of reels (shorts). Falls back
   // to the single TOPIC env, or "" (the channel auto-picks). Queue 5, sleep, wake up to 5 videos.
@@ -364,13 +373,43 @@ async function main() {
       });
     } else {
       // LONG (or TIL single short), plus derived shorts for long+shorts mode.
-      const lineTarget = tilShort ? "8-11 short punchy" : "30-42";
       const funnel = cfg.funnel ? `\nEnd with a final line that is a soft CTA: "${cfg.funnel}"` : "";
-      const longPrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${lineTarget} lines.${funnel}\nReturn the JSON now.`;
+      const minutes = Math.max(2, Math.round((cfg.targetSeconds || 240) / 60));
+      const longPrompt = tilShort
+        ? `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite 8-11 short punchy lines.${funnel}\nReturn the JSON now.`
+        : `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite a COMPLETE, in-depth ${minutes}-minute script: about ${neededLong} lines/scenes, one clear idea per line. Do NOT stop early, summarize, or skip the middle — develop the full story/analysis with specifics and examples.${funnel}\nReturn the JSON now.`;
 
       const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
-      const longLines = sanitizeLines(getLines(longModel), { language: cfg.language, longForm: !tilShort });
+      let rawLong = getLines(longModel);
+
+      // The free model routinely under-delivers on length (you asked for 50 lines, it wrote 18).
+      // Keep adding DISTINCT scenes until the long is actually long enough for the target duration.
+      // Capped at 3 extra passes so a flaky model can never loop forever.
+      let expand = 0;
+      while (!DRY && !tilShort && rawLong.length < Math.floor(neededLong * 0.9) && expand < 3) {
+        const have = rawLong.map((l) => l.text || l.caption).filter(Boolean);
+        const addN = Math.min(20, neededLong - rawLong.length);
+        const expandPrompt = `You are continuing a ${cfg.niche} long-form video script on TOPIC: ${topic || cfg.niche}.\nScenes already written (DO NOT repeat any of these):\n${JSON.stringify(have)}\nAdd ${addN} MORE distinct, valuable scenes that move the story/analysis forward, in the SAME JSON line shape. Return { "lines": [ ... ] } only.`;
+        let more;
+        try { more = await callGroq(system, expandPrompt); } catch { break; }
+        const moreLines = getLines(more);
+        if (!moreLines.length) break;
+        rawLong = rawLong.concat(moreLines);
+        expand++;
+      }
+      // Drop empty + repeated scenes so the validator's no-duplicate gate can never fail the long.
+      const seenLong = new Set();
+      rawLong = rawLong.filter((l) => {
+        const k = String((l && (l.text || l.caption)) || "").trim().toLowerCase();
+        if (!k || seenLong.has(k)) return false;
+        seenLong.add(k);
+        return true;
+      });
+      longModel.lines = rawLong; // derived shorts should pull from the FULL expanded script
+
+      const longLines = sanitizeLines(rawLong, { language: cfg.language, longForm: !tilShort });
       const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, topic, tilShort, researchFile);
+      if (!tilShort) console.log(`  long: ${longLines.length} scenes (aim ~${neededLong} for ~${minutes} min)`);
       if (writeLong && longLines.length) { writeJob(prefix, longMeta, longLines); written++; }
 
       if (wantDerivedShorts) {
