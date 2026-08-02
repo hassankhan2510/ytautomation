@@ -92,10 +92,15 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs
-      - name: Render long + shorts
+      - name: Render long + shorts + upload to YouTube (PRIVATE / DRAFT — verify before publishing)
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           VOICE_CHOICE: ${{ github.event.inputs.voice }}
+          UPLOAD: "1"
+          YT_PRIVACY: private
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_SYNDAR: ${{ secrets.YT_REFRESH_TOKEN_SYNDAR }}
         run: |
           case "$VOICE_CHOICE" in
             *"My voice"*) export VOICE=myvoice ;;
