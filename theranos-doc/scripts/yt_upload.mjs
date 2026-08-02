@@ -25,6 +25,7 @@ const arg = (k, d) => {
 const CHANNEL = (arg("channel", "equitier")).toLowerCase();
 const VIDEO = arg("video", "");
 const SCRIPT = arg("script", "");
+const THUMB = arg("thumb", ""); // optional custom thumbnail (long-form)
 const PRIVACY = arg("privacy", "private"); // private | unlisted | public
 const CATEGORY = arg("category", "22"); // 22 = People & Blogs (safe default)
 
@@ -116,6 +117,23 @@ async function main() {
   const j = await res.json();
   if (!res.ok || !j.id) throw new Error(`upload: ${JSON.stringify(j).slice(0, 300)}`);
   console.log(`  ✓ Uploaded: https://youtu.be/${j.id}  (Studio: https://studio.youtube.com/video/${j.id}/edit)`);
+
+  // Set the custom thumbnail (long-form). Best-effort: needs custom-thumbnail eligibility on the
+  // channel; if it's not allowed the video still keeps its auto frame.
+  const thumbPath = THUMB ? path.resolve(ROOT, THUMB) : "";
+  if (thumbPath && fs.existsSync(thumbPath)) {
+    try {
+      const png = fs.readFileSync(thumbPath);
+      const tr = await fetch(
+        `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${j.id}&uploadType=media`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/png" }, body: png },
+      );
+      if (tr.ok) console.log("  ✓ Custom thumbnail set");
+      else console.log(`  ! thumbnail not set (${tr.status}) — video keeps its auto frame`);
+    } catch (e) {
+      console.log(`  ! thumbnail not set (${e.message}) — video keeps its auto frame`);
+    }
+  }
 }
 
 main().catch((e) => {

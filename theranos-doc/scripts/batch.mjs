@@ -92,16 +92,17 @@ function bundleJob(name, platform) {
 
 // Optional auto-upload to YouTube (only when UPLOAD=1 and the channel's refresh token is present).
 // Runs AFTER render (mp4 still loose) and is best-effort — a failed upload never fails the video.
-function uploadToYouTube(name, outFile) {
+function uploadToYouTube(name, outFile, thumbFile) {
   const channel = name.split("_")[0];
   const tokenVar = `YT_REFRESH_TOKEN_${channel.toUpperCase()}`;
   if (!process.env[tokenVar] || !process.env.YT_CLIENT_ID) {
     console.log(`  (upload skipped — ${tokenVar} not set)`);
     return;
   }
+  const thumbArg = thumbFile ? ` --thumb=${thumbFile}` : "";
   try {
     run(
-      `node scripts/yt_upload.mjs --channel=${channel} --video=${outFile} --script=jobs/${name}.json --privacy=${process.env.YT_PRIVACY || "private"}`,
+      `node scripts/yt_upload.mjs --channel=${channel} --video=${outFile} --script=jobs/${name}.json --privacy=${process.env.YT_PRIVACY || "private"}${thumbArg}`,
     );
   } catch (e) {
     console.log(`  ! upload failed (${String(e.message).split("\n")[0]}) — non-fatal`);
@@ -163,7 +164,19 @@ function main() {
         const frames = SAMPLE ? " --frames=0-45" : "";
         run(`npx remotion render ${comp} ${outFile}${frames} --concurrency=4`);
         if (!SAMPLE) normalizeLoudness(outFile);
-        if (!SAMPLE && process.env.UPLOAD === "1") uploadToYouTube(name, outFile);
+
+        // YouTube thumbnail (long-form only — Shorts don't use a 16:9 thumbnail). Generated BEFORE
+        // upload so the uploader can set it on the video automatically.
+        let thumbFile = null;
+        if (!SAMPLE && platform === "youtube-long") {
+          try {
+            run(`node scripts/make_thumbnail.mjs --out=out/${name}_thumb.png`);
+            if (fs.existsSync(path.join(ROOT, "out", `${name}_thumb.png`))) thumbFile = `out/${name}_thumb.png`;
+          } catch {
+            /* thumbnail is best-effort — the video still ships */
+          }
+        }
+        if (!SAMPLE && process.env.UPLOAD === "1") uploadToYouTube(name, outFile, thumbFile);
 
         // Copy-paste publish kit (title/description/hashtags) next to the video.
         try {
@@ -177,14 +190,6 @@ function main() {
             run(`node scripts/make_carousel.mjs ${name}`);
           } catch {
             /* carousel is best-effort — the video still ships */
-          }
-        }
-        // YouTube thumbnail (long-form only — Shorts don't use a 16:9 thumbnail).
-        if (!SAMPLE && platform === "youtube-long") {
-          try {
-            run(`node scripts/make_thumbnail.mjs --out=out/${name}_thumb.png`);
-          } catch {
-            /* thumbnail is best-effort — the video still ships */
           }
         }
         // Bundle ALL of this video's deliverables (reel + kit txt + carousel pdf + slides) into one
