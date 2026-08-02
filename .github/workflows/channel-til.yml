@@ -95,22 +95,10 @@ jobs:
           esac
           echo "Voice engine: $VOICE"
           npm run batch -- --only=til
-      - name: Deliver to out/
-        working-directory: ${{ github.workspace }}
-        run: |
-          mkdir -p out/til
-          # Timestamp each delivered file so a new run never overwrites an old one (delete manually).
-          TS=$(date -u +%Y%m%d-%H%M%S)
-          for f in theranos-doc/out/til*.zip theranos-doc/out/til*.mp4; do
-            [ -e "$f" ] || continue
-            cp "$f" "out/til/${TS}_$(basename "$f")"
-          done
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add out/til 2>/dev/null || true
-          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
-          git commit -m "TIL: auto video [skip ci]"
-          for i in 1 2 3 4 5; do
-            if git pull --rebase --autostash origin main && git push origin main; then exit 0; fi
-            echo "retry $i"; sleep 6
-          done
+      - name: Deliver as downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: til-run${{ github.run_number }}
+          path: theranos-doc/out/til*.zip
+          retention-days: 30
+          if-no-files-found: warn

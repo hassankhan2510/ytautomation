@@ -66,22 +66,10 @@ jobs:
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN_EQUITIER: ${{ secrets.YT_REFRESH_TOKEN_EQUITIER }}
         run: npm run batch -- --only=equitier
-      - name: Deliver to out/equitier/
-        working-directory: ${{ github.workspace }}
-        run: |
-          mkdir -p out/equitier
-          # Timestamp each delivered file so a new run never overwrites an old one (delete manually).
-          TS=$(date -u +%Y%m%d-%H%M%S)
-          for f in theranos-doc/out/equitier*.zip theranos-doc/out/equitier*.mp4; do
-            [ -e "$f" ] || continue
-            cp "$f" "out/equitier/${TS}_$(basename "$f")"
-          done
-          git config user.name "github-actions"
-          git config user.email "actions@github.com"
-          git add out/equitier 2>/dev/null || true
-          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
-          git commit -m "Equitier: daily auto short [skip ci]"
-          for i in 1 2 3 4 5; do
-            if git pull --rebase --autostash origin main && git push origin main; then exit 0; fi
-            echo "retry $i"; sleep 6
-          done
+      - name: Deliver as downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: equitier-daily-run${{ github.run_number }}
+          path: theranos-doc/out/equitier*.zip
+          retention-days: 30
+          if-no-files-found: warn
