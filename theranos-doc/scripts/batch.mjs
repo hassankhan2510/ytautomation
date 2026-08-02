@@ -90,6 +90,24 @@ function bundleJob(name, platform) {
   }
 }
 
+// Optional auto-upload to YouTube (only when UPLOAD=1 and the channel's refresh token is present).
+// Runs AFTER render (mp4 still loose) and is best-effort — a failed upload never fails the video.
+function uploadToYouTube(name, outFile) {
+  const channel = name.split("_")[0];
+  const tokenVar = `YT_REFRESH_TOKEN_${channel.toUpperCase()}`;
+  if (!process.env[tokenVar] || !process.env.YT_CLIENT_ID) {
+    console.log(`  (upload skipped — ${tokenVar} not set)`);
+    return;
+  }
+  try {
+    run(
+      `node scripts/yt_upload.mjs --channel=${channel} --video=${outFile} --script=jobs/${name}.json --privacy=${process.env.YT_PRIVACY || "private"}`,
+    );
+  } catch (e) {
+    console.log(`  ! upload failed (${String(e.message).split("\n")[0]}) — non-fatal`);
+  }
+}
+
 function backup(p) {
   if (fs.existsSync(p)) fs.copyFileSync(p, p + ".bak");
 }
@@ -145,6 +163,7 @@ function main() {
         const frames = SAMPLE ? " --frames=0-45" : "";
         run(`npx remotion render ${comp} ${outFile}${frames} --concurrency=4`);
         if (!SAMPLE) normalizeLoudness(outFile);
+        if (!SAMPLE && process.env.UPLOAD === "1") uploadToYouTube(name, outFile);
 
         // Copy-paste publish kit (title/description/hashtags) next to the video.
         try {

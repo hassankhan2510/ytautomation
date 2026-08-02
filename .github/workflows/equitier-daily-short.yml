@@ -57,9 +57,14 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs
-      - name: Render (natural Kokoro voice)
+      - name: Render + upload to YouTube (private)
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          UPLOAD: "1"
+          YT_PRIVACY: private
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_EQUITIER: ${{ secrets.YT_REFRESH_TOKEN_EQUITIER }}
         run: npm run batch -- --only=equitier
       - name: Deliver to out/equitier/
         working-directory: ${{ github.workspace }}
