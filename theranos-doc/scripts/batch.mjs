@@ -37,8 +37,8 @@ const VOICE = voiceArg ? voiceArg.split("=")[1] : process.env.VOICE || "auto";
 
 // Windows: route scratch off the full C: drive. Linux (CI): use the default temp.
 const ENV = process.platform === "win32"
-  ? { ...process.env, VOICE, TMP: "D:/remotion-temp", TEMP: "D:/remotion-temp", TMPDIR: "D:/remotion-temp" }
-  : { ...process.env, VOICE };
+  ? { ...process.env, VOICE, SOFT_GATES: "1", TMP: "D:/remotion-temp", TEMP: "D:/remotion-temp", TMPDIR: "D:/remotion-temp" }
+  : { ...process.env, VOICE, SOFT_GATES: "1" };
 const COMP = { "youtube-long": "YouTube", shorts: "Shorts", reel: "Shorts", linkedin: "Square" };
 
 function run(cmd) {

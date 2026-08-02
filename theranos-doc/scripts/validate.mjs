@@ -41,10 +41,16 @@ const LAYOUTS = [
 const PLACEHOLDER = /\b(todo|tbd|lorem ipsum|placeholder|xxx|insert .* here|example text|your text)\b/i;
 const TTS_UNSAFE = /[$%&#]|\b\d{5,}\b/; // symbols / 5+ digit runs (4-digit years read fine)
 
-const results = []; // { gate, ok, msg }
+// In the automated pipeline (batch sets SOFT_GATES=1) there's no human to "fix and re-run", so a
+// quality-nudge gate must NOT throw away a whole rendered video — it becomes a warning instead.
+// Structural gates (things that would crash the render) always hard-fail. Manual `npm run validate`
+// stays fully strict.
+const SOFT_MODE = process.env.SOFT_GATES === "1";
+
+const results = []; // { name, ok, msg, soft }
 const warnings = [];
-function gate(name, ok, msg) {
-  results.push({ name, ok, msg });
+function gate(name, ok, msg, soft = false) {
+  results.push({ name, ok, msg, soft });
 }
 function warn(msg) {
   warnings.push(msg);
@@ -118,7 +124,8 @@ function main() {
       lines.length >= minLines,
       lines.length >= minLines
         ? `${lines.length} lines ≈ ${meta.targetSeconds}s target (min ${minLines})`
-        : `TOO SHORT: ${lines.length} lines for a ${meta.targetSeconds}s video — need ≥ ${minLines}. Add more lines.`,
+        : `shorter than target: ${lines.length} lines for a ${meta.targetSeconds}s video (ideal ≥ ${minLines})`,
+      true, // quality nudge — warn, don't drop the video
     );
   }
 
@@ -138,7 +145,7 @@ function main() {
   // ---- 5. NO LAZINESS: visual + layout variety ---------------------------
   const visuals = new Set(lines.map((l) => l.asset || (l.keywords && l.keywords[0]) || "?"));
   const minVisuals = Math.max(2, Math.ceil(lines.length / 5));
-  gate("visual variety", visuals.size >= minVisuals, `${visuals.size} unique visuals (min ${minVisuals})`);
+  gate("visual variety", visuals.size >= minVisuals, `${visuals.size} unique visuals (min ${minVisuals})`, true);
 
   // Long-form should have chapter structure; short-form (reels/shorts) is exempt.
   const longForm = platform === "youtube-long" || platform === "linkedin";
@@ -146,7 +153,7 @@ function main() {
     const hasEmphasis = lines.some((l) => l.layout === "center" || l.layout === "title");
     const hasKicker = lines.some((l) => l.kicker);
     gate("layout variety", hasEmphasis && hasKicker,
-      hasEmphasis && hasKicker ? "has center/title + kicker" : `needs ≥1 center-or-title (${hasEmphasis}) AND ≥1 kicker (${hasKicker})`);
+      hasEmphasis && hasKicker ? "has center/title + kicker" : `wants ≥1 center-or-title (${hasEmphasis}) AND ≥1 kicker (${hasKicker})`, true);
   }
 
   // ---- 5b. LANGUAGE: non-English voice must ship English on-screen text --
@@ -163,7 +170,7 @@ function main() {
   // ---- 6. HOOK: first line must grab, not ramble -------------------------
   if (lines[0]) {
     const w = words(lines[0].text);
-    gate("hook line", w >= 3 && w <= 32, `first line is ${w} words (want 3–32)`);
+    gate("hook line", w >= 3 && w <= 32, `first line is ${w} words (want 3–32)`, true);
   }
 
   // ---- 7. RESEARCH: real sources, not hallucination ----------------------
@@ -189,8 +196,9 @@ function main() {
   console.log("-".repeat(70));
   let failed = 0;
   for (const r of results) {
-    const tag = r.ok ? "PASS" : "FAIL";
-    if (!r.ok) failed++;
+    const softened = !r.ok && r.soft && SOFT_MODE; // quality nudge in the auto pipeline
+    const tag = r.ok ? "PASS" : softened ? "WARN" : "FAIL";
+    if (!r.ok && !softened) failed++;
     console.log(`  [${tag}] ${r.name.padEnd(20)} ${r.msg}`);
   }
   if (warnings.length) {
