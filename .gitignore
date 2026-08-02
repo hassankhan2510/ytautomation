@@ -6,6 +6,7 @@ theranos-doc/.remotion/
 
 # --- generated per render (recreated by `npm run prepare-video`) ---
 theranos-doc/public/audio/
+theranos-doc/public/thumb/
 theranos-doc/src/data/timeline.json
 
 # --- uncompressed source-asset duplicates ---

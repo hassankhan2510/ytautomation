@@ -1,0 +1,11 @@
+{
+  "bg": null,
+  "brand": "EQUITIER",
+  "accent": "#10b981",
+  "lines": [
+    { "t": "INDEX FUNDS", "hi": true },
+    { "t": "BEAT THE PROS" }
+  ],
+  "sub": "The boring strategy that wins",
+  "variant": 0
+}

@@ -113,6 +113,7 @@ const RULES = `
 OUTPUT: a single JSON object. No prose outside JSON.
 Shape: { "title": string, "titleOptions": string[3-5], "hashtags": string[5-10],
   "description": string, "tags": string[>=3],
+  "thumb": { "line1": string, "line2": string, "sub": string },
   "lines": [ { "text": string, "caption"?: string, "keywords": string[1-2],
     "type": "image"|"video", "layout": "lower-third"|"center"|"title"|"stat"|"quote"|"bullets"|"nametag"|"timeline"|"chart"|"meter",
     "kicker"?: string, "stat"?: string, "cite"?: string, "items"?: string[], "name"?: string, "role"?: string,
@@ -124,7 +125,10 @@ RULES:
 - Use a MIX of layouts (this is what makes it look produced, not generic AI): mostly lower-third,
   but a "center" or "title" for the hook and big statements, at least one "stat", a "nametag" if a
   person matters, one "bullets", and a "kicker" label on the first line of each act.
-- keywords = concrete stock-footage search terms (e.g. "rocket launch night").`;
+- keywords = concrete stock-footage search terms (e.g. "rocket launch night").
+- thumb = the YouTube THUMBNAIL text, built for clicks: line1 + line2 are each 1-3 BIG punchy words
+  (a curiosity gap or bold claim, NOT the full title — e.g. "INDEX FUNDS" / "BEAT THE PROS"), and
+  "sub" is a short 3-6 word hook. High-contrast, provocative but not false.`;
 
 function langRule(language) {
   if (language === "ur") return `\nLANGUAGE: write "text" in natural URDISH (Urdu script with common English words inline, e.g. "Uber نے Careem کو acquire کیا"). Put the ENGLISH on-screen version in "caption" for EVERY line.`;
@@ -224,6 +228,8 @@ function finalizeMeta(model, cfg, topic, isShort, researchFile) {
     language: cfg.language || "en",
     brand: cfg.brand || CHANNEL.toUpperCase(),
     tagline: cfg.tagline || "",
+    thumbStyle: cfg.thumbStyle || "",
+    thumb: model.thumb && model.thumb.line1 ? model.thumb : null,
     pauseBetweenLinesSec: isShort ? 0.15 : 0.22,
     accentColor: cfg.accentColor,
     description: model.description || model.title || "",

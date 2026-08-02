@@ -2,6 +2,7 @@ import React from "react";
 import { Composition } from "remotion";
 import { DocVideo } from "./compositions/DocVideo";
 import { Carousel } from "./compositions/Carousel";
+import { Thumbnail } from "./compositions/Thumbnail";
 import timeline from "./data/timeline.json";
 import carousel from "./data/carousel.json";
 
@@ -54,6 +55,8 @@ export const RemotionRoot: React.FC = () => {
         width={1080}
         height={1080}
       />
+      {/* YouTube thumbnail — 1280x720, rendered as a single still. */}
+      <Composition id="Thumbnail" component={Thumbnail} durationInFrames={1} fps={fps} width={1280} height={720} />
     </>
   );
 };

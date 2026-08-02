@@ -28,6 +28,7 @@
     "assets": "node scripts/fetch_assets.mjs",
     "compress": "node scripts/compress_assets.mjs",
     "carousel": "node scripts/make_carousel.mjs",
+    "thumb": "node scripts/make_thumbnail.mjs",
     "autocut": "node scripts/autocut.mjs",
     "batch": "node scripts/batch.mjs",
     "kit": "node scripts/publish_kit.mjs",

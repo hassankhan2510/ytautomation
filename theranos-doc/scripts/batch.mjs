@@ -77,6 +77,7 @@ function bundleJob(name, platform) {
         f === `${name}_${platform}.mp4` ||
         f === `${name}.txt` ||
         f === `${name}_carousel.pdf` ||
+        f === `${name}_thumb.png` ||
         slide.test(f),
     );
     if (!wanted.length) return;
@@ -157,6 +158,14 @@ function main() {
             run(`node scripts/make_carousel.mjs ${name}`);
           } catch {
             /* carousel is best-effort — the video still ships */
+          }
+        }
+        // YouTube thumbnail (long-form only — Shorts don't use a 16:9 thumbnail).
+        if (!SAMPLE && platform === "youtube-long") {
+          try {
+            run(`node scripts/make_thumbnail.mjs --out=out/${name}_thumb.png`);
+          } catch {
+            /* thumbnail is best-effort — the video still ships */
           }
         }
         // Bundle ALL of this video's deliverables (reel + kit txt + carousel pdf + slides) into one

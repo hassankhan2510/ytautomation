@@ -14,7 +14,8 @@
     "review": true,
     "funnel": "If you're building autonomy where cameras fail, see what we're building at Syndar — link below.",
     "brand": "SYNDAR",
-    "tagline": "Perception where cameras fail"
+    "tagline": "Perception where cameras fail",
+    "thumbStyle": "futuristic radar and sensor technology, robotics, sci-fi HUD interface, glowing cyan lights, cinematic, high-tech, dramatic"
   },
   "cohortzero": {
     "niche": "business",
@@ -30,7 +31,8 @@
     "ground": true,
     "review": false,
     "brand": "COHORT ZERO",
-    "tagline": "Founders' files"
+    "tagline": "Founders' files",
+    "thumbStyle": "modern glass skyscrapers and a boardroom, startup and business energy, dramatic red rim lighting, cinematic, moody"
   },
   "equitier": {
     "niche": "finance",
@@ -46,7 +48,8 @@
     "ground": true,
     "review": false,
     "brand": "EQUITIER",
-    "tagline": "Money, honestly"
+    "tagline": "Money, honestly",
+    "thumbStyle": "financial district skyline with glowing green stock-market charts and money, professional, cinematic, moody depth of field"
   },
   "til": {
     "niche": "facts",
@@ -62,6 +65,7 @@
     "ground": true,
     "review": false,
     "brand": "TIL",
-    "tagline": "Today I learned"
+    "tagline": "Today I learned",
+    "thumbStyle": "vivid vibrant science and space imagery, cosmic nebula and macro detail, colorful, dramatic, sense of wonder"
   }
 }
