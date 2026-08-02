@@ -203,14 +203,26 @@ function deriveKeywords(text) {
   return words.length ? [words.slice(0, 4).join(" ")] : ["cinematic background"];
 }
 
+// Coerce a token list into a clean string array. The free model sometimes returns tags/hashtags as
+// a single comma-separated STRING instead of an array — which then fails the validator's
+// Array.isArray check. Split it, strip '#', drop blanks, and cap the count (no tag-stuffing).
+function toArr(v, max) {
+  let a = v;
+  if (typeof a === "string") a = a.split(/[,;#\n]+/);
+  if (!Array.isArray(a)) a = [];
+  a = a.map((x) => String(x).trim().replace(/^#+/, "")).filter(Boolean);
+  return max ? a.slice(0, max) : a;
+}
+
 function finalizeMeta(model, cfg, topic, isShort, researchFile) {
   const platform = isShort ? (cfg.platform === "youtube-long" ? "reel" : cfg.platform) : cfg.platform;
   const spl = SEC_PER_LINE[platform] || 7;
   const lines = model.lines || [];
+  const tags = toArr(model.tags, 15);
   return {
     title: model.title || topic,
-    titleOptions: model.titleOptions || [],
-    hashtags: model.hashtags || [],
+    titleOptions: Array.isArray(model.titleOptions) ? model.titleOptions : [],
+    hashtags: toArr(model.hashtags, 12),
     topic: topic || model.title || cfg.niche,
     niche: cfg.niche,
     channel: CHANNEL,
@@ -233,7 +245,7 @@ function finalizeMeta(model, cfg, topic, isShort, researchFile) {
     pauseBetweenLinesSec: isShort ? 0.15 : 0.22,
     accentColor: cfg.accentColor,
     description: model.description || model.title || "",
-    tags: model.tags && model.tags.length >= 3 ? model.tags : [cfg.niche, "shorts", "video"],
+    tags: tags.length >= 3 ? tags : [cfg.niche, "shorts", "video"],
     researchFile: researchFile || "research.md",
     requireResearch: false,
   };
