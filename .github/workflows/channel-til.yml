@@ -99,11 +99,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           mkdir -p out/til
-          cp theranos-doc/out/til*.zip out/til/ 2>/dev/null || true
-          cp theranos-doc/out/til*.mp4 out/til/ 2>/dev/null || true
-          cp theranos-doc/out/til*.txt out/til/ 2>/dev/null || true
-          cp theranos-doc/out/til*.jpg out/til/ 2>/dev/null || true
-          cp theranos-doc/out/til*.pdf out/til/ 2>/dev/null || true
+          # Timestamp each delivered file so a new run never overwrites an old one (delete manually).
+          TS=$(date -u +%Y%m%d-%H%M%S)
+          for f in theranos-doc/out/til*.zip theranos-doc/out/til*.mp4; do
+            [ -e "$f" ] || continue
+            cp "$f" "out/til/${TS}_$(basename "$f")"
+          done
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add out/til 2>/dev/null || true

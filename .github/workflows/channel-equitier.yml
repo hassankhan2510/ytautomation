@@ -89,10 +89,15 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs
-      - name: Render long + shorts
+      - name: Render long + shorts + upload to YouTube (private)
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           VOICE_CHOICE: ${{ github.event.inputs.voice }}
+          UPLOAD: "1"
+          YT_PRIVACY: private
+          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
+          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
+          YT_REFRESH_TOKEN_EQUITIER: ${{ secrets.YT_REFRESH_TOKEN_EQUITIER }}
         run: |
           case "$VOICE_CHOICE" in
             *"My voice"*) export VOICE=myvoice ;;
@@ -105,11 +110,12 @@ jobs:
         working-directory: ${{ github.workspace }}
         run: |
           mkdir -p out/equitier
-          cp theranos-doc/out/equitier*.zip out/equitier/ 2>/dev/null || true
-          cp theranos-doc/out/equitier*.mp4 out/equitier/ 2>/dev/null || true
-          cp theranos-doc/out/equitier*.txt out/equitier/ 2>/dev/null || true
-          cp theranos-doc/out/equitier*.jpg out/equitier/ 2>/dev/null || true
-          cp theranos-doc/out/equitier*.pdf out/equitier/ 2>/dev/null || true
+          # Timestamp each delivered file so a new run never overwrites an old one (delete manually).
+          TS=$(date -u +%Y%m%d-%H%M%S)
+          for f in theranos-doc/out/equitier*.zip theranos-doc/out/equitier*.mp4; do
+            [ -e "$f" ] || continue
+            cp "$f" "out/equitier/${TS}_$(basename "$f")"
+          done
           git config user.name "github-actions"
           git config user.email "actions@github.com"
           git add out/equitier 2>/dev/null || true
