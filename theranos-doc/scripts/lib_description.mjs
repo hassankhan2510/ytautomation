@@ -62,6 +62,7 @@ export function buildDescription(meta, chapters = []) {
   const parts = [String(meta.description || meta.title || "").trim()];
   if (!isShort && chapters.length >= 3) parts.push("", "Chapters:", ...chapters);
   if (linkLines.length) parts.push("", `Follow ${brand}:`, ...linkLines);
+  if (meta.disclaimer && String(meta.disclaimer).trim()) parts.push("", String(meta.disclaimer).trim());
   if (hashtags.length) parts.push("", hashtags.slice(0, 8).join(" "));
   if (isShort) parts.push("#Shorts");
   return parts.join("\n").slice(0, 4900);

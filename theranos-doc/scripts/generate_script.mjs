@@ -237,6 +237,7 @@ function finalizeMeta(model, cfg, topic, isShort, researchFile) {
     brand: cfg.brand || CHANNEL.toUpperCase(),
     tagline: cfg.tagline || "",
     links: cfg.links || null,
+    disclaimer: cfg.disclaimer || "",
     thumbStyle: cfg.thumbStyle || "",
     thumb: model.thumb && model.thumb.line1 ? model.thumb : null,
     pauseBetweenLinesSec: isShort ? 0.15 : 0.22,
