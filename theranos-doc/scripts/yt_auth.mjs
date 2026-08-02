@@ -16,7 +16,8 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-const SCOPE = "https://www.googleapis.com/auth/youtube.upload";
+// upload = to post videos; readonly = so we can print WHICH channel this token controls (confirmation).
+const SCOPE = "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly";
 
 function loadClient() {
   // Prefer env vars; else read a client_secret*.json in the project root.
@@ -106,6 +107,24 @@ async function main() {
   if (!tok.refresh_token) {
     console.error("\nNo refresh_token returned. Make sure the OAuth app is PUBLISHED (in production) and you approved with prompt=consent. Response:\n", tok);
     process.exit(1);
+  }
+
+  // Confirm WHICH channel this token controls — so you never save it under the wrong name.
+  try {
+    const who = await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true", {
+      headers: { Authorization: `Bearer ${tok.access_token}` },
+    });
+    const wj = await who.json();
+    const ch = wj.items?.[0]?.snippet;
+    if (ch) {
+      console.log("\n=========================================================");
+      console.log(`  ✓ This token uploads to the channel:  "${ch.title}"${ch.customUrl ? "  (" + ch.customUrl + ")" : ""}`);
+      console.log("  >> Make sure that's the channel you intended before saving the token below.");
+    } else {
+      console.log(`\n  (couldn't read the channel name: ${JSON.stringify(wj).slice(0, 160)})`);
+    }
+  } catch (e) {
+    console.log(`\n  (couldn't confirm the channel name — ${e.message}. The token still uploads to whichever channel you picked.)`);
   }
 
   console.log("\n=========================================================");

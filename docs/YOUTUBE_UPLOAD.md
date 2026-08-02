@@ -33,7 +33,9 @@ channel** to let it upload to that channel. Do it once per channel (~30–45 min
 4. **APIs & Services → OAuth consent screen** (newer console: **Google Auth Platform**).
    - User type **External** → Create → app name + your support/developer emails → save.
    - **Do NOT upload a logo** (a logo forces Google verification — leave it blank).
-   - **Data Access → Add scopes** → add `https://www.googleapis.com/auth/youtube.upload` → Update → Save.
+   - **Data Access → Add scopes** → add **both**:
+     `https://www.googleapis.com/auth/youtube.upload` and `https://www.googleapis.com/auth/youtube.readonly`
+     → Update → Save. *(readonly lets the helper print which channel your token controls, so you never save it under the wrong name.)*
 5. **Audience → Publish app → Confirm** so status is **"In production"**.
    - ⚠️ If left in **Testing**, the refresh token **dies every 7 days** and the automation breaks. In production it doesn't expire.
    - You do NOT need verification for your own channels — at sign-in you'll see an "unverified app" warning → **Advanced → Go to … (unsafe)**. Normal.
