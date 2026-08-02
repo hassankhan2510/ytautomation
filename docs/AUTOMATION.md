@@ -14,10 +14,11 @@ click Run (or, for TIL, it runs itself daily). Finished videos + publish kits la
 
 | Workflow | Channel | Trigger | Notes |
 |---|---|---|---|
-| **Channel — TIL** | `til` | **Daily (auto)** + manual | Autonomous. Groq invents a valuable fact; a short is built + delivered. Daily run = a short; on manual run you can also pick **long** / **long+shorts** for a deep-dive. |
-| **Channel — Cohort Zero** | `cohortzero` | Manual (enter topics) | Long video + 3 shorts. Wikipedia-grounded. |
-| **Channel — Equitier** | `equitier` | Manual (enter topics) | Long video + 3 shorts. Wikipedia-grounded. |
-| **Channel — Syndar** | `syndar` | Manual (enter topics) | Long + 3 shorts. **DRAFT — verify technical claims before uploading.** |
+| **Equitier — Daily Short** | `equitier` | **Daily (auto)** — 08:00 PKT | Fully autonomous mass-upload: the **topic scout** picks a trending finance topic (YouTube autocomplete + Google Trends, interest/riba filtered) and builds ONE short + kit. Blank topic on manual run = auto-pick. |
+| **Channel — Equitier** | `equitier` | Manual (enter topics) | Long video + shorts. Wikipedia-grounded. |
+| **Channel — Cohort Zero** | `cohortzero` | Manual (enter topics) | Long video + shorts. Wikipedia-grounded. |
+| **Channel — Syndar** | `syndar` | Manual (enter topics) | Long + shorts. **DRAFT — verify technical claims before uploading.** |
+| **Channel — TIL** | `til` | Manual (auto-run OFF) | Groq invents a fact → a short. Daily schedule is disabled until TIL is fully set up. |
 
 To make a video: Actions → the channel → **Run workflow** → fill in the fields → Run. When it
 finishes, each video is delivered as a **single `.zip`** in that channel's own folder — **`out/syndar/`,

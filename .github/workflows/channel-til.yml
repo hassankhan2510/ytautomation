@@ -1,6 +1,7 @@
-name: "Channel — TIL (auto daily)"
+name: "Channel — TIL (manual)"
 
-# Fully autonomous: Groq invents a valuable fact, the machine builds a short, and it lands in out/.
+# Groq invents a valuable fact, the machine builds a short, and it lands in out/til/.
+# NOTE: the daily auto-run is currently OFF (see below) — run it manually until TIL is fully set up.
 on:
   workflow_dispatch:
     inputs:
@@ -35,8 +36,10 @@ on:
           - "Auto (natural — Kokoro + edge-tts)"
           - "My voice (Chatterbox clone)"
           - "Edge-tts (robotic, fastest)"
-  schedule:
-    - cron: "0 6 * * *" # every day 06:00 UTC (defaults to English)
+  # Daily auto-run DISABLED — TIL isn't fully set up yet. Run it manually from the Actions tab.
+  # (Re-enable later by uncommenting:)
+  #  schedule:
+  #    - cron: "0 3 * * *"
 
 jobs:
   make:

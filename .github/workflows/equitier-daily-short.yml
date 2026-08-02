@@ -1,0 +1,78 @@
+name: "Equitier — Daily Short (auto, trend-picked)"
+
+# Fully autonomous mass-upload: the topic scout picks a trending finance topic (YouTube autocomplete
+# + Google Trends, interest/riba filtered), the machine builds ONE short + publish kit, and delivers
+# it to out/equitier/. Runs every morning Pakistan time. Blank topic on manual runs = auto-pick.
+on:
+  schedule:
+    - cron: "0 3 * * *" # 08:00 Pakistan Standard Time (UTC+5)
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Optional topic (leave blank to auto-pick a trending one)"
+        required: false
+        type: string
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: theranos-doc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: theranos-doc/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install headless-Chrome libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng
+      - run: npm ci
+      - run: pip install edge-tts kokoro soundfile
+      - name: Pick a trending topic (scout)
+        id: scout
+        run: |
+          TOPIC="${{ github.event.inputs.topic }}"
+          if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=equitier --one)"; fi
+          echo "Chosen topic: $TOPIC"
+          echo "topic=$TOPIC" >> "$GITHUB_OUTPUT"
+      - name: Write short (Groq)
+        env:
+          CHANNEL: equitier
+          TOPICS: ${{ steps.scout.outputs.topic }}
+          MODE: shorts
+          SHORTS: "1"
+          LANGUAGE: English
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: node scripts/generate_script.mjs
+      - name: Render (natural Kokoro voice)
+        env:
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: npm run batch -- --only=equitier
+      - name: Deliver to out/equitier/
+        working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p out/equitier
+          cp theranos-doc/out/equitier*.zip out/equitier/ 2>/dev/null || true
+          cp theranos-doc/out/equitier*.mp4 out/equitier/ 2>/dev/null || true
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add out/equitier 2>/dev/null || true
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 0; fi
+          git commit -m "Equitier: daily auto short [skip ci]"
+          for i in 1 2 3 4 5; do
+            if git pull --rebase --autostash origin main && git push origin main; then exit 0; fi
+            echo "retry $i"; sleep 6
+          done
