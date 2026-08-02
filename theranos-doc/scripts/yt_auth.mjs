@@ -16,8 +16,9 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
-// upload = to post videos; readonly = so we can print WHICH channel this token controls (confirmation).
-const SCOPE = "https://www.googleapis.com/auth/youtube.upload https://www.googleapis.com/auth/youtube.readonly";
+// Only youtube.upload — a single sensitive scope you can click through as "unverified" for your own
+// channel. (Adding youtube.readonly triggers Google's mandatory app-verification wall, so we don't.)
+const SCOPE = "https://www.googleapis.com/auth/youtube.upload";
 
 function loadClient() {
   // Prefer env vars; else read a client_secret*.json in the project root.
@@ -109,22 +110,18 @@ async function main() {
     process.exit(1);
   }
 
-  // Confirm WHICH channel this token controls — so you never save it under the wrong name.
+  // Try to name the channel this token controls (works only if youtube.readonly was granted; with
+  // upload-only it can't read, so it tells you how to confirm instead).
   try {
     const who = await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true", {
       headers: { Authorization: `Bearer ${tok.access_token}` },
     });
-    const wj = await who.json();
-    const ch = wj.items?.[0]?.snippet;
-    if (ch) {
-      console.log("\n=========================================================");
-      console.log(`  ✓ This token uploads to the channel:  "${ch.title}"${ch.customUrl ? "  (" + ch.customUrl + ")" : ""}`);
-      console.log("  >> Make sure that's the channel you intended before saving the token below.");
-    } else {
-      console.log(`\n  (couldn't read the channel name: ${JSON.stringify(wj).slice(0, 160)})`);
-    }
-  } catch (e) {
-    console.log(`\n  (couldn't confirm the channel name — ${e.message}. The token still uploads to whichever channel you picked.)`);
+    const ch = (await who.json()).items?.[0]?.snippet;
+    if (ch) console.log(`\n  ✓ This token uploads to the channel:  "${ch.title}"${ch.customUrl ? "  (" + ch.customUrl + ")" : ""}`);
+    else throw new Error("no read scope");
+  } catch {
+    console.log("\n  NOTE: token is tied to the account/brand you just picked in the chooser.");
+    console.log("  To 100% confirm the channel, watch where the FIRST upload lands in YouTube Studio.");
   }
 
   console.log("\n=========================================================");
