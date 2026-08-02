@@ -133,7 +133,7 @@ RULES:
 function langRule(language) {
   if (language === "ur") return `\nLANGUAGE: write "text" in natural URDISH (Urdu script with common English words inline, e.g. "Uber نے Careem کو acquire کیا"). Put the ENGLISH on-screen version in "caption" for EVERY line.`;
   if (language === "hi") return `\nLANGUAGE: write "text" in natural HINGLISH (Hindi script with English words inline). Put the ENGLISH on-screen version in "caption" for EVERY line.`;
-  return `\nLANGUAGE: English. No "caption" needed.`;
+  return `\nLANGUAGE: English. Do NOT include a "caption" field on any line — the full "text" is what shows on screen.`;
 }
 
 function groundingText(g) {
@@ -176,8 +176,10 @@ function sanitizeLines(lines, { language, longForm }) {
     if (layout === "chart") line.chart = l.chart.slice(0, 6);
     if (layout === "meter") line.percent = Number(l.percent);
     if (layout === "map") { line.location = String(l.location); if (l.coords) line.coords = String(l.coords); }
+    // caption = the ENGLISH on-screen text, ONLY for a non-English voice (Urdu/Hindi). For English,
+    // never keep a caption — the full spoken sentence must show on screen (a short model-added
+    // "caption" was causing only 2-3 words to display instead of the whole line).
     if (language !== "en") line.caption = l.caption && String(l.caption).trim() ? String(l.caption) : l.text;
-    else if (l.caption) line.caption = String(l.caption);
     clean.push(line);
   }
   if (longForm && clean.length >= 6) {
