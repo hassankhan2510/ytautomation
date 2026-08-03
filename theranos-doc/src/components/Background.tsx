@@ -31,6 +31,9 @@ const KenBurns: React.FC<{ src: string; durationInFrames: number; seed: number }
   seed,
 }) => {
   const frame = useCurrentFrame();
+  // If an asset failed to download or is corrupt, render nothing (the dark base shows) instead of
+  // letting Remotion throw and kill the whole render. onError disables Remotion's default throw.
+  const [failed, setFailed] = React.useState(false);
   const dir = seed % 2 === 0 ? 1 : -1; // alternate pan direction per segment
   const scale = interpolate(frame, [0, durationInFrames], [1.08, 1.22], {
     extrapolateRight: "clamp",
@@ -41,10 +44,12 @@ const KenBurns: React.FC<{ src: string; durationInFrames: number; seed: number }
   const translateY = interpolate(frame, [0, durationInFrames], [0, -25], {
     extrapolateRight: "clamp",
   });
+  if (failed) return null;
   return (
     <AbsoluteFill>
       <Img
         src={src}
+        onError={() => setFailed(true)}
         style={{
           width: "100%",
           height: "100%",
@@ -93,6 +98,7 @@ export const Background: React.FC<{ segments: BgSegment[] }> = ({ segments }) =>
                   <OffthreadVideo
                     src={src}
                     muted
+                    onError={() => {}}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 </Loop>

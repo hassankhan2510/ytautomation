@@ -107,34 +107,48 @@ async function main() {
     return;
   }
 
+  const niche = String(script.meta?.niche || "").trim();
   for (const [assetName, info] of need) {
-    const query = info.keywords[0] || path.parse(assetName).name.replace(/_/g, " ");
     const dest = path.join(ASSET_DIR, assetName);
-    try {
-      const link =
-        info.type === "video"
-          ? await pexelsVideo(query, orientation)
-          : await pexelsImage(query, orientation);
-      if (!link) {
-        log(`  ! no ${info.type} result for "${query}" (${assetName}) — add manually`);
-        continue;
-      }
-      const bytes = await download(link, dest);
-      // Compress immediately on download: smaller = faster renders + less disk.
-      let note = `${(bytes / 1e6).toFixed(1)} MB`;
+    // Try the specific keyword first, then progressively more generic fallbacks — so a keyword with
+    // NO Pexels match (e.g. a company name like "atlassian") still gets a relevant clip instead of
+    // leaving a blank/404 scene.
+    const queries = [
+      info.keywords[0],
+      info.keywords[1],
+      path.parse(assetName).name.replace(/_/g, " "),
+      niche && `${niche}`,
+      "cinematic abstract dark background",
+    ].filter(Boolean);
+
+    let done = false;
+    for (const query of queries) {
       try {
-        const res = compressAsset(dest, orientation, manifest);
-        if (res.before && res.after) {
-          const pct = Math.round((1 - res.after / res.before) * 100);
-          note = `${(res.after / 1e6).toFixed(1)} MB, -${pct}% compressed`;
+        const link =
+          info.type === "video"
+            ? await pexelsVideo(query, orientation)
+            : await pexelsImage(query, orientation);
+        if (!link) continue; // no result for this query — try the next fallback
+        const bytes = await download(link, dest);
+        if (bytes < 1500) { fs.rmSync(dest, { force: true }); continue; } // tiny/corrupt — try next
+        let note = `${(bytes / 1e6).toFixed(1)} MB`;
+        try {
+          const res = compressAsset(dest, orientation, manifest);
+          if (res.before && res.after) {
+            const pct = Math.round((1 - res.after / res.before) * 100);
+            note = `${(res.after / 1e6).toFixed(1)} MB, -${pct}% compressed`;
+          }
+        } catch (e) {
+          note += ` (compress skipped: ${e.message})`;
         }
-      } catch (e) {
-        note += ` (compress skipped: ${e.message})`;
+        log(`  + ${assetName}  <- "${query}"  (${note})`);
+        done = true;
+        break;
+      } catch (err) {
+        /* try the next fallback query */
       }
-      log(`  + ${assetName}  <- "${query}"  (${note})`);
-    } catch (err) {
-      log(`  ! failed ${assetName} ("${query}"): ${err.message}`);
     }
+    if (!done) log(`  ! could not fetch ${assetName} (tried: ${queries.join(", ")}) — scene will show a dark background`);
   }
   saveManifest(manifest);
   log("\nAsset fetch complete.\n");
