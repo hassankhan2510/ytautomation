@@ -36,7 +36,10 @@
     "review": false,
     "brand": "COHORT ZERO",
     "tagline": "Founders' files",
-    "thumbStyle": "modern glass skyscrapers and a boardroom, startup and business energy, dramatic red rim lighting, cinematic, moody"
+    "thumbStyle": "modern glass skyscrapers and a boardroom, startup and business energy, dramatic red rim lighting, cinematic, moody",
+    "links": {
+      "linkedin": "https://www.linkedin.com/company/cohort-zero/"
+    }
   },
   "equitier": {
     "niche": "finance",
