@@ -128,8 +128,15 @@ async function main() {
         `https://www.googleapis.com/upload/youtube/v3/thumbnails/set?videoId=${j.id}&uploadType=media`,
         { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "image/png" }, body: png },
       );
-      if (tr.ok) console.log("  ✓ Custom thumbnail set");
-      else console.log(`  ! thumbnail not set (${tr.status}) — video keeps its auto frame`);
+      if (tr.ok) {
+        console.log("  ✓ Custom thumbnail set");
+      } else {
+        const body = await tr.text().catch(() => "");
+        const hint = tr.status === 403
+          ? " — this channel isn't eligible for custom thumbnails yet. Verify it at youtube.com/verify (phone), then re-run."
+          : "";
+        console.log(`  ! thumbnail not set (${tr.status})${hint}  ${body.slice(0, 200)}`);
+      }
     } catch (e) {
       console.log(`  ! thumbnail not set (${e.message}) — video keeps its auto frame`);
     }

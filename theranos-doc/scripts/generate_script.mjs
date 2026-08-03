@@ -56,7 +56,7 @@ async function callGroq(system, user) {
         body: JSON.stringify({
           model: GROQ_MODEL,
           temperature: 0.6,
-          max_tokens: 6000,
+          max_tokens: 8000,
           response_format: { type: "json_object" },
           messages: [
             { role: "system", content: system },
@@ -451,20 +451,25 @@ async function main() {
       if (writeLong && longLines.length) { writeJob(prefix, longMeta, longLines); written++; }
 
       if (wantDerivedShorts) {
-        const shortsSystem = `You turn a long video script into short vertical reels. Pick the ${cfg.makeShorts} MOST hook-worthy, self-contained, valuable moments from the script and rewrite each as a punchy standalone reel. Do NOT cut randomly — choose the segments that hook and deliver value. ${RULES}${langRule(cfg.language)}`;
-        const shortsPrompt = `Here is the long script's lines:\n${JSON.stringify((longModel.lines || []).map((l) => l.text || l.caption))}\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines as in the shape] } x${cfg.makeShorts} ] }`;
-        let shortsModel;
-        try {
-          shortsModel = DRY ? drySample().shorts : await callGroq(shortsSystem, shortsPrompt);
-        } catch (e) {
-          console.log(`  ! shorts generation failed (${e.message}) — long video still produced.`);
-          shortsModel = { shorts: [] };
-        }
-        (shortsModel.shorts || []).forEach((sh, i) => {
+        // Generate the derived shorts ONE AT A TIME. Asking for all N in a single response used to
+        // overflow the token limit (the long is ~50 scenes of context), truncate the JSON, and yield
+        // ZERO shorts. One short per call keeps each response small and reliable; a failure on one
+        // short no longer loses the rest.
+        const pts = (longModel.lines || []).map((l) => l.text || l.caption).filter(Boolean).slice(0, 40);
+        const shortsSystem = `You write ONE punchy vertical reel (YouTube Short / Reel) from a longer ${cfg.niche} video. Pick a self-contained, hook-worthy angle and write it as a standalone short. ${RULES}${langRule(cfg.language)}`;
+        for (let i = 0; i < cfg.makeShorts; i++) {
+          const shortsPrompt = `The long video covers these points:\n${JSON.stringify(pts)}\nWrite reel ${i + 1} of ${cfg.makeShorts} — pick a DISTINCT angle/moment (different from the other reels). Return ONE JSON object: { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "thumb": {"line1","line2","sub"}, "lines": [6-9 punchy lines in the shape above] }`;
+          let sh;
+          try {
+            sh = DRY ? drySample().shorts.shorts[0] : await callGroq(shortsSystem, shortsPrompt);
+          } catch (e) {
+            console.log(`  ! short ${i + 1} generation failed (${e.message}) — skipping this one.`);
+            continue;
+          }
           const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
           const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || topic, true, researchFile);
           if (shl.length >= 3) { writeJob(`${prefix}_short_${i + 1}`, meta, shl); written++; }
-        });
+        }
 
         // Never leave the render step with nothing: fall back to the long.
         if (written === 0 && longLines.length) {
