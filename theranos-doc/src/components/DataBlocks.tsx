@@ -81,6 +81,55 @@ export const Chart: React.FC<{
   );
 };
 
+/* ============================ COUNT-UP (animated number) ============================ */
+export const CountUp: React.FC<{
+  value: number;
+  prefix?: string | null;
+  suffix?: string | null;
+  label?: string | null;
+  accent: string;
+  fontSize: number;
+  portrait: boolean;
+}> = ({ value, prefix, suffix, label, accent, fontSize }) => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+  const opacity = useFade();
+  const anim = spring({ frame, fps, config: { mass: 0.7, damping: 18 } });
+  const isInt = Number.isInteger(value);
+  const shownNum = value * anim;
+  const shown = (isInt ? Math.round(shownNum) : Math.round(shownNum * 10) / 10).toLocaleString("en-US");
+
+  return (
+    <AbsoluteFill>
+      <Scrim />
+      <AbsoluteFill style={{ justifyContent: "center", alignItems: "center", opacity, padding: "0 8%" }}>
+        <div
+          style={{
+            fontFamily: sans,
+            fontSize: Math.round(fontSize * 3.0),
+            fontWeight: 900,
+            color: "#f8fafc",
+            letterSpacing: "-2px",
+            textShadow: `0 0 55px ${accent}66`,
+            display: "flex",
+            alignItems: "baseline",
+          }}
+        >
+          {prefix ? <span style={{ color: accent, fontSize: Math.round(fontSize * 1.9), marginRight: 4 }}>{prefix}</span> : null}
+          <span>{shown}</span>
+          {suffix ? <span style={{ color: accent, fontSize: Math.round(fontSize * 1.4), marginLeft: 12 }}>{suffix}</span> : null}
+        </div>
+        <div style={{ height: 5, width: 140 * anim, background: accent, marginTop: 26, borderRadius: 4, boxShadow: `0 0 24px ${accent}` }} />
+        {label ? (
+          <div style={{ fontFamily: sans, fontSize: Math.round(fontSize * 0.86), fontWeight: 500, color: "rgba(248,250,252,0.85)", marginTop: 26, maxWidth: 1200, textAlign: "center", lineHeight: 1.4 }}>
+            {label}
+          </div>
+        ) : null}
+      </AbsoluteFill>
+    </AbsoluteFill>
+  );
+};
+
 /* ============================ COMPARE (VS) ============================ */
 type ComparePanel = { title: string; items: string[] };
 export const Compare: React.FC<{
@@ -299,7 +348,7 @@ export const Collage: React.FC<{
           const s = spring({ frame: frame - i * 3, fps, config: { mass: 0.5, damping: 16 } });
           return (
             <div key={i} style={{ overflow: "hidden", position: "relative" }}>
-              <Img src={staticFile(`assets/${a}`)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${interpolate(s, [0, 1], [1.15, 1])})` }} />
+              <Img src={staticFile(`assets/${a}`)} onError={() => {}} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${interpolate(s, [0, 1], [1.15, 1])})` }} />
             </div>
           );
         })}

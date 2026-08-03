@@ -92,9 +92,10 @@ Shape: { "title": string, "titleOptions": string[3-5], "hashtags": string[5-10],
   "description": string, "tags": string[>=3],
   "thumb": { "line1": string, "line2": string, "sub": string },
   "lines": [ { "text": string, "caption"?: string, "keywords": string[1-2],
-    "type": "image"|"video", "layout": "lower-third"|"center"|"title"|"stat"|"quote"|"bullets"|"nametag"|"timeline"|"chart"|"meter",
+    "type": "image"|"video", "layout": "lower-third"|"center"|"title"|"stat"|"quote"|"bullets"|"nametag"|"timeline"|"chart"|"meter"|"countup",
     "kicker"?: string, "stat"?: string, "cite"?: string, "items"?: string[], "name"?: string, "role"?: string,
-    "events"?: [{ "label": string, "text": string }], "percent"?: number } ] }
+    "events"?: [{ "label": string, "text": string }], "percent"?: number,
+    "value"?: number, "prefix"?: string, "suffix"?: string } ] }
 RULES:
 - One idea per line. The HOOK (line 1) and the big emphasis cards ("center"/"title" layouts) are
   short and punchy. But EVERY OTHER line must be a COMPLETE, informative sentence of 14-24 words that
@@ -123,8 +124,12 @@ RULES:
 - Spell numbers/symbols for TTS ("nine billion", not "$9B"); put "$9B" only in a stat/caption field.
 - Use a MIX of layouts (this is what makes it look produced, not generic AI): mostly lower-third,
   but a "center" or "title" for the hook and big statements, at least one "stat", a "nametag" if a
-  person matters, one "bullets", and a "kicker" label on the first line of each act/section (these
-  also become the video's chapters, so make them short and descriptive).
+  person matters, one "bullets", a "chart" or "timeline" where data/sequence helps, and a "countup"
+  for a big number reveal (money, users, years — set "value" as a plain number e.g. 40000000000,
+  with optional "prefix" like "$" and "suffix" like " users"/"%"). Vary them; don't repeat one block.
+- CHAPTERS: for long-form, put a short "kicker" on the FIRST line of each of the ~5-7 sections/acts
+  (e.g. "THE SETUP", "THE TURN", "THE FALLOUT"). These become the video's YouTube chapters, so make
+  them descriptive, spread through the video, and ~5-7 of them.
 - keywords = concrete stock-footage search terms (e.g. "rocket launch night").
 - thumb = the YouTube THUMBNAIL text, built for clicks: line1 + line2 are each 1-3 BIG punchy words
   (a curiosity gap or bold claim, NOT the full title — e.g. "INDEX FUNDS" / "BEAT THE PROS"), and
@@ -149,7 +154,7 @@ function slug(s) {
 
 // LLMs don't follow schemas perfectly. Coerce output so it always passes validation + renders:
 // drop empty lines, fix bad layouts, downgrade data-blocks missing their required field, ensure captions.
-const OK_LAYOUTS = ["lower-third", "center", "title", "stat", "quote", "bullets", "chart", "timeline", "meter", "nametag", "map", "compare"];
+const OK_LAYOUTS = ["lower-third", "center", "title", "stat", "quote", "bullets", "chart", "timeline", "meter", "nametag", "map", "compare", "countup"];
 function sanitizeLines(lines, { language, longForm }) {
   const clean = [];
   for (const l of Array.isArray(lines) ? lines : []) {
@@ -166,6 +171,7 @@ function sanitizeLines(lines, { language, longForm }) {
     else if (layout === "meter" && typeof l.percent !== "number") layout = "lower-third";
     else if (layout === "map" && !(l.location && String(l.location).trim())) layout = "lower-third";
     else if (layout === "compare" && !(l.compare && l.compare.left && l.compare.right)) layout = "lower-third";
+    else if (layout === "countup" && !(typeof l.value === "number" || (l.value && !Number.isNaN(Number(l.value))))) layout = "lower-third";
     line.layout = layout;
     if (l.kicker) line.kicker = String(l.kicker);
     if (layout === "stat") line.stat = String(l.stat);
@@ -176,6 +182,7 @@ function sanitizeLines(lines, { language, longForm }) {
     if (layout === "chart") line.chart = l.chart.slice(0, 6);
     if (layout === "meter") line.percent = Number(l.percent);
     if (layout === "map") { line.location = String(l.location); if (l.coords) line.coords = String(l.coords); }
+    if (layout === "countup") { line.value = Number(l.value); if (l.prefix) line.prefix = String(l.prefix); if (l.suffix) line.suffix = String(l.suffix); }
     // caption = the ENGLISH on-screen text, ONLY for a non-English voice (Urdu/Hindi). For English,
     // never keep a caption — the full spoken sentence must show on screen (a short model-added
     // "caption" was causing only 2-3 words to display instead of the whole line).

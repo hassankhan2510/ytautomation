@@ -35,7 +35,7 @@ const PLATFORMS = {
 
 const LAYOUTS = [
   "lower-third", "center", "title", "stat", "quote", "bullets",
-  "chart", "compare", "timeline", "meter", "nametag", "map", "collage",
+  "chart", "compare", "timeline", "meter", "nametag", "map", "collage", "countup",
 ];
 
 const PLACEHOLDER = /\b(todo|tbd|lorem ipsum|placeholder|xxx|insert .* here|example text|your text)\b/i;
@@ -109,6 +109,7 @@ function main() {
     else if (l.layout === "compare" && (!l.compare || !l.compare.left || !l.compare.right)) badLines.push(`#${i} compare needs "compare" with left+right {title,items}`);
     else if (l.layout === "timeline" && (!Array.isArray(l.events) || l.events.length < 2)) badLines.push(`#${i} timeline needs an "events" array (>=2 of {label,text})`);
     else if (l.layout === "meter" && typeof l.percent !== "number") badLines.push(`#${i} meter needs a numeric "percent"`);
+    else if (l.layout === "countup" && typeof l.value !== "number") badLines.push(`#${i} countup needs a numeric "value"`);
     else if (l.layout === "nametag" && !l.name) badLines.push(`#${i} nametag needs a "name"`);
     else if (l.layout === "map" && !l.location) badLines.push(`#${i} map needs a "location"`);
     else if (l.layout === "collage" && (!Array.isArray(l.collageAssets) || l.collageAssets.length < 2)) badLines.push(`#${i} collage needs "collageAssets" (>=2 filenames)`);

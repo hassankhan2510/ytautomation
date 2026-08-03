@@ -10,7 +10,7 @@ import timeline from "../data/timeline.json";
 import { Background, BgSegment } from "../components/Background";
 import { Caption, Word, Layout } from "../components/Caption";
 import { Stat, Quote, Bullets } from "../components/SceneBlocks";
-import { Chart, Compare, Timeline, Meter, NameTag, MapLocator, Collage } from "../components/DataBlocks";
+import { Chart, Compare, Timeline, Meter, NameTag, MapLocator, Collage, CountUp } from "../components/DataBlocks";
 import { Grain } from "../components/Grain";
 import { Intro, Outro } from "../components/Brand";
 
@@ -33,6 +33,9 @@ type TimelineLine = {
   compare?: { left: { title: string; items: string[] }; right: { title: string; items: string[] } } | null;
   events?: { label: string; text: string }[] | null;
   percent?: number | null;
+  value?: number | null;
+  prefix?: string | null;
+  suffix?: string | null;
   name?: string | null;
   role?: string | null;
   location?: string | null;
@@ -105,6 +108,8 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
         return <Timeline events={line.events || []} {...common} />;
       case "meter":
         return <Meter percent={line.percent ?? 0} label={line.kicker || line.text} {...common} />;
+      case "countup":
+        return <CountUp value={line.value ?? 0} prefix={line.prefix} suffix={line.suffix} label={line.text} {...common} />;
       case "nametag":
         return <NameTag name={line.name || line.text} role={line.role} {...common} />;
       case "map":
