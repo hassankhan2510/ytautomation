@@ -1,10 +1,10 @@
-name: "Equitier — Daily Short (auto, trend-picked)"
+name: "Cohort Zero — Daily Short (auto, trend-picked)"
 
-# Fully autonomous: the topic scout picks a trending finance topic, the machine builds ONE short in
-# YOUR cloned voice, and uploads it to @equitier as PUBLIC. Blank topic on manual runs = auto-pick.
+# Fully autonomous: the topic scout picks a trending business/startup topic, the machine builds ONE
+# short in YOUR cloned voice, and uploads it to Cohort Zero as PUBLIC. Blank topic = auto-pick.
 on:
   schedule:
-    - cron: "0 16 * * *" # ~11:00 US-Eastern — finance audience is most active midday/lunch
+    - cron: "0 13 * * *" # ~08:00 US-Eastern — founders/professionals starting the workday
   workflow_dispatch:
     inputs:
       topic:
@@ -43,12 +43,12 @@ jobs:
         id: scout
         run: |
           TOPIC="${{ github.event.inputs.topic }}"
-          if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=equitier --one)"; fi
+          if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=cohortzero --one)"; fi
           echo "Chosen topic: $TOPIC"
           echo "topic=$TOPIC" >> "$GITHUB_OUTPUT"
       - name: Write short (Groq)
         env:
-          CHANNEL: equitier
+          CHANNEL: cohortzero
           TOPICS: ${{ steps.scout.outputs.topic }}
           MODE: shorts
           SHORTS: "1"
@@ -64,12 +64,12 @@ jobs:
           YT_PRIVACY: public
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-          YT_REFRESH_TOKEN_EQUITIER: ${{ secrets.YT_REFRESH_TOKEN_EQUITIER }}
-        run: npm run batch -- --only=equitier
+          YT_REFRESH_TOKEN_COHORTZERO: ${{ secrets.YT_REFRESH_TOKEN_COHORTZERO }}
+        run: npm run batch -- --only=cohortzero
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: equitier-daily-run${{ github.run_number }}
-          path: theranos-doc/out/equitier*.zip
+          name: cohortzero-daily-run${{ github.run_number }}
+          path: theranos-doc/out/cohortzero*.zip
           retention-days: 30
           if-no-files-found: warn

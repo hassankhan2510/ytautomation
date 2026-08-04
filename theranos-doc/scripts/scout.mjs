@@ -31,6 +31,28 @@ const CHANNELS = {
     block: /interest|mortgage|\bloans?\b|credit\s?card|\bapr\b|high[-\s]?yield|savings account|\bbonds?\b|refinanc|heloc|credit score|\bdebt\b|bnpl|buy now pay later|riba|payday/i,
     boost: /invest|index fund|stock|money|wealth|inflation|passive income|\bsave\b|budget|gold|\betf\b|financ|retire|rich|millionaire|portfolio|dividend|scam|economy|recession/i,
   },
+  cohortzero: {
+    seeds: [
+      "how to start a business", "why startups fail", "startup mistakes", "business ideas 2026",
+      "how founders raise money", "how to scale a startup", "profitable business models",
+      "billion dollar company story", "biggest startup failures", "how companies grow",
+      "business strategy explained", "entrepreneur mistakes", "how to get customers",
+      "product market fit", "how startups make money", "famous founder stories",
+    ],
+    block: /nsfw|onlyfans|gambling|casino/i,
+    boost: /startup|business|founder|company|entrepreneur|venture|scal|revenue|customer|product|market|billion|acqui|ipo|fund|pitch|strategy/i,
+  },
+  syndar: {
+    seeds: [
+      "how self driving cars work", "how radar works", "lidar vs radar", "autonomous drones",
+      "physical ai explained", "how robots see", "sensor fusion explained", "slam robotics",
+      "machine perception", "computer vision explained", "autonomous navigation",
+      "how do robots navigate", "future of robotics", "ai in the physical world",
+      "how do cameras fail", "gps denied navigation",
+    ],
+    block: /nsfw|gambling|casino|toy review/i,
+    boost: /radar|lidar|sensor|autonom|\brobot|\bai\b|drone|percept|vision|slam|navigat|self[-\s]?driving|physical ai|machine|tech|neural|compute/i,
+  },
 };
 
 async function ytSuggest(seed) {

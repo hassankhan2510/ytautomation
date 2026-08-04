@@ -48,6 +48,14 @@ on:
           - "Auto (natural — Kokoro + edge-tts)"
           - "My voice (Chatterbox clone)"
           - "Edge-tts (robotic, fastest)"
+      upload:
+        description: "Upload to YouTube as Private DRAFT? (No = just make the video + kit)"
+        required: true
+        default: "Yes"
+        type: choice
+        options:
+          - "Yes"
+          - "No"
 
 jobs:
   make:
@@ -96,7 +104,7 @@ jobs:
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           VOICE_CHOICE: ${{ github.event.inputs.voice }}
-          UPLOAD: "1"
+          UPLOAD: ${{ github.event.inputs.upload == 'No' && '0' || '1' }}
           YT_PRIVACY: private
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
