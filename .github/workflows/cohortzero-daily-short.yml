@@ -56,12 +56,12 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs
-      - name: Render (your cloned voice) + upload to YouTube (PUBLIC)
+      - name: Render (your cloned voice) + upload to YouTube (private)
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           VOICE: myvoice
           UPLOAD: "1"
-          YT_PRIVACY: public
+          YT_PRIVACY: private
           YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
           YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
           YT_REFRESH_TOKEN_COHORTZERO: ${{ secrets.YT_REFRESH_TOKEN_COHORTZERO }}
