@@ -47,6 +47,22 @@ const CHANNELS = {
     block: /nsfw|onlyfans|gambling|casino/i,
     boost: /startup|business|founder|company|entrepreneur|venture|scal|revenue|customer|product|market|billion|acqui|ipo|fund|pitch|strategy/i,
   },
+  // Pakistan-focused Cohort Zero (for TikTok): founder / entrepreneurship lust the local audience is
+  // searching daily. Same brand + accent, different topic pool + language flavour.
+  cohortzero_pk: {
+    seeds: [
+      "how to become entrepreneur in pakistan", "pakistani startup success story",
+      "business ideas in pakistan", "young entrepreneur pakistan", "how to start business in pakistan",
+      "pakistani founder story", "careem story", "airlift pakistan", "bazaar pakistan startup",
+      "bykea founder", "foodpanda pakistan", "krave mart", "sadapay founder", "raast pakistan",
+      "how to make money in pakistan", "side business in pakistan", "small business ideas pakistan",
+      "why startups fail in pakistan", "pakistani businessman success", "how to be rich in pakistan",
+      "student business ideas pakistan", "online business in pakistan", "freelance in pakistan",
+    ],
+    // No riba (interest) for the user's line, plus obvious junk out.
+    block: /interest|mortgage|\bloans?\b|credit\s?card|payday|riba|nsfw|gambling|casino/i,
+    boost: /pakistan|karachi|lahore|islamabad|founder|entrepreneur|startup|business|\brich\b|hustle|careem|airlift|bazaar|foodpanda|bykea|sadapay|krave|money|success|jazz|makro|daraz/i,
+  },
   syndar: {
     // Daily = "AI breakthroughs / AI news today" — the highest-view AI-shorts angle right now.
     // Manual workflow stays for your deep radar/perception long-form topics.

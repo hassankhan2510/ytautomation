@@ -18,6 +18,9 @@ theranos-doc/src/assets/
 theranos-doc/client_secret*.json
 **/client_secret*.json
 *.token
+# TikTok session cookies — NEVER commit; used as a GitHub secret instead.
+**/cookies.txt
+**/cookies*.json
 
 # --- os / editor / logs ---
 *.log
