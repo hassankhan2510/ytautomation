@@ -20,16 +20,21 @@ const ONE = process.argv.includes("--one");
 // Per-channel search seeds + filters. (Only Equitier is wired for now.)
 const CHANNELS = {
   equitier: {
+    // Daily = high-view "market updates" (stocks, gold, silver, bitcoin) — the shorts YouTube pushes
+    // hardest in finance because they ride searches that spike EVERY DAY. Use the manual workflow
+    // for evergreen how-to topics.
     seeds: [
-      "how to invest for beginners", "index funds", "stock market for beginners",
-      "passive income ideas", "how to save money", "money mistakes", "how to build wealth",
-      "inflation explained", "investing mistakes", "gold investment", "financial freedom",
-      "how to budget", "side hustle ideas", "how the rich build wealth", "money psychology",
-      "biggest financial scams", "etf investing", "how to become a millionaire",
+      "stock market today", "stocks to buy today", "top stocks today", "nasdaq today",
+      "s&p 500 today", "tesla stock today", "nvidia stock today", "apple stock today",
+      "amazon stock today", "google stock today", "meta stock today",
+      "gold price today", "gold price prediction", "silver price today", "silver price prediction",
+      "bitcoin price today", "bitcoin prediction today", "bitcoin news today",
+      "ethereum today", "crypto news today", "solana price today", "xrp price today",
+      "market news today", "stock market crash", "us economy today",
     ],
     // Equitier is general-audience finance BUT must avoid interest/riba topics (user's line).
     block: /interest|mortgage|\bloans?\b|credit\s?card|\bapr\b|high[-\s]?yield|savings account|\bbonds?\b|refinanc|heloc|credit score|\bdebt\b|bnpl|buy now pay later|riba|payday/i,
-    boost: /invest|index fund|stock|money|wealth|inflation|passive income|\bsave\b|budget|gold|\betf\b|financ|retire|rich|millionaire|portfolio|dividend|scam|economy|recession/i,
+    boost: /stock|\bmarket|nasdaq|s&p|dow\b|gold|silver|bitcoin|btc|ethereum|\beth\b|crypto|solana|\bxrp\b|\bprice\b|surge|crash|rally|nvidia|tesla|apple|amazon|meta|invest|economy/i,
   },
   cohortzero: {
     seeds: [
@@ -43,15 +48,18 @@ const CHANNELS = {
     boost: /startup|business|founder|company|entrepreneur|venture|scal|revenue|customer|product|market|billion|acqui|ipo|fund|pitch|strategy/i,
   },
   syndar: {
+    // Daily = "AI breakthroughs / AI news today" — the highest-view AI-shorts angle right now.
+    // Manual workflow stays for your deep radar/perception long-form topics.
     seeds: [
-      "how self driving cars work", "how radar works", "lidar vs radar", "autonomous drones",
-      "physical ai explained", "how robots see", "sensor fusion explained", "slam robotics",
-      "machine perception", "computer vision explained", "autonomous navigation",
-      "how do robots navigate", "future of robotics", "ai in the physical world",
-      "how do cameras fail", "gps denied navigation",
+      "ai breakthrough today", "ai news today", "openai news today", "chatgpt news today",
+      "google gemini today", "anthropic claude news", "grok ai news", "deepseek news",
+      "new ai tool today", "ai just did this", "ai model released", "ai update today",
+      "new robot released", "humanoid robot news", "tesla optimus news", "figure ai news",
+      "boston dynamics news", "ai agent news", "ai video generator", "sora ai news",
+      "self driving car news", "waymo news today", "ai in daily life", "future of ai",
     ],
     block: /nsfw|gambling|casino|toy review/i,
-    boost: /radar|lidar|sensor|autonom|\brobot|\bai\b|drone|percept|vision|slam|navigat|self[-\s]?driving|physical ai|machine|tech|neural|compute/i,
+    boost: /\bai\b|openai|chatgpt|gemini|claude|grok|deepseek|llm|robot|humanoid|optimus|figure|boston dynamics|breakthrough|released|launch|announce|autonom|waymo|self[-\s]?driving|agent|neural|deepmind|nvidia/i,
   },
 };
 
@@ -88,7 +96,7 @@ function clean(q) {
 }
 
 // Autocomplete pollution: creator-name completions and obvious junk we don't want as topics.
-const NOISE = /\b(tilbury|nazareth|mcqueen|ramsey|graham stephan|meet kevin|minority mindset|coffeezilla|abdaal|reddit|quora|song|lyrics|movie|meme|roblox|gta|fortnite)\b/i;
+const NOISE = /\b(tilbury|nazareth|mcqueen|ramsey|graham stephan|meet kevin|minority mindset|coffeezilla|abdaal|reddit|quora|song|lyrics|movie|meme|roblox|gta|fortnite|hindi|tamil|telugu|urdu|malayalam|bangla|bengali|odia|marathi|punjabi|gujarati|kannada|n8n|newsletter|class \d)\b/i;
 
 // Dedupe key that ignores the year so "... in 2025 / 2026 / 2024" collapse to one entry.
 const dkey = (q) => q.replace(/\b(in\s+)?20\d\d\b/g, "").replace(/\s+/g, " ").trim();
