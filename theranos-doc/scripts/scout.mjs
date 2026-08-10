@@ -10,6 +10,8 @@
  *   node scripts/scout.mjs --channel=equitier --one      # print ONE topic (for the daily auto-run)
  */
 
+import { recentTopicKeys, normKey } from "./lib_history.mjs";
+
 const arg = (k, d) => {
   const a = process.argv.find((x) => x.startsWith(`--${k}=`));
   return a ? a.split("=").slice(1).join("=") : d;
@@ -174,8 +176,15 @@ async function main() {
   }
 
   if (ONE) {
-    // Rotate through the top of the list by day, so the daily short isn't the same topic twice.
-    const top = cand.slice(0, 25);
+    // Never repeat a topic used in the last 14 days. The old `dayOfYear() % len` "rotation" was an
+    // illusion — the candidate list is re-fetched live every day, so its length/order shift and the
+    // modulo could re-land on the same phrase. Instead we drop anything recently posted (persisted
+    // in channels/history/<channel>.json) and take the strongest remaining topic.
+    const recent = recentTopicKeys(CHANNEL, 14);
+    const fresh = cand.filter((q) => !recent.has(normKey(q)));
+    const pool = fresh.length ? fresh : cand; // if the whole pool is exhausted, fall back to all
+    // Among the top of the fresh, ranked list, rotate by day so two runs on the same day differ too.
+    const top = pool.slice(0, Math.max(1, Math.min(10, pool.length)));
     console.log(top[dayOfYear() % top.length]);
   } else {
     console.log(`Top topics for ${CHANNEL} (${cand.length} found):\n`);

@@ -109,6 +109,21 @@ function uploadToYouTube(name, outFile, thumbFile) {
   }
 }
 
+// Optional auto-post to a LinkedIn Company Page (only when LI_UPLOAD=1 and the channel's org URN +
+// token are present). Best-effort — a failed post never fails the video. Posts the reel by default;
+// set LI_TYPE=document to post the PDF carousel instead.
+function postToLinkedIn(name, outFile, platform) {
+  if (process.env.LI_UPLOAD !== "1") return;
+  const channel = name.split("_")[0];
+  const type = process.env.LI_TYPE === "document" ? "document" : "video";
+  const media = type === "document" ? `--document=out/${name}_carousel.pdf` : `--video=${outFile}`;
+  try {
+    run(`node scripts/li_upload.mjs --channel=${channel} --script=jobs/${name}.json ${media} --type=${type}`);
+  } catch (e) {
+    console.log(`  ! linkedin post failed (${String(e.message).split("\n")[0]}) — non-fatal`);
+  }
+}
+
 function backup(p) {
   if (fs.existsSync(p)) fs.copyFileSync(p, p + ".bak");
 }
@@ -192,6 +207,8 @@ function main() {
             /* carousel is best-effort — the video still ships */
           }
         }
+        // Optional: post to the LinkedIn Page (after the carousel exists, before the files are zipped).
+        if (!SAMPLE) postToLinkedIn(name, outFile, platform);
         // Bundle ALL of this video's deliverables (reel + kit txt + carousel pdf + slides) into one
         // zip, so the output folder is one file per video instead of a scatter of loose files.
         if (!SAMPLE) bundleJob(name, platform);

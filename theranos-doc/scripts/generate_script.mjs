@@ -17,6 +17,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { research } from "./lib_research.mjs";
+import { liveContext } from "./lib_live.mjs";
+import { recentTitles, appendHistory } from "./lib_history.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -262,6 +264,39 @@ function finalizeMeta(model, cfg, topic, isShort, researchFile) {
   };
 }
 
+// REVIEW / PACKAGING PASS (fixes "title says one thing, video goes elsewhere" + weak hooks).
+// A cheap second Groq call that does NOT touch the body: it (1) rewrites the title so it accurately
+// reflects the lines actually written (no promise the body can't keep), and (2) for English videos,
+// rewrites line 1 into the strongest hook that still matches the body's own opening. Best-effort:
+// on any failure the original title/hook are kept. Gated on cfg.review !== false.
+async function polish(meta, lines, cfg) {
+  if (DRY || cfg.review === false || !Array.isArray(lines) || !lines.length) return;
+  const body = lines.map((l, i) => `${i + 1}. ${l.caption || l.text}`).join("\n").slice(0, 4000);
+  const sys =
+    `You are a YouTube/Shorts packaging editor. You must NOT change the video body. Return ONLY JSON ` +
+    `{"title": string, "hook": string}. The title must ACCURATELY reflect the body below (no promise ` +
+    `the body doesn't deliver), be keyword-first, specific, and create curiosity — no generic clickbait. ` +
+    `The hook is a rewrite of line 1: the single most scroll-stopping opening that still matches the ` +
+    `body's first idea — concrete (a number/name/tension), no "in this video", no "have you ever".`;
+  const usr =
+    `NICHE: ${cfg.niche}\nCURRENT TITLE: ${meta.title}\nBODY (numbered; do not change):\n${body}\n\n` +
+    `Rules: title <= 70 chars. hook 4-24 words. Return {"title","hook"} now.`;
+  try {
+    const r = await callGroq(sys, usr);
+    if (r && typeof r.title === "string" && r.title.trim()) meta.title = r.title.trim().slice(0, 100);
+    // Only rewrite the spoken hook for English (for Urdu/Hindi the spoken line is native-script and
+    // the model's English hook would corrupt it — the title rewrite above still applies).
+    if (cfg.language === "en" && r && typeof r.hook === "string" && r.hook.trim()) {
+      const hook = r.hook.trim().replace(/^["']|["']$/g, "");
+      const w = hook.split(/\s+/).length;
+      if (w >= 3 && w <= 30) lines[0].text = hook; // stay inside the validator's hook gate
+    }
+    console.log(`  ~ review: title/hook tightened -> "${meta.title.slice(0, 60)}"`);
+  } catch (e) {
+    console.log(`  ! review pass skipped (${e.message})`);
+  }
+}
+
 function giveEachLineAsset(lines, prefix) {
   const used = {};
   lines.forEach((l) => {
@@ -358,7 +393,13 @@ async function main() {
   const multi = topics.length > 1;
   const researchFile = "research.md";
 
-  const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}`;
+  // Don't rewrite yesterday's video: feed the writer the recently-used titles to steer away from.
+  const avoidTitles = recentTitles(CHANNEL, 21);
+  const avoidRule = avoidTitles.length
+    ? `\nFRESHNESS: these titles were used recently on this channel — pick a genuinely DIFFERENT angle and do NOT reuse or lightly reword any of them:\n${JSON.stringify(avoidTitles.slice(-20))}`
+    : "";
+
+  const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}${avoidRule}`;
 
   console.log(`Channel ${CHANNEL} | mode ${MODE} | ${topics.length} topic(s) queued`);
   let totalWritten = 0;
@@ -385,17 +426,30 @@ async function main() {
         console.log(`  ! research failed (${e.message}) — writing without grounding.`);
       }
     }
+    // LIVE CONTEXT: for time-sensitive niches (finance/AI/business), prepend REAL today-facts —
+    // live prices + same-day headlines — so the title/hook can be timely and specific instead of a
+    // generic evergreen that drifts away from a "...today" topic. Best-effort; prepended so the
+    // writer treats it as the freshest, highest-priority grounding.
+    if (cfg.live !== false && topic && !DRY) {
+      try {
+        const live = await liveContext(topic, cfg.niche);
+        if (live.length) { g = live.concat(g); console.log(`  live: ${live.length} real-time facts prepended`); }
+      } catch (e) {
+        console.log(`  ! live context skipped (${e.message})`);
+      }
+    }
     const researchLines = ["# Research (auto)\n"];
     if (g.length) g.forEach((x) => researchLines.push(`- ${x.title ? x.title + ": " : ""}${x.extract}${x.url ? "\n  Source: " + x.url : ""}`));
     else researchLines.push("- (no external grounding — verify facts before publishing)");
     fs.writeFileSync(path.join(JOBS, `${prefix}.research.md`), researchLines.join("\n"));
 
     let written = 0;
+    let primaryTitle = null; // recorded to history so tomorrow's run won't repeat this topic/title
 
     if (shortsOnly) {
       // SHORTS-ONLY: write standalone reels DIRECTLY from the topic — no long video first.
       const n = cfg.makeShorts || 3;
-      const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}`;
+      const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}${avoidRule}`;
       const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
       let shortsModel;
       try {
@@ -404,11 +458,18 @@ async function main() {
         console.error(`  ! shorts generation failed (${e.message}).`);
         shortsModel = { shorts: [] };
       }
-      (shortsModel.shorts || []).forEach((sh, i) => {
+      const shortsArr = shortsModel.shorts || [];
+      for (let i = 0; i < shortsArr.length; i++) {
+        const sh = shortsArr[i];
         const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
         const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || topic, true, researchFile);
-        if (shl.length >= 3) { writeJob(`${prefix}_short_${i + 1}`, meta, shl); written++; }
-      });
+        if (shl.length >= 3) {
+          await polish(meta, shl, cfg);
+          writeJob(`${prefix}_short_${i + 1}`, meta, shl);
+          if (!primaryTitle) primaryTitle = meta.title;
+          written++;
+        }
+      }
     } else {
       // LONG (or TIL single short), plus derived shorts for long+shorts mode.
       const funnel = cfg.funnel ? `\nEnd with a final line that is a soft CTA: "${cfg.funnel}"` : "";
@@ -448,7 +509,12 @@ async function main() {
       const longLines = sanitizeLines(rawLong, { language: cfg.language, longForm: !tilShort });
       const longMeta = finalizeMeta({ ...longModel, lines: longLines }, cfg, topic, tilShort, researchFile);
       if (!tilShort) console.log(`  long: ${longLines.length} scenes (aim ~${neededLong} for ~${minutes} min)`);
-      if (writeLong && longLines.length) { writeJob(prefix, longMeta, longLines); written++; }
+      if (writeLong && longLines.length) {
+        await polish(longMeta, longLines, cfg);
+        writeJob(prefix, longMeta, longLines);
+        primaryTitle = longMeta.title;
+        written++;
+      }
 
       if (wantDerivedShorts) {
         // Generate the derived shorts ONE AT A TIME. Asking for all N in a single response used to
@@ -456,7 +522,7 @@ async function main() {
         // ZERO shorts. One short per call keeps each response small and reliable; a failure on one
         // short no longer loses the rest.
         const pts = (longModel.lines || []).map((l) => l.text || l.caption).filter(Boolean).slice(0, 40);
-        const shortsSystem = `You write ONE punchy vertical reel (YouTube Short / Reel) from a longer ${cfg.niche} video. Pick a self-contained, hook-worthy angle and write it as a standalone short. ${RULES}${langRule(cfg.language)}`;
+        const shortsSystem = `You write ONE punchy vertical reel (YouTube Short / Reel) from a longer ${cfg.niche} video. Pick a self-contained, hook-worthy angle and write it as a standalone short. ${RULES}${langRule(cfg.language)}${avoidRule}`;
         for (let i = 0; i < cfg.makeShorts; i++) {
           const shortsPrompt = `The long video covers these points:\n${JSON.stringify(pts)}\nWrite reel ${i + 1} of ${cfg.makeShorts} — pick a DISTINCT angle/moment (different from the other reels). Return ONE JSON object: { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "thumb": {"line1","line2","sub"}, "lines": [6-9 punchy lines in the shape above] }`;
           let sh;
@@ -468,7 +534,12 @@ async function main() {
           }
           const shl = sanitizeLines(getLines(sh), { language: cfg.language, longForm: false });
           const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || topic, true, researchFile);
-          if (shl.length >= 3) { writeJob(`${prefix}_short_${i + 1}`, meta, shl); written++; }
+          if (shl.length >= 3) {
+            await polish(meta, shl, cfg);
+            writeJob(`${prefix}_short_${i + 1}`, meta, shl);
+            if (!primaryTitle) primaryTitle = meta.title;
+            written++;
+          }
         }
 
         // Never leave the render step with nothing: fall back to the long.
@@ -481,6 +552,8 @@ async function main() {
     }
 
     if (written === 0) console.error(`  ! no usable content for topic "${topic || "(auto)"}" — skipped.`);
+    // Remember what we made so tomorrow's scout skips this topic and the writer avoids this title.
+    if (written > 0 && primaryTitle && !DRY) appendHistory(CHANNEL, { topic: topic || primaryTitle, title: primaryTitle });
     totalWritten += written;
   }
 
