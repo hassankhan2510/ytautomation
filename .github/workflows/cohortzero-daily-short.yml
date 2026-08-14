@@ -82,13 +82,6 @@ jobs:
           LI_CLIENT_SECRET: ${{ secrets.LI_CLIENT_SECRET }}
           LI_REFRESH_TOKEN: ${{ secrets.LI_REFRESH_TOKEN }}
           LI_ORG_URN_COHORTZERO: ${{ secrets.LI_ORG_URN_COHORTZERO }}
-          # Facebook Page + Instagram auto-post — off unless you set the repo variable META_UPLOAD=1.
-          META_UPLOAD: ${{ vars.META_UPLOAD }}
-          META_PAGE_ID_COHORTZERO: ${{ vars.META_PAGE_ID_COHORTZERO }}
-          META_IG_USER_ID_COHORTZERO: ${{ vars.META_IG_USER_ID_COHORTZERO }}
-          META_PAGE_TOKEN_COHORTZERO: ${{ secrets.META_PAGE_TOKEN_COHORTZERO }}
-          # Needed to host the reel on a GitHub Release so Meta can fetch it by URL.
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run batch -- --only=cohortzero
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4

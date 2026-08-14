@@ -1,11 +1,13 @@
-name: "Syndar — Daily Short (auto, trend-picked)"
+name: "Equitier — Daily Reels → Instagram + Facebook (2/day)"
 
-# Fully autonomous: the topic scout picks a trending deep-tech / physical-AI topic, the machine builds
-# ONE short in YOUR cloned voice, and uploads it to Syndar as PUBLIC. Blank topic = auto-pick.
-# NOTE: this is SHORTS only. Long-form Syndar (the startup funnel) still uploads Private for review.
+# Dedicated Meta pipeline, SEPARATE from YouTube: the scout picks a trending finance topic, the
+# machine builds ONE reel in YOUR cloned voice, and posts it to the Equitier Facebook Page AND
+# Instagram. Runs twice a day (two spaced schedules) = 2 reels/day. Topic dedup (channels/history)
+# keeps the two daily reels on different topics. No YouTube upload here.
 on:
   schedule:
-    - cron: "0 23 * * *" # ~18:00 US-Eastern — tech/dev audience is most active in the evening
+    - cron: "0 13 * * *" # ~09:00 US-Eastern (morning slot)
+    - cron: "0 21 * * *" # ~17:00 US-Eastern (evening slot)
   workflow_dispatch:
     inputs:
       topic:
@@ -44,12 +46,12 @@ jobs:
         id: scout
         run: |
           TOPIC="${{ github.event.inputs.topic }}"
-          if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=syndar --one)"; fi
+          if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=equitier --one)"; fi
           echo "Chosen topic: $TOPIC"
           echo "topic=$TOPIC" >> "$GITHUB_OUTPUT"
-      - name: Write short (Groq)
+      - name: Write reel (Groq)
         env:
-          CHANNEL: syndar
+          CHANNEL: equitier
           TOPICS: ${{ steps.scout.outputs.topic }}
           MODE: shorts
           SHORTS: "1"
@@ -57,37 +59,31 @@ jobs:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs
-      - name: Persist topic history (so tomorrow won't repeat)
+      - name: Persist topic history (so the next reel won't repeat)
         working-directory: ${{ github.workspace }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add channels/history/*.json 2>/dev/null || true
-          git commit -m "chore(history): syndar daily topic [skip ci]" || { echo "no history change"; exit 0; }
+          git commit -m "chore(history): equitier meta reel [skip ci]" || { echo "no history change"; exit 0; }
           git pull --rebase --autostash || true
           git push || echo "push skipped"
-      - name: Render (your cloned voice) + upload to YouTube (private) + LinkedIn (if enabled)
+      - name: Render (your cloned voice) + post to Instagram + Facebook
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
           VOICE: myvoice
-          UPLOAD: "1"
-          YT_PRIVACY: private
-          YT_CLIENT_ID: ${{ secrets.YT_CLIENT_ID }}
-          YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
-          YT_REFRESH_TOKEN_SYNDAR: ${{ secrets.YT_REFRESH_TOKEN_SYNDAR }}
-          # LinkedIn Page auto-post — off unless you set the repo variable LI_UPLOAD=1 and add the secrets.
-          LI_UPLOAD: ${{ vars.LI_UPLOAD }}
-          LI_TYPE: ${{ vars.LI_TYPE }}
-          LI_ACCESS_TOKEN: ${{ secrets.LI_ACCESS_TOKEN }}
-          LI_CLIENT_ID: ${{ secrets.LI_CLIENT_ID }}
-          LI_CLIENT_SECRET: ${{ secrets.LI_CLIENT_SECRET }}
-          LI_REFRESH_TOKEN: ${{ secrets.LI_REFRESH_TOKEN }}
-          LI_ORG_URN_SYNDAR: ${{ secrets.LI_ORG_URN_SYNDAR }}
-        run: npm run batch -- --only=syndar
+          # No YouTube here — this pipeline is Meta-only.
+          META_UPLOAD: "1"
+          META_PAGE_ID_EQUITIER: ${{ vars.META_PAGE_ID_EQUITIER }}
+          META_IG_USER_ID_EQUITIER: ${{ vars.META_IG_USER_ID_EQUITIER }}
+          META_PAGE_TOKEN_EQUITIER: ${{ secrets.META_PAGE_TOKEN_EQUITIER }}
+          # Hosts the reel on a GitHub Release so Meta can fetch it by URL.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run batch -- --only=equitier
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: syndar-daily-run${{ github.run_number }}
-          path: theranos-doc/out/syndar*.zip
+          name: equitier-meta-run${{ github.run_number }}
+          path: theranos-doc/out/equitier*.zip
           retention-days: 30
           if-no-files-found: warn
