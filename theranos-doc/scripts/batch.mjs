@@ -124,6 +124,18 @@ function postToLinkedIn(name, outFile, platform) {
   }
 }
 
+// Optional auto-post to a Facebook Page + Instagram (only when META_UPLOAD=1 and the channel's
+// token + IDs are present). Best-effort — a failed post never fails the video.
+function postToMeta(name, outFile) {
+  if (process.env.META_UPLOAD !== "1") return;
+  const channel = name.split("_")[0];
+  try {
+    run(`node scripts/meta_upload.mjs --channel=${channel} --script=jobs/${name}.json --video=${outFile}`);
+  } catch (e) {
+    console.log(`  ! meta post failed (${String(e.message).split("\n")[0]}) — non-fatal`);
+  }
+}
+
 function backup(p) {
   if (fs.existsSync(p)) fs.copyFileSync(p, p + ".bak");
 }
@@ -209,6 +221,8 @@ function main() {
         }
         // Optional: post to the LinkedIn Page (after the carousel exists, before the files are zipped).
         if (!SAMPLE) postToLinkedIn(name, outFile, platform);
+        // Optional: post to Facebook Page + Instagram.
+        if (!SAMPLE) postToMeta(name, outFile);
         // Bundle ALL of this video's deliverables (reel + kit txt + carousel pdf + slides) into one
         // zip, so the output folder is one file per video instead of a scatter of loose files.
         if (!SAMPLE) bundleJob(name, platform);

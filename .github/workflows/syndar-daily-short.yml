@@ -83,6 +83,13 @@ jobs:
           LI_CLIENT_SECRET: ${{ secrets.LI_CLIENT_SECRET }}
           LI_REFRESH_TOKEN: ${{ secrets.LI_REFRESH_TOKEN }}
           LI_ORG_URN_SYNDAR: ${{ secrets.LI_ORG_URN_SYNDAR }}
+          # Facebook Page + Instagram auto-post — off unless you set the repo variable META_UPLOAD=1.
+          META_UPLOAD: ${{ vars.META_UPLOAD }}
+          META_PAGE_ID_SYNDAR: ${{ vars.META_PAGE_ID_SYNDAR }}
+          META_IG_USER_ID_SYNDAR: ${{ vars.META_IG_USER_ID_SYNDAR }}
+          META_PAGE_TOKEN_SYNDAR: ${{ secrets.META_PAGE_TOKEN_SYNDAR }}
+          # Needed to host the reel on a GitHub Release so Meta can fetch it by URL.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run batch -- --only=syndar
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
