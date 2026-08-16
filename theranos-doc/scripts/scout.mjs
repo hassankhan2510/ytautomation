@@ -25,18 +25,22 @@ const CHANNELS = {
     // Daily = high-view "market updates" (stocks, gold, silver, bitcoin) — the shorts YouTube pushes
     // hardest in finance because they ride searches that spike EVERY DAY. Use the manual workflow
     // for evergreen how-to topics.
+    // Shorts win on curiosity + wealth psychology, not daily price recaps (commodity → buried).
+    // Seed high-engagement money/investing angles. Riba/interest stays blocked below (user's line).
     seeds: [
-      "stock market today", "stocks to buy today", "top stocks today", "nasdaq today",
-      "s&p 500 today", "tesla stock today", "nvidia stock today", "apple stock today",
-      "amazon stock today", "google stock today", "meta stock today",
-      "gold price today", "gold price prediction", "silver price today", "silver price prediction",
-      "bitcoin price today", "bitcoin prediction today", "bitcoin news today",
-      "ethereum today", "crypto news today", "solana price today", "xrp price today",
-      "market news today", "stock market crash", "us economy today",
+      "how to build wealth", "how the rich get richer", "money mistakes keeping you poor",
+      "how to invest for beginners", "passive income ideas that work", "how money actually works",
+      "stock market for beginners", "how to start investing with little money",
+      "biggest investing mistakes", "warren buffett investing advice",
+      "how inflation is stealing your money", "why the middle class stays poor",
+      "financial freedom explained", "how to get rich slowly", "index funds explained",
+      "how billionaires invest their money", "money habits of the rich",
+      "gold vs bitcoin", "is bitcoin still worth it", "stock market crash coming",
+      "how to make your money work for you", "wealth building for beginners",
     ],
     // Equitier is general-audience finance BUT must avoid interest/riba topics (user's line).
     block: /interest|mortgage|\bloans?\b|credit\s?card|\bapr\b|high[-\s]?yield|savings account|\bbonds?\b|refinanc|heloc|credit score|\bdebt\b|bnpl|buy now pay later|riba|payday/i,
-    boost: /stock|\bmarket|nasdaq|s&p|dow\b|gold|silver|bitcoin|btc|ethereum|\beth\b|crypto|solana|\bxrp\b|\bprice\b|surge|crash|rally|nvidia|tesla|apple|amazon|meta|invest|economy/i,
+    boost: /stock|\bmarket|nasdaq|s&p|dow\b|gold|silver|bitcoin|btc|ethereum|\beth\b|crypto|solana|\bxrp\b|\bprice\b|surge|crash|rally|nvidia|tesla|apple|amazon|meta|invest|econom|money|wealth|\brich|income|inflation|financ|billionaire|passive|budget|retire/i,
   },
   cohortzero: {
     seeds: [
@@ -66,18 +70,21 @@ const CHANNELS = {
     boost: /pakistan|karachi|lahore|islamabad|founder|entrepreneur|startup|business|\brich\b|hustle|careem|airlift|bazaar|foodpanda|bykea|sadapay|krave|money|success|jazz|makro|daraz/i,
   },
   syndar: {
-    // Daily = "AI breakthroughs / AI news today" — the highest-view AI-shorts angle right now.
-    // Manual workflow stays for your deep radar/perception long-form topics.
+    // Shorts win on CURIOSITY, not "news today" (that's commodity content that gets buried). Seed
+    // high-intrigue AI/robotics/tech angles that hook and travel, plus Syndar's own perception/
+    // autonomy niche ("how machines see", "why cameras fail") — its actual differentiator.
     seeds: [
-      "ai breakthrough today", "ai news today", "openai news today", "chatgpt news today",
-      "google gemini today", "anthropic claude news", "grok ai news", "deepseek news",
-      "new ai tool today", "ai just did this", "ai model released", "ai update today",
-      "new robot released", "humanoid robot news", "tesla optimus news", "figure ai news",
-      "boston dynamics news", "ai agent news", "ai video generator", "sora ai news",
-      "self driving car news", "waymo news today", "ai in daily life", "future of ai",
+      "how ai actually works", "what ai can really do now", "ai you won't believe exists",
+      "this ai is insane", "scariest ai moment", "ai did something no one expected",
+      "most advanced robot in the world", "robot doing human jobs", "humanoid robot in real life",
+      "how self driving cars see the road", "why cameras fail at night", "ai vs human",
+      "craziest ai tools right now", "ai breakthrough explained", "new robot unveiled",
+      "tesla optimus robot", "figure humanoid robot", "boston dynamics robot",
+      "how does chatgpt actually work", "will ai take your job", "ai facts nobody talks about",
+      "future technology that already exists", "insane new technology",
     ],
     block: /nsfw|gambling|casino|toy review/i,
-    boost: /\bai\b|openai|chatgpt|gemini|claude|grok|deepseek|llm|robot|humanoid|optimus|figure|boston dynamics|breakthrough|released|launch|announce|autonom|waymo|self[-\s]?driving|agent|neural|deepmind|nvidia/i,
+    boost: /\bai\b|openai|chatgpt|gemini|claude|grok|deepseek|llm|robot|humanoid|optimus|figure|boston dynamics|breakthrough|explained|autonom|waymo|self[-\s]?driving|agent|neural|deepmind|nvidia|\btech|technolog|future|sensor|automat/i,
   },
 };
 
