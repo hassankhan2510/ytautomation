@@ -146,7 +146,7 @@ function buildTF(raw, price, decimals, count, smaPeriods, tolPct) {
   const kl = keyLevels([...sw.highs, ...sw.lows], price, tolPct, 2);
   const overlays = smaPeriods.filter((p) => closes.length >= p).map((p) => ({ period: p, points: smaSeries(closes, p) }));
   return {
-    candles: c.map((x) => ({ o: round(x.o), h: round(x.h), l: round(x.l), c: round(x.c) })),
+    candles: c.map((x) => ({ o: round(x.o), h: round(x.h), l: round(x.l), c: round(x.c), v: Math.round(x.v || 0) })),
     support: kl.support.map(round),
     resistance: kl.resistance.map(round),
     overlays,

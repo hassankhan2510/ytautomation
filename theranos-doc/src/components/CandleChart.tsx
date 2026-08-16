@@ -7,7 +7,7 @@ import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from "remo
  * lines fade in with labels. All values come from real market data (lib_market.mjs) — nothing invented.
  */
 
-export type Candle = { o: number; h: number; l: number; c: number };
+export type Candle = { o: number; h: number; l: number; c: number; v?: number };
 export type Overlay = { label: string; color?: string; points: (number | null)[] };
 export type Level = { price: number; label: string; kind?: "support" | "resistance" | "level" };
 
@@ -53,13 +53,17 @@ export const CandleChart: React.FC<{
   const revealEnd = Math.max(9, durationInFrames * 0.65);
   const shown = still ? n : Math.max(1, Math.floor(interpolate(frame, [8, revealEnd], [1, n], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })));
 
-  // Chart geometry (inside the SVG viewBox = pixel space).
+  // Chart geometry (inside the SVG viewBox = pixel space). Pulled up to use the space, with a thin
+  // volume band reserved at the base of the price pane.
   const W = width;
   const H = height;
   const padX = W * 0.06;
-  const chartTop = portrait ? H * 0.30 : H * 0.26;
-  const chartBottom = portrait ? H * 0.80 : H * 0.86;
+  const chartTop = portrait ? H * 0.235 : H * 0.24;
+  const chartBottom = portrait ? H * 0.83 : H * 0.86;
   const chartH = chartBottom - chartTop;
+  const volH = chartH * 0.15; // subtle volume histogram along the base
+  const priceBottom = chartBottom - volH;
+  const priceH = priceBottom - chartTop;
   const chartW = W - padX * 2 - (portrait ? 150 : 190); // leave room for the right-side price axis
 
   const allHi = Math.max(...candles.map((c) => c.h), ...levels.map((l) => l.price));
@@ -67,10 +71,11 @@ export const CandleChart: React.FC<{
   const pad = (allHi - allLo) * 0.08 || 1;
   const hi = allHi + pad, lo = allLo - pad;
 
-  const yFor = (p: number) => chartTop + ((hi - p) / (hi - lo)) * chartH;
+  const yFor = (p: number) => chartTop + ((hi - p) / (hi - lo)) * priceH;
   const slot = chartW / n;
   const xFor = (i: number) => padX + slot * (i + 0.5);
   const bodyW = Math.max(2, slot * 0.62);
+  const maxVol = Math.max(...candles.slice(0, shown).map((c) => c.v || 0), 1);
 
   const changeColor = changePct >= 0 ? UP : DOWN;
   const axisX = padX + chartW + (portrait ? 18 : 24);
@@ -128,14 +133,16 @@ export const CandleChart: React.FC<{
             </g>
           ))}
 
-          {/* support / resistance / key levels — line at the real price, label staggered to avoid overlap */}
+          {/* support / resistance as soft ZONES (band + faint centre line), label staggered */}
           {leveled.map((lv, i) => {
             const o = still ? 1 : interpolate(frame, [20 + i * 4, 32 + i * 4], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
             const col = levelColor(lv.kind);
+            const bandH = Math.max(8, Math.round(fontSize * 0.5));
             return (
               <g key={`lv${i}`} opacity={o}>
-                <line x1={padX} y1={lv.y} x2={padX + chartW} y2={lv.y} stroke={col} strokeWidth={2} strokeDasharray="10 8" opacity={0.7} />
-                <rect x={padX + 8} y={lv.labelY - Math.round(fontSize * 0.5)} width={Math.round(fontSize * (lv.label.length * 0.34 + 1.4))} height={Math.round(fontSize * 0.78)} rx={4} fill={col} opacity={0.18} />
+                <rect x={padX} y={lv.y - bandH / 2} width={chartW} height={bandH} fill={col} opacity={0.09} />
+                <line x1={padX} y1={lv.y} x2={padX + chartW} y2={lv.y} stroke={col} strokeWidth={1.5} strokeDasharray="9 9" opacity={0.55} />
+                <rect x={padX + 8} y={lv.labelY - Math.round(fontSize * 0.5)} width={Math.round(fontSize * (lv.label.length * 0.34 + 1.4))} height={Math.round(fontSize * 0.78)} rx={4} fill={col} opacity={0.22} />
                 <text x={padX + 16} y={lv.labelY + 5} fill={col} fontFamily={mono} fontSize={Math.round(fontSize * 0.5)} fontWeight={700}>
                   {lv.label}
                 </text>
@@ -143,7 +150,7 @@ export const CandleChart: React.FC<{
             );
           })}
 
-          {/* candles (progressive reveal) */}
+          {/* candles (progressive reveal) + a subtle volume bar under each */}
           {candles.slice(0, shown).map((c, i) => {
             const x = xFor(i);
             const up = c.c >= c.o;
@@ -151,8 +158,10 @@ export const CandleChart: React.FC<{
             const yO = yFor(c.o), yC = yFor(c.c);
             const bodyTop = Math.min(yO, yC);
             const bodyH = Math.max(2, Math.abs(yC - yO));
+            const vh = ((c.v || 0) / maxVol) * volH * 0.92;
             return (
               <g key={`c${i}`}>
+                {vh > 0 ? <rect x={x - bodyW / 2} y={chartBottom - vh} width={bodyW} height={vh} fill={col} opacity={0.28} /> : null}
                 <line x1={x} y1={yFor(c.h)} x2={x} y2={yFor(c.l)} stroke={col} strokeWidth={Math.max(1.5, bodyW * 0.14)} />
                 <rect x={x - bodyW / 2} y={bodyTop} width={bodyW} height={bodyH} fill={col} rx={1.5} />
               </g>
@@ -169,10 +178,14 @@ export const CandleChart: React.FC<{
             return <polyline key={`o${oi}`} points={pts} fill="none" stroke={ov.color || accent} strokeWidth={2.5} opacity={0.9} strokeLinejoin="round" />;
           })}
 
-          {/* last-price marker */}
-          {shown > 0 && (
-            <line x1={padX} y1={yFor(candles[shown - 1].c)} x2={padX + chartW} y2={yFor(candles[shown - 1].c)} stroke="#f8fafc" strokeWidth={1} strokeDasharray="2 6" opacity={0.5} />
-          )}
+          {/* current-price line + a solid price tag on the axis */}
+          <g>
+            <line x1={padX} y1={yFor(price)} x2={padX + chartW} y2={yFor(price)} stroke="#f8fafc" strokeWidth={1} strokeDasharray="2 6" opacity={0.45} />
+            <rect x={padX + chartW + 6} y={yFor(price) - Math.round(fontSize * 0.44)} width={Math.round(fontSize * (fmt(price, decimals).length * 0.32 + 1))} height={Math.round(fontSize * 0.88)} rx={4} fill={changeColor} />
+            <text x={padX + chartW + 14} y={yFor(price) + 5} fill="#04070c" fontFamily={mono} fontWeight={800} fontSize={Math.round(fontSize * 0.5)}>
+              {fmt(price, decimals)}
+            </text>
+          </g>
         </svg>
 
         {/* overlay legend */}
