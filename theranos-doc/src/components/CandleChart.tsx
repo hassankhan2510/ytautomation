@@ -35,10 +35,11 @@ export const CandleChart: React.FC<{
   changePct: number;
   decimals: number;
   callout?: string | null; // short key words/numbers overlaid on the chart (the only "caption")
+  dateLabel?: string | null; // the analysis date, so viewers know when it's from
   accent: string;
   fontSize: number;
   portrait: boolean;
-}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, accent, fontSize, portrait }) => {
+}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, dateLabel, accent, fontSize, portrait }) => {
   const frame = useCurrentFrame();
   const { width, height, durationInFrames } = useVideoConfig();
 
@@ -97,6 +98,11 @@ export const CandleChart: React.FC<{
             <div style={{ fontFamily: mono, fontWeight: 600, fontSize: Math.round(fontSize * 0.62), color: "rgba(226,232,240,0.6)", marginTop: 8, letterSpacing: "1px" }}>
               {pair} · {timeframe}
             </div>
+            {dateLabel ? (
+              <div style={{ fontFamily: mono, fontWeight: 600, fontSize: Math.round(fontSize * 0.5), color: accent, marginTop: 6, letterSpacing: "1px" }}>
+                {dateLabel}
+              </div>
+            ) : null}
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontFamily: mono, fontWeight: 800, fontSize: Math.round(fontSize * 1.25), color: "#f8fafc" }}>

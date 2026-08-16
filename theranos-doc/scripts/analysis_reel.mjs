@@ -40,6 +40,8 @@ function isWeekendPKT() {
 const MODE = (process.env.MODE || (isWeekendPKT() ? "deepdive" : "analysis")).toLowerCase();
 
 const OVER = { sma20: "#38bdf8", sma50: "#f5a623", sma200: "#a78bfa", vwap: "#facc15" };
+// The date the reel is generated — shown on the chart so viewers know the analysis is time-stamped.
+const DATE_LABEL = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
 function loadConfig() {
   const cfg = JSON.parse(fs.readFileSync(path.join(REPO, "channels", "config.json"), "utf-8"));
@@ -134,6 +136,7 @@ function tfScene(snap, tfKey, tfLabel, text, callout, keywords, vwap = false) {
     text, keywords, layout: "candles", callout,
     candles: tf.candles, overlays, levels, timeframe: tfLabel,
     pair: snap.pair, assetName: snap.name, priceNow: snap.price, changePct: snap.changePct, decimals: snap.decimals,
+    dateLabel: DATE_LABEL,
   };
 }
 
