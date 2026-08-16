@@ -88,6 +88,22 @@ HARD RULES:
 - Each spoken line is 1-2 sentences, punchy, specific, and flows into the next.
 - Use ONLY the data provided. Do not invent numbers or news.`;
 
+// Hard technical-analysis voice for the GOLD/BTC day-trade reels (not the educational stock deep-dive).
+const TA_RULES = `
+You are a top 0.01% technical DAY TRADER writing a fast vertical reel. This is HARD technical analysis,
+not general commentary — zero fluff.
+- Read the ACTUAL chart data and reference the real levels, VWAP, moving averages, RSI and ATR by their
+  (spelled-out) numbers.
+- Talk market STRUCTURE: higher highs / lower lows, breakouts, retests, ranges, and reclaim or rejection
+  of specific levels.
+- Read momentum (RSI overbought/oversold/strength), volatility (ATR = expected range), and exactly where
+  price sits versus VWAP and the moving averages.
+- Use multi-timeframe CONFLUENCE: how the one-hour and four-hour line up with the daily and weekly.
+- Be decisive in the READ, not advice: e.g. "reclaiming the level flips intraday structure bullish",
+  "rejecting the four-hour supply", "holding above VWAP keeps buyers in control". NO buy/sell signals,
+  entries, stops or targets.
+- Spell numbers as words in "say"; NO $ or % in "say" (those go in the callout). No generic filler.`;
+
 function snapshotText(s) {
   const t = s.timeframes;
   const list = (arr) => arr.map((x) => fmt(x, s.decimals)).join(", ") || "n/a";
@@ -155,26 +171,40 @@ async function marketReel(cfg) {
   const headTxt = heads.map((h) => `- ${h.extract}`).join("\n") || "(no fresh headlines)";
 
   const u = snap.unit;
-  const sys = `${NARRATION_RULES}\nReturn ONLY JSON: {"title","description","hashtags":[6-8],"tags":[6-10],"beats":{"hook":{"say","callout"},"snapshot":{"say","callout"},"intraday":{"say","callout"},"h4":{"say","callout"},"daily":{"say","callout"},"weekly":{"say","callout"},"scenario":{"say","callout"}}}. Each "say" = 1-2 spoken sentences (spell numbers, NO $ or % in "say"). Each "callout" = 2-6 words or a level for the SCREEN ($ and % are fine in callout).`;
-  const usr = `ASSET: ${snap.name} (${snap.pair})\nDATA:\n${snapshotText(snap)}\nTODAY'S HEADLINES:\n${headTxt}\n
-Write a MULTI-TIMEFRAME day-trade breakdown as spoken beats + short on-screen callouts:
-hook (scroll-stopper over the chart), snapshot (price + move), intraday (the 1-hour session read using VWAP + 1H levels), h4 (4-hour structure/momentum), daily (swing structure via moving averages, RSI, major levels), weekly (higher-timeframe context for swing traders), scenario ("if it holds X … if it loses Y …" — analysis, not advice). Also a specific title, SEO description, hashtags, tags.`;
+  const s = snap.swing, d = snap.day;
+  const rsiState = s.rsi >= 70 ? "overbought" : s.rsi <= 30 ? "oversold" : s.rsi >= 60 ? "strong" : s.rsi <= 40 ? "weak" : "neutral";
+  const vwapRel = d.vwap != null ? (snap.price >= d.vwap ? "above" : "below") : "near";
+  const ma50Rel = s.sma50 != null ? (snap.price >= s.sma50 ? "above" : "below") : "n/a";
+  const ma200Rel = s.sma200 != null ? (snap.price >= s.sma200 ? "above" : "below") : "n/a";
+  const taContext = [
+    `Price ${vwapRel} VWAP (${fmt(d.vwap, snap.decimals)})`,
+    `RSI ${s.rsi} = ${rsiState}`,
+    `Price ${ma50Rel} the 50-day MA and ${ma200Rel} the 200-day MA`,
+    `ATR ${s.atr} = expected daily range`,
+    `Daily trend: ${s.trend}`,
+  ].join("\n");
+
+  const sys = `${TA_RULES}\nReturn ONLY JSON: {"title","description","hashtags":[6-8],"tags":[6-10],"beats":{"hook":{"say","callout"},"snapshot":{"say","callout"},"intraday":{"say","callout"},"h4":{"say","callout"},"daily":{"say","callout"},"weekly":{"say","callout"},"scenario":{"say","callout"}}}. Each "say" = 1-2 spoken sentences (spell numbers, NO $ or % in "say"). Each "callout" = 2-6 words or a level for the SCREEN ($ and % are fine in callout).`;
+  const usr = `ASSET: ${snap.name} (${snap.pair})\nCHART DATA:\n${snapshotText(snap)}\nTECHNICAL READ:\n${taContext}\nTODAY'S HEADLINES:\n${headTxt}\n
+Write a HARD multi-timeframe technical day-trade breakdown as spoken beats + short on-screen callouts. Reference the real levels/VWAP/MAs/RSI above:
+hook (scroll-stopping technical read), snapshot (price vs VWAP + the move), intraday (the 1-hour structure using VWAP + the exact 1H levels — reclaim/reject), h4 (4-hour structure & momentum), daily (swing structure via the moving averages + RSI + major levels), weekly (higher-timeframe confluence for the swing), scenario ("holding X keeps structure bullish, losing X flips it" — analysis, not advice). Also a specific title, SEO description, hashtags, tags.`;
 
   const g = (await callGroq(sys, usr)) || {};
   const b = g.beats || {};
   const beat = (k, say, callout) => ({ say: (b[k] && b[k].say) || say, callout: (b[k] && b[k].callout) || callout });
-  const dir = snap.changePct >= 0 ? "higher" : "lower";
   const pct = `${snap.changePct >= 0 ? "+" : ""}${snap.changePct}%`;
   const lvl = (arr) => (arr && arr.length ? `${u}${fmt(arr[0], snap.decimals)}` : `${u}${fmt(snap.price, snap.decimals)}`);
+  const control = vwapRel === "above" ? "buyers" : "sellers";
 
+  // Technical fallbacks (used only if Groq is down) — still reference the real reads, not generic filler.
   const B = {
-    hook: beat("hook", `${snap.name} is trading ${dir} today — here's the full multi-timeframe read.`, `${snap.name} ${dir} today`),
-    snapshot: beat("snapshot", `${snap.name} is ${dir} on the session, holding around its volume-weighted average price.`, `${pct} today · VWAP ${u}${fmt(snap.day.vwap, snap.decimals)}`),
-    intraday: beat("intraday", `On the one-hour chart, price is fighting over the levels that decide today's session.`, `1H · watch ${lvl(snap.timeframes.h1.support)}`),
-    h4: beat("h4", `Zoom to the four-hour and the short-term momentum shows its hand.`, `4H trend: ${snap.swing.trend}`),
-    daily: beat("daily", `On the daily, the moving averages frame a ${snap.swing.trend}, and relative strength shows how stretched it is.`, `RSI ${snap.swing.rsi} · ${snap.swing.trend}`),
-    weekly: beat("weekly", `Step back to the weekly and the levels that matter for the swing come into focus.`, `Weekly · ${lvl(snap.swing.majorResistance)}`),
-    scenario: beat("scenario", `Hold the major support and the structure stays constructive; lose it and the tone flips. Follow for tomorrow's breakdown.`, `Hold ${lvl(snap.swing.majorSupport)} → bullish`),
+    hook: beat("hook", `${snap.name} is ${rsiState} and trading ${vwapRel} its intraday average — here's the full technical read across timeframes.`, `${snap.name} ${vwapRel} VWAP`),
+    snapshot: beat("snapshot", `Price is ${vwapRel} the volume-weighted average, which keeps ${control} in control of the session for now.`, `${pct} today · VWAP ${u}${fmt(d.vwap, snap.decimals)}`),
+    intraday: beat("intraday", `On the one-hour, the level that matters is the intraday support — reclaim it and structure stays constructive, lose it and the intraday trend rolls over.`, `1H · reclaim ${lvl(snap.timeframes.h1.support)}`),
+    h4: beat("h4", `The four-hour ${s.trend.includes("up") ? "is holding higher lows, so momentum sits with the bulls" : "is pressing lower highs, so momentum sits with the bears"} short term.`, `4H · ${s.trend}`),
+    daily: beat("daily", `On the daily, price is ${ma50Rel} the fifty-day and ${ma200Rel} the two-hundred-day, with relative strength ${rsiState} — that frames how stretched the move is.`, `RSI ${s.rsi} · ${rsiState}`),
+    weekly: beat("weekly", `On the weekly, the major resistance overhead is the line swing traders need reclaimed for the next leg higher.`, `Weekly · ${lvl(s.majorResistance)}`),
+    scenario: beat("scenario", `Holding the major support keeps the structure bullish; losing it puts the daily trend in question. Follow for tomorrow's breakdown.`, `Hold ${lvl(s.majorSupport)} → bullish`),
   };
 
   const lines = [
