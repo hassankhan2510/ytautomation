@@ -11,9 +11,17 @@ on:
   workflow_dispatch:
     inputs:
       asset:
-        description: "gold | btc | deepdive (blank = gold)"
+        description: "Which reel to build"
+        type: choice
+        options: [gold, btc, deepdive]
+        default: gold
         required: false
-        type: string
+      publish:
+        description: "publish = post to FB+IG · test = render only, NO upload (download the zip to watch)"
+        type: choice
+        options: [publish, test]
+        default: publish
+        required: false
 
 jobs:
   make:
@@ -51,9 +59,13 @@ jobs:
             ASSET="${{ github.event.inputs.asset }}"; ASSET="${ASSET:-gold}"
           fi
           MODE=""; if [ "$ASSET" = "deepdive" ]; then MODE=deepdive; fi
+          # Publish unless this is a manual "test" run (scheduled runs always publish).
+          UPLOAD=1
+          if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ github.event.inputs.publish }}" = "test" ]; then UPLOAD=0; fi
           echo "asset=$ASSET" >> "$GITHUB_OUTPUT"
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
-          echo "Asset: $ASSET  Mode: ${MODE:-auto}"
+          echo "upload=$UPLOAD" >> "$GITHUB_OUTPUT"
+          echo "Asset: $ASSET  Mode: ${MODE:-auto}  Upload: $UPLOAD"
       - name: Build the analysis reel (real data + charts + Groq narration)
         env:
           CHANNEL: equitier
@@ -73,8 +85,8 @@ jobs:
       - name: Render (Kokoro voice) + post to Instagram + Facebook
         env:
           VOICE: kokoro
-          # Meta-only — no YouTube here.
-          META_UPLOAD: "1"
+          # Meta-only — no YouTube here. "1" to post, "0" for a test render (set by the dropdown).
+          META_UPLOAD: ${{ steps.pick.outputs.upload }}
           META_PAGE_ID_EQUITIER: ${{ vars.META_PAGE_ID_EQUITIER || secrets.META_PAGE_ID_EQUITIER }}
           META_IG_USER_ID_EQUITIER: ${{ vars.META_IG_USER_ID_EQUITIER || secrets.META_IG_USER_ID_EQUITIER }}
           META_PAGE_TOKEN_EQUITIER: ${{ secrets.META_PAGE_TOKEN_EQUITIER }}
