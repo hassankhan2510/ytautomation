@@ -323,6 +323,16 @@ async def main():
                 "location": line.get("location"),
                 "coords": line.get("coords"),
                 "collageAssets": line.get("collageAssets"),
+                # candlestick chart (daily market-analysis reels)
+                "candles": line.get("candles"),
+                "overlays": line.get("overlays"),
+                "levels": line.get("levels"),
+                "timeframe": line.get("timeframe"),
+                "pair": line.get("pair"),
+                "assetName": line.get("assetName"),
+                "priceNow": line.get("priceNow"),
+                "changePct": line.get("changePct"),
+                "decimals": line.get("decimals"),
                 "words": word_frames,
             }
         )

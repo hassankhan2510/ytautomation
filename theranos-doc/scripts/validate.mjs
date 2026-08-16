@@ -35,7 +35,7 @@ const PLATFORMS = {
 
 const LAYOUTS = [
   "lower-third", "center", "title", "stat", "quote", "bullets",
-  "chart", "compare", "timeline", "meter", "nametag", "map", "collage", "countup",
+  "chart", "compare", "timeline", "meter", "nametag", "map", "collage", "countup", "candles",
 ];
 
 const PLACEHOLDER = /\b(todo|tbd|lorem ipsum|placeholder|xxx|insert .* here|example text|your text)\b/i;

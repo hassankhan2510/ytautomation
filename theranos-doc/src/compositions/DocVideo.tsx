@@ -11,6 +11,7 @@ import { Background, BgSegment } from "../components/Background";
 import { Caption, Word, Layout } from "../components/Caption";
 import { Stat, Quote, Bullets } from "../components/SceneBlocks";
 import { Chart, Compare, Timeline, Meter, NameTag, MapLocator, Collage, CountUp } from "../components/DataBlocks";
+import { CandleChart, Candle, Overlay, Level } from "../components/CandleChart";
 import { Grain } from "../components/Grain";
 import { Intro, Outro } from "../components/Brand";
 
@@ -41,6 +42,16 @@ type TimelineLine = {
   location?: string | null;
   coords?: string | null;
   collageAssets?: string[] | null;
+  // candlestick chart (daily market-analysis reels)
+  candles?: Candle[] | null;
+  overlays?: Overlay[] | null;
+  levels?: Level[] | null;
+  timeframe?: string | null;
+  pair?: string | null;
+  assetName?: string | null;
+  priceNow?: number | null;
+  changePct?: number | null;
+  decimals?: number | null;
 };
 
 /** Group consecutive lines that share the same asset into one background segment. */
@@ -116,6 +127,21 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
         return <MapLocator location={line.location || line.text} coords={line.coords} {...common} />;
       case "collage":
         return <Collage assets={line.collageAssets || []} accent={accent} />;
+      case "candles":
+        return line.candles && line.candles.length ? (
+          <CandleChart
+            candles={line.candles}
+            overlays={line.overlays || []}
+            levels={line.levels || []}
+            name={line.assetName || line.text}
+            pair={line.pair || ""}
+            timeframe={line.timeframe || ""}
+            price={line.priceNow ?? line.candles[line.candles.length - 1].c}
+            changePct={line.changePct ?? 0}
+            decimals={line.decimals ?? 2}
+            {...common}
+          />
+        ) : null;
       default:
         return (
           <Caption
