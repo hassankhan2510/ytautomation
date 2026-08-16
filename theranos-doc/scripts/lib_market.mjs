@@ -137,9 +137,8 @@ function trendLabel(price, s20, s50, s200) {
 }
 
 /* ---------- the snapshot ---------- */
-export async function analyze(key) {
-  const a = ASSETS[key];
-  if (!a) throw new Error(`unknown asset ${key}`);
+export async function analyzeSymbol(symbol, opts = {}) {
+  const a = { symbol, name: opts.name || symbol, pair: opts.pair || "", unit: opts.unit || "$", decimals: opts.decimals ?? 2 };
   const [intra, daily, weekly] = await Promise.all([
     fetchCandles(a.symbol, "5d", "15m").catch(() => ({ candles: [], meta: {} })),
     fetchCandles(a.symbol, "1y", "1d"),
@@ -167,7 +166,7 @@ export async function analyze(key) {
 
   const round = (x) => (x == null ? null : Number(x.toFixed(a.decimals)));
   return {
-    key, symbol: a.symbol, name: a.name, pair: a.pair, unit: a.unit, decimals: a.decimals,
+    symbol: a.symbol, name: a.name, pair: a.pair, unit: a.unit, decimals: a.decimals,
     price: round(price), prevClose: round(prevClose), changeAbs: round(changeAbs),
     changePct: Number(changePct.toFixed(2)), direction: changeAbs >= 0 ? "up" : "down",
     day: {
@@ -190,6 +189,20 @@ export async function analyze(key) {
       weekly: weekly.candles.slice(-52),
     },
   };
+}
+
+// Convenience wrapper for the built-in Gold/Bitcoin assets.
+export async function analyze(key) {
+  const a = ASSETS[key];
+  if (!a) throw new Error(`unknown asset ${key}`);
+  return { key, ...(await analyzeSymbol(a.symbol, a)) };
+}
+
+// Simple-moving-average SERIES aligned to the closes (null until enough history) — for chart overlays.
+export function smaSeries(closes, period) {
+  return closes.map((_, i) =>
+    i + 1 < period ? null : Number((closes.slice(i + 1 - period, i + 1).reduce((x, y) => x + y, 0) / period).toFixed(4)),
+  );
 }
 
 // CLI dry-check: print the live snapshot (without the raw candle arrays) for Gold + Bitcoin.

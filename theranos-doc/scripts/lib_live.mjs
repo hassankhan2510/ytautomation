@@ -83,7 +83,7 @@ async function finance(topic) {
   return out.filter(Boolean);
 }
 
-async function news(query, max = 5) {
+export async function news(query, max = 5) {
   const xml = await fetchText(
     `https://news.google.com/rss/search?q=${encodeURIComponent(query + " when:2d")}&hl=en-US&gl=US&ceid=US:en`,
   );
