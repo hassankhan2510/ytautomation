@@ -333,6 +333,7 @@ async def main():
                 "priceNow": line.get("priceNow"),
                 "changePct": line.get("changePct"),
                 "decimals": line.get("decimals"),
+                "callout": line.get("callout"),
                 "words": word_frames,
             }
         )

@@ -126,6 +126,33 @@ function priorDailyClose(daily) {
   return daily.at(-2).c;
 }
 
+// Resample finer candles into a higher timeframe (e.g. 1h -> 4h by grouping every 4).
+function resample(candles, factor) {
+  const out = [];
+  for (let i = 0; i < candles.length; i += factor) {
+    const g = candles.slice(i, i + factor);
+    if (!g.length) break;
+    out.push({ t: g[0].t, o: g[0].o, h: Math.max(...g.map((x) => x.h)), l: Math.min(...g.map((x) => x.l)), c: g.at(-1).c, v: g.reduce((s, x) => s + (x.v || 0), 0) });
+  }
+  return out;
+}
+
+// One timeframe ready for the chart engine: last `count` candles + its own support/resistance + MAs.
+function buildTF(raw, price, decimals, count, smaPeriods, tolPct) {
+  const round = (x) => (x == null ? null : Number(x.toFixed(decimals)));
+  const c = raw.slice(-count);
+  const closes = c.map((x) => x.c);
+  const sw = swingLevels(c, 3);
+  const kl = keyLevels([...sw.highs, ...sw.lows], price, tolPct, 2);
+  const overlays = smaPeriods.filter((p) => closes.length >= p).map((p) => ({ period: p, points: smaSeries(closes, p) }));
+  return {
+    candles: c.map((x) => ({ o: round(x.o), h: round(x.h), l: round(x.l), c: round(x.c) })),
+    support: kl.support.map(round),
+    resistance: kl.resistance.map(round),
+    overlays,
+  };
+}
+
 function trendLabel(price, s20, s50, s200) {
   if (s50 && s200) {
     if (price > s50 && s50 > s200) return "uptrend";
@@ -139,14 +166,14 @@ function trendLabel(price, s20, s50, s200) {
 /* ---------- the snapshot ---------- */
 export async function analyzeSymbol(symbol, opts = {}) {
   const a = { symbol, name: opts.name || symbol, pair: opts.pair || "", unit: opts.unit || "$", decimals: opts.decimals ?? 2 };
-  const [intra, daily, weekly] = await Promise.all([
-    fetchCandles(a.symbol, "5d", "15m").catch(() => ({ candles: [], meta: {} })),
+  const [h1, daily, weekly] = await Promise.all([
+    fetchCandles(a.symbol, "1mo", "1h").catch(() => ({ candles: [], meta: {} })),
     fetchCandles(a.symbol, "1y", "1d"),
     fetchCandles(a.symbol, "2y", "1wk").catch(() => ({ candles: [], meta: {} })),
   ]);
 
   const meta = daily.meta || {};
-  const session = lastSession(intra.candles);
+  const session = lastSession(h1.candles); // today's 1h candles (for VWAP + day range)
   const price = meta.regularMarketPrice ?? daily.candles.at(-1)?.c;
   const prevClose = priorDailyClose(daily.candles) ?? meta.chartPreviousClose ?? price;
   const changeAbs = price - prevClose;
@@ -156,13 +183,6 @@ export async function analyzeSymbol(symbol, opts = {}) {
   const s20 = sma(dCloses, 20), s50 = sma(dCloses, 50), s200 = sma(dCloses, 200);
   const dailySwings = swingLevels(daily.candles, 3);
   const majorLevels = keyLevels([...dailySwings.highs, ...dailySwings.lows], price, 0.6, 3);
-
-  const intraSwings = session.length ? swingLevels(session, 3) : { highs: [], lows: [] };
-  const intraLevels = session.length
-    ? keyLevels([...intraSwings.highs, ...intraSwings.lows], price, 0.25, 2)
-    : { support: [], resistance: [] };
-
-  const wCloses = weekly.candles.map((c) => c.c);
 
   const round = (x) => (x == null ? null : Number(x.toFixed(a.decimals)));
   return {
@@ -174,19 +194,19 @@ export async function analyzeSymbol(symbol, opts = {}) {
       low: round(session.length ? Math.min(...session.map((c) => c.l)) : meta.regularMarketDayLow ?? price),
       vwap: round(vwap(session)),
     },
-    intraday: { support: intraLevels.support.map(round), resistance: intraLevels.resistance.map(round) },
     swing: {
       sma20: round(s20), sma50: round(s50), sma200: round(s200),
       rsi: round(rsi(dCloses, 14)), atr: round(atr(daily.candles, 14)),
       trend: trendLabel(price, s20, s50, s200),
-      weekRsi: round(rsi(wCloses, 14)),
+      weekRsi: round(rsi(weekly.candles.map((c) => c.c), 14)),
       majorSupport: majorLevels.support.map(round), majorResistance: majorLevels.resistance.map(round),
     },
-    // Raw candles for the chart engine (Phase 2). Trimmed to keep the job file lean.
-    candles: {
-      intraday: session.slice(-40), // last session (15m candles)
-      daily: daily.candles.slice(-60),
-      weekly: weekly.candles.slice(-52),
+    // Multi-timeframe candle sets for the chart engine — each with its own S/R + moving averages.
+    timeframes: {
+      h1: buildTF(h1.candles, price, a.decimals, 48, [20], 0.3),
+      h4: buildTF(resample(h1.candles, 4), price, a.decimals, 42, [20], 0.5),
+      daily: buildTF(daily.candles, price, a.decimals, 60, [20, 50], 0.6),
+      weekly: buildTF(weekly.candles, price, a.decimals, 52, [20], 1.2),
     },
   };
 }
@@ -207,7 +227,7 @@ export function smaSeries(closes, period) {
 
 // CLI dry-check: print the live snapshot (without the raw candle arrays) for Gold + Bitcoin.
 if (import.meta.url === `file://${process.argv[1]}` || process.argv[1]?.endsWith("lib_market.mjs")) {
-  const show = (s) => { const { candles, ...rest } = s; return rest; };
+  const show = (s) => { const { timeframes, ...rest } = s; return { ...rest, timeframes: Object.keys(timeframes || {}) }; };
   Promise.all([analyze("gold"), analyze("btc")])
     .then(([g, b]) => { console.log(JSON.stringify(show(g), null, 2)); console.log(JSON.stringify(show(b), null, 2)); })
     .catch((e) => { console.error("market snapshot failed:", e.message); process.exit(1); });

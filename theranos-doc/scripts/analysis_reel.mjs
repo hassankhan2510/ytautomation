@@ -89,48 +89,36 @@ HARD RULES:
 - Use ONLY the data provided. Do not invent numbers or news.`;
 
 function snapshotText(s) {
+  const t = s.timeframes;
+  const list = (arr) => arr.map((x) => fmt(x, s.decimals)).join(", ") || "n/a";
   return [
-    `${s.name} (${s.pair}) — as of today`,
-    `Price ${fmt(s.price, s.decimals)} (${s.changePct >= 0 ? "+" : ""}${s.changePct}% on the day)`,
-    `Day range ${fmt(s.day.low, s.decimals)}–${fmt(s.day.high, s.decimals)}, VWAP ${fmt(s.day.vwap, s.decimals)}`,
-    `Intraday support ${s.intraday.support.map((x) => fmt(x, s.decimals)).join(", ") || "n/a"}; resistance ${s.intraday.resistance.map((x) => fmt(x, s.decimals)).join(", ") || "n/a"}`,
-    `SMA20/50/200 ${fmt(s.swing.sma20, s.decimals)}/${fmt(s.swing.sma50, s.decimals)}/${fmt(s.swing.sma200, s.decimals)}; RSI ${s.swing.rsi}; ATR ${s.swing.atr}; trend ${s.swing.trend}`,
-    `Major support ${s.swing.majorSupport.map((x) => fmt(x, s.decimals)).join(", ")}; major resistance ${s.swing.majorResistance.map((x) => fmt(x, s.decimals)).join(", ")}`,
+    `${s.name} (${s.pair}) — today`,
+    `Price ${fmt(s.price, s.decimals)} (${s.changePct >= 0 ? "+" : ""}${s.changePct}% on the day), day range ${fmt(s.day.low, s.decimals)}–${fmt(s.day.high, s.decimals)}, VWAP ${fmt(s.day.vwap, s.decimals)}`,
+    `1H  support ${list(t.h1.support)}; resistance ${list(t.h1.resistance)}`,
+    `4H  support ${list(t.h4.support)}; resistance ${list(t.h4.resistance)}`,
+    `Daily  SMA20/50/200 ${fmt(s.swing.sma20, s.decimals)}/${fmt(s.swing.sma50, s.decimals)}/${fmt(s.swing.sma200, s.decimals)}, RSI ${s.swing.rsi}, ATR ${s.swing.atr}, trend ${s.swing.trend}`,
+    `Major support ${list(s.swing.majorSupport)}; major resistance ${list(s.swing.majorResistance)}; weekly RSI ${s.swing.weekRsi}`,
   ].join("\n");
 }
 
-/* ---------- chart scene builder ---------- */
-function chartScene(text, keywords, snap, candles, { timeframe, overlays = [], levels = [] }) {
+/* ---------- multi-timeframe chart scene builder ---------- */
+// A scene whose FULL background is a real chart for the given timeframe, with a short on-screen
+// callout (the only "caption") and the spoken analysis in `text`.
+function tfScene(snap, tfKey, tfLabel, text, callout, keywords, vwap = false) {
+  const tf = snap.timeframes[tfKey] || { candles: [], overlays: [], support: [], resistance: [] };
+  const overlays = (tf.overlays || []).map((o) => ({
+    label: `SMA${o.period}`, color: o.period >= 50 ? OVER.sma50 : OVER.sma20, points: o.points,
+  }));
+  const levels = [
+    ...tf.resistance.map((p) => ({ price: p, label: `R ${fmt(p, snap.decimals)}`, kind: "resistance" })),
+    ...tf.support.map((p) => ({ price: p, label: `S ${fmt(p, snap.decimals)}`, kind: "support" })),
+  ];
+  if (vwap && snap.day.vwap) levels.push({ price: snap.day.vwap, label: `VWAP ${fmt(snap.day.vwap, snap.decimals)}`, kind: "level" });
   return {
-    text, keywords, layout: "candles",
-    candles: candles.map((c) => ({ o: c.o, h: c.h, l: c.l, c: c.c })),
-    overlays, levels, timeframe, pair: snap.pair, assetName: snap.name,
-    priceNow: snap.price, changePct: snap.changePct, decimals: snap.decimals,
+    text, keywords, layout: "candles", callout,
+    candles: tf.candles, overlays, levels, timeframe: tfLabel,
+    pair: snap.pair, assetName: snap.name, priceNow: snap.price, changePct: snap.changePct, decimals: snap.decimals,
   };
-}
-
-function intradayChart(snap, narration) {
-  const c = snap.candles.intraday;
-  const closes = c.map((x) => x.c);
-  const levels = [
-    ...snap.intraday.resistance.map((p) => ({ price: p, label: `R ${fmt(p, snap.decimals)}`, kind: "resistance" })),
-    ...snap.intraday.support.map((p) => ({ price: p, label: `S ${fmt(p, snap.decimals)}`, kind: "support" })),
-  ];
-  if (snap.day.vwap) levels.push({ price: snap.day.vwap, label: `VWAP ${fmt(snap.day.vwap, snap.decimals)}`, kind: "level" });
-  const overlays = closes.length >= 20 ? [{ label: "SMA20", color: OVER.sma20, points: smaSeries(closes, 20) }] : [];
-  return chartScene(narration.intraday, [`${snap.name} intraday`], snap, c, { timeframe: "15m · Today", overlays, levels });
-}
-function dailyChart(snap, narration) {
-  const c = snap.candles.daily;
-  const closes = c.map((x) => x.c);
-  const overlays = [];
-  if (closes.length >= 20) overlays.push({ label: "SMA20", color: OVER.sma20, points: smaSeries(closes, 20) });
-  if (closes.length >= 50) overlays.push({ label: "SMA50", color: OVER.sma50, points: smaSeries(closes, 50) });
-  const levels = [
-    ...snap.swing.majorResistance.slice(0, 2).map((p) => ({ price: p, label: `R ${fmt(p, snap.decimals)}`, kind: "resistance" })),
-    ...snap.swing.majorSupport.slice(0, 2).map((p) => ({ price: p, label: `S ${fmt(p, snap.decimals)}`, kind: "support" })),
-  ];
-  return chartScene(narration.swing, [`${snap.name} trend`], snap, c, { timeframe: "Daily · 3M", overlays, levels });
 }
 
 /* ---------- meta ---------- */
@@ -166,35 +154,37 @@ async function marketReel(cfg) {
   const heads = await news(`${snap.name} price today`, 3).catch(() => []);
   const headTxt = heads.map((h) => `- ${h.extract}`).join("\n") || "(no fresh headlines)";
 
-  const sys = `${NARRATION_RULES}\nReturn ONLY JSON: {"title","description","hashtags":[6-8],"tags":[6-10],"hook","snapshot","intraday","swing","scenario","takeaway"}.`;
+  const u = snap.unit;
+  const sys = `${NARRATION_RULES}\nReturn ONLY JSON: {"title","description","hashtags":[6-8],"tags":[6-10],"beats":{"hook":{"say","callout"},"snapshot":{"say","callout"},"intraday":{"say","callout"},"h4":{"say","callout"},"daily":{"say","callout"},"weekly":{"say","callout"},"scenario":{"say","callout"}}}. Each "say" = 1-2 spoken sentences (spell numbers, NO $ or % in "say"). Each "callout" = 2-6 words or a level for the SCREEN ($ and % are fine in callout).`;
   const usr = `ASSET: ${snap.name} (${snap.pair})\nDATA:\n${snapshotText(snap)}\nTODAY'S HEADLINES:\n${headTxt}\n
-Write: title (specific, e.g. "Gold Analysis Today: The Level That Decides the Trend"), description (SEO, 2-3 sentences), hashtags, tags,
-hook (scroll-stopper), snapshot (price + move, spelled), intraday (explain today's session using VWAP + intraday levels), swing (the daily/higher-timeframe structure using the moving averages, RSI and major levels), scenario ("if it holds X … if it loses Y …" — framed as analysis, no advice), takeaway (mature closer + a soft "follow for tomorrow's breakdown").`;
+Write a MULTI-TIMEFRAME day-trade breakdown as spoken beats + short on-screen callouts:
+hook (scroll-stopper over the chart), snapshot (price + move), intraday (the 1-hour session read using VWAP + 1H levels), h4 (4-hour structure/momentum), daily (swing structure via moving averages, RSI, major levels), weekly (higher-timeframe context for swing traders), scenario ("if it holds X … if it loses Y …" — analysis, not advice). Also a specific title, SEO description, hashtags, tags.`;
 
   const g = (await callGroq(sys, usr)) || {};
+  const b = g.beats || {};
+  const beat = (k, say, callout) => ({ say: (b[k] && b[k].say) || say, callout: (b[k] && b[k].callout) || callout });
   const dir = snap.changePct >= 0 ? "higher" : "lower";
-  const n = {
-    hook: g.hook || `${snap.name} is trading ${dir} today — here's exactly what the chart is telling us.`,
-    snapshot: g.snapshot || `${snap.name} is ${dir} on the session, and the intraday picture is doing something worth watching.`,
-    intraday: g.intraday || `On the intraday chart, ${snap.name} is trading around its VWAP with buyers and sellers fighting over the day's key levels.`,
-    swing: g.swing || `Step back to the daily chart and the bigger structure shows a ${snap.swing.trend}, with the moving averages framing the trend.`,
-    scenario: g.scenario || `Hold the major support and the structure stays constructive; lose it and the picture shifts. Watch the levels, not the noise.`,
-    takeaway: g.takeaway || `That's today's read on ${snap.name}. Follow for tomorrow's breakdown.`,
+  const pct = `${snap.changePct >= 0 ? "+" : ""}${snap.changePct}%`;
+  const lvl = (arr) => (arr && arr.length ? `${u}${fmt(arr[0], snap.decimals)}` : `${u}${fmt(snap.price, snap.decimals)}`);
+
+  const B = {
+    hook: beat("hook", `${snap.name} is trading ${dir} today — here's the full multi-timeframe read.`, `${snap.name} ${dir} today`),
+    snapshot: beat("snapshot", `${snap.name} is ${dir} on the session, holding around its volume-weighted average price.`, `${pct} today · VWAP ${u}${fmt(snap.day.vwap, snap.decimals)}`),
+    intraday: beat("intraday", `On the one-hour chart, price is fighting over the levels that decide today's session.`, `1H · watch ${lvl(snap.timeframes.h1.support)}`),
+    h4: beat("h4", `Zoom to the four-hour and the short-term momentum shows its hand.`, `4H trend: ${snap.swing.trend}`),
+    daily: beat("daily", `On the daily, the moving averages frame a ${snap.swing.trend}, and relative strength shows how stretched it is.`, `RSI ${snap.swing.rsi} · ${snap.swing.trend}`),
+    weekly: beat("weekly", `Step back to the weekly and the levels that matter for the swing come into focus.`, `Weekly · ${lvl(snap.swing.majorResistance)}`),
+    scenario: beat("scenario", `Hold the major support and the structure stays constructive; lose it and the tone flips. Follow for tomorrow's breakdown.`, `Hold ${lvl(snap.swing.majorSupport)} → bullish`),
   };
 
-  const levelBullets = [
-    `Resistance  ${snap.swing.majorResistance.slice(0, 2).map((x) => fmt(x, snap.decimals)).join("  /  ")}`,
-    `Support  ${snap.swing.majorSupport.slice(0, 2).map((x) => fmt(x, snap.decimals)).join("  /  ")}`,
-    `RSI ${snap.swing.rsi}  ·  Trend: ${snap.swing.trend}`,
-  ];
-
   const lines = [
-    { text: n.hook, keywords: [`${snap.name} markets`], layout: "center" },
-    { text: n.snapshot, keywords: [`${snap.name} price`], layout: "countup", value: snap.price, prefix: snap.unit },
-    intradayChart(snap, n),
-    dailyChart(snap, n),
-    { text: n.scenario, keywords: [`${snap.name} levels`], layout: "bullets", kicker: "KEY LEVELS", items: levelBullets },
-    { text: n.takeaway, keywords: [`${snap.name} outlook`], layout: "center" },
+    tfScene(snap, "daily", "Daily · 6M", B.hook.say, B.hook.callout, [`${snap.name} chart`]),
+    tfScene(snap, "h1", "1H · Today", B.snapshot.say, B.snapshot.callout, [`${snap.name} price`], true),
+    tfScene(snap, "h1", "1H · Day Trade", B.intraday.say, B.intraday.callout, [`${snap.name} intraday`], true),
+    tfScene(snap, "h4", "4H · Structure", B.h4.say, B.h4.callout, [`${snap.name} 4h`]),
+    tfScene(snap, "daily", "Daily · Swing", B.daily.say, B.daily.callout, [`${snap.name} daily`]),
+    tfScene(snap, "weekly", "Weekly · Macro", B.weekly.say, B.weekly.callout, [`${snap.name} weekly`]),
+    tfScene(snap, "daily", "Daily · Levels", B.scenario.say, B.scenario.callout, [`${snap.name} levels`]),
   ];
 
   const defaultTags = ASSET === "gold"
@@ -202,7 +192,7 @@ hook (scroll-stopper), snapshot (price + move, spelled), intraday (explain today
     : ["bitcoin", "btc", "crypto", "bitcoin analysis", "trading", "technical analysis", "markets", "investing"];
   const meta = buildMeta(cfg, {
     title: g.title, description: g.description, hashtags: g.hashtags, tags: g.tags && g.tags.length >= 3 ? g.tags : defaultTags,
-    topic: `${snap.name} daily analysis`, thumb: { line1: snap.name, line2: "ANALYSIS", sub: `${snap.changePct >= 0 ? "+" : ""}${snap.changePct}% today` },
+    topic: `${snap.name} daily analysis`, thumb: { line1: snap.name, line2: "ANALYSIS", sub: `${pct} today` },
   }, lines.length);
 
   writeJob(`${CHANNEL}_${ASSET}`, meta, lines, heads);
@@ -222,36 +212,27 @@ async function deepDive(cfg) {
   const heads = await news(`${pick.name} stock`, 4).catch(() => []);
   const headTxt = heads.map((h) => `- ${h.extract}`).join("\n") || "(no fresh headlines)";
 
-  const sys = `${NARRATION_RULES}\nThis is a WEEKEND educational deep-dive on a US stock (markets are closed). Mature, insightful, no hype. Return ONLY JSON: {"title","description","hashtags":[6-8],"tags":[6-10],"hook","business","facts":[3 short bullet strings],"chart","story","takeaway"}.`;
+  const sys = `${NARRATION_RULES}\nThis is a WEEKEND educational deep-dive on a US stock (markets closed). Mature, insightful, no hype. Return ONLY JSON: {"title","description","hashtags":[6-8],"tags":[6-10],"beats":{"hook":{"say","callout"},"business":{"say","callout"},"numbers":{"say","callout"},"story":{"say","callout"},"takeaway":{"say","callout"}}}. "say" = 1-2 spoken sentences (spell numbers, no $ or %). "callout" = 2-6 words for the screen ($/% ok).`;
   const usr = `COMPANY: ${pick.name} (${pick.sym})\nPRICE DATA:\n${snapshotText(snap)}\nRECENT HEADLINES:\n${headTxt}\n
-Write an advanced but accessible breakdown: hook, business (what the company actually does + why it matters), facts (3 crisp bullets a smart investor should know), chart (what the weekly chart structure shows — trend, moving averages, major levels, spelled numbers, no symbols), story (the current narrative/what to watch), takeaway (mature closer + soft "follow for the next breakdown"). No price targets or advice.`;
+Write an advanced but accessible breakdown as beats + short callouts: hook, business (what the company does + why it matters), numbers (what the weekly/daily chart structure shows — trend, moving averages, major levels), story (the current narrative / what to watch), takeaway (mature closer + soft "follow for the next breakdown"). No price targets or advice. Also title, description, hashtags, tags.`;
 
   const g = (await callGroq(sys, usr)) || {};
-  const n = {
-    hook: g.hook || `Everyone knows ${pick.name} — but here's what most people miss about it.`,
-    business: g.business || `${pick.name} is one of the most important companies in the market, and its story is bigger than its stock price.`,
-    facts: Array.isArray(g.facts) && g.facts.length >= 2 ? g.facts.slice(0, 4) : ["A market leader in its space", "Watched by every serious investor", "A stock that moves the whole index"],
-    chart: g.chart || `On the weekly chart, ${pick.name} is in a ${snap.swing.trend}, with the moving averages framing the bigger trend.`,
-    story: g.story || `The real question is what happens next — and the chart plus the fundamentals tell part of that story.`,
-    takeaway: g.takeaway || `That's the deep-dive on ${pick.name}. Follow for the next breakdown.`,
+  const b = g.beats || {};
+  const beat = (k, say, callout) => ({ say: (b[k] && b[k].say) || say, callout: (b[k] && b[k].callout) || callout });
+  const B = {
+    hook: beat("hook", `Everyone knows ${pick.name} — but here's what most people miss.`, `${pick.name}, explained`),
+    business: beat("business", `${pick.name} is one of the most important companies in the market, and its story is bigger than its stock price.`, `What ${pick.name} really does`),
+    numbers: beat("numbers", `On the daily chart, ${pick.name} is in a ${snap.swing.trend}, with the moving averages framing the trend.`, `RSI ${snap.swing.rsi} · ${snap.swing.trend}`),
+    story: beat("story", `The real question is what happens next — the chart and the fundamentals each tell part of that story.`, `What to watch next`),
+    takeaway: beat("takeaway", `That's the deep-dive on ${pick.name}. Follow for the next breakdown.`, `Follow for more`),
   };
 
-  const closes = snap.candles.daily.map((x) => x.c);
-  const overlays = [];
-  if (closes.length >= 50) overlays.push({ label: "SMA50", color: OVER.sma50, points: smaSeries(closes, 50) });
-  if (closes.length >= 200) overlays.push({ label: "SMA200", color: OVER.sma200, points: smaSeries(closes, 200) });
-  const levels = [
-    ...snap.swing.majorResistance.slice(0, 2).map((p) => ({ price: p, label: `R ${fmt(p, 2)}`, kind: "resistance" })),
-    ...snap.swing.majorSupport.slice(0, 2).map((p) => ({ price: p, label: `S ${fmt(p, 2)}`, kind: "support" })),
-  ];
-
   const lines = [
-    { text: n.hook, keywords: [`${pick.name} company`], layout: "center" },
-    { text: n.business, keywords: [`${pick.name} business`], layout: "lower-third" },
-    { text: n.facts.join(". ") + ".", keywords: [`${pick.name} facts`], layout: "bullets", kicker: pick.name.toUpperCase(), items: n.facts },
-    chartScene(n.chart, [`${pick.name} chart`], snap, snap.candles.daily, { timeframe: "Daily · 1Y", overlays, levels }),
-    { text: n.story, keywords: [`${pick.name} outlook`], layout: "center" },
-    { text: n.takeaway, keywords: [`${pick.name} takeaway`], layout: "center" },
+    tfScene(snap, "weekly", "Weekly · 2Y", B.hook.say, B.hook.callout, [`${pick.name} company`]),
+    tfScene(snap, "daily", "Daily · 1Y", B.business.say, B.business.callout, [`${pick.name} business`]),
+    tfScene(snap, "daily", "Daily · Trend", B.numbers.say, B.numbers.callout, [`${pick.name} chart`]),
+    tfScene(snap, "weekly", "Weekly · Big Picture", B.story.say, B.story.callout, [`${pick.name} outlook`]),
+    tfScene(snap, "daily", "Daily", B.takeaway.say, B.takeaway.callout, [`${pick.name} takeaway`]),
   ];
 
   const meta = buildMeta(cfg, {

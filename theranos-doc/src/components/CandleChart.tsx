@@ -34,10 +34,11 @@ export const CandleChart: React.FC<{
   price: number;
   changePct: number;
   decimals: number;
+  callout?: string | null; // short key words/numbers overlaid on the chart (the only "caption")
   accent: string;
   fontSize: number;
   portrait: boolean;
-}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, accent, fontSize, portrait }) => {
+}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, accent, fontSize, portrait }) => {
   const frame = useCurrentFrame();
   const { width, height, durationInFrames } = useVideoConfig();
 
@@ -76,6 +77,13 @@ export const CandleChart: React.FC<{
 
   const levelColor = (k?: string) => (k === "support" ? UP : k === "resistance" ? DOWN : accent);
 
+  // Stagger level labels so close-together levels don't overlap (the dashed line stays at its price).
+  const labelGap = Math.round(fontSize * 0.95);
+  const leveled = [...levels].map((lv) => ({ ...lv, y: yFor(lv.price), labelY: yFor(lv.price) }));
+  leveled.sort((a, b) => a.y - b.y);
+  let lastLabelY = -Infinity;
+  for (const lv of leveled) { lv.labelY = Math.max(lv.y, lastLabelY + labelGap); lastLabelY = lv.labelY; }
+
   return (
     <AbsoluteFill style={{ opacity }}>
       <Scrim />
@@ -112,15 +120,15 @@ export const CandleChart: React.FC<{
             </g>
           ))}
 
-          {/* support / resistance / key levels */}
-          {levels.map((lv, i) => {
+          {/* support / resistance / key levels — line at the real price, label staggered to avoid overlap */}
+          {leveled.map((lv, i) => {
             const o = interpolate(frame, [20 + i * 4, 32 + i * 4], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
             const col = levelColor(lv.kind);
             return (
               <g key={`lv${i}`} opacity={o}>
-                <line x1={padX} y1={yFor(lv.price)} x2={padX + chartW} y2={yFor(lv.price)} stroke={col} strokeWidth={2} strokeDasharray="10 8" opacity={0.75} />
-                <rect x={padX + 8} y={yFor(lv.price) - Math.round(fontSize * 0.5)} width={Math.round(fontSize * (lv.label.length * 0.34 + 1.4))} height={Math.round(fontSize * 0.78)} rx={4} fill={col} opacity={0.16} />
-                <text x={padX + 16} y={yFor(lv.price) + 5} fill={col} fontFamily={mono} fontSize={Math.round(fontSize * 0.5)} fontWeight={700}>
+                <line x1={padX} y1={lv.y} x2={padX + chartW} y2={lv.y} stroke={col} strokeWidth={2} strokeDasharray="10 8" opacity={0.7} />
+                <rect x={padX + 8} y={lv.labelY - Math.round(fontSize * 0.5)} width={Math.round(fontSize * (lv.label.length * 0.34 + 1.4))} height={Math.round(fontSize * 0.78)} rx={4} fill={col} opacity={0.18} />
+                <text x={padX + 16} y={lv.labelY + 5} fill={col} fontFamily={mono} fontSize={Math.round(fontSize * 0.5)} fontWeight={700}>
                   {lv.label}
                 </text>
               </g>
@@ -170,6 +178,28 @@ export const CandleChart: React.FC<{
             ))}
           </div>
         )}
+
+        {/* Callout — the only on-screen "caption": short key words/numbers, no blocking box. */}
+        {callout ? (
+          <div
+            style={{
+              position: "absolute", left: 0, right: 0, bottom: portrait ? H * 0.09 : H * 0.07,
+              display: "flex", justifyContent: "center", padding: "0 6%",
+              opacity: interpolate(frame, [6, 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+              transform: `translateY(${(1 - interpolate(frame, [6, 22], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })) * 22}px)`,
+            }}
+          >
+            <div
+              style={{
+                fontFamily: sans, fontWeight: 800, fontSize: Math.round(fontSize * 1.2), color: "#f8fafc",
+                textAlign: "center", lineHeight: 1.22, letterSpacing: "-0.5px",
+                textShadow: "0 2px 16px rgba(0,0,0,0.95), 0 0 6px rgba(0,0,0,0.95)",
+              }}
+            >
+              {callout}
+            </div>
+          </div>
+        ) : null}
       </AbsoluteFill>
     </AbsoluteFill>
   );
