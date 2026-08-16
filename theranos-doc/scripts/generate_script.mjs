@@ -399,7 +399,12 @@ async function main() {
     ? `\nFRESHNESS: these titles were used recently on this channel — pick a genuinely DIFFERENT angle and do NOT reuse or lightly reword any of them:\n${JSON.stringify(avoidTitles.slice(-20))}`
     : "";
 
-  const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}${avoidRule}`;
+  // IG_TONE=1 (set by the Instagram/Facebook workflow) shifts the writing to a native Reels voice.
+  const igTone = process.env.IG_TONE === "1"
+    ? `\nPLATFORM TONE (Instagram/Facebook Reels): write in a casual, scroll-stopping, IG-native voice — punchy short sentences, conversational, speak directly to "you", land the hook in the first 2 seconds, high energy, no corporate stiffness.`
+    : "";
+
+  const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}${avoidRule}${igTone}`;
 
   console.log(`Channel ${CHANNEL} | mode ${MODE} | ${topics.length} topic(s) queued`);
   let totalWritten = 0;
@@ -430,14 +435,19 @@ async function main() {
     // live prices + same-day headlines — so the title/hook can be timely and specific instead of a
     // generic evergreen that drifts away from a "...today" topic. Best-effort; prepended so the
     // writer treats it as the freshest, highest-priority grounding.
+    let hasLive = false;
     if (cfg.live !== false && topic && !DRY) {
       try {
         const live = await liveContext(topic, cfg.niche);
-        if (live.length) { g = live.concat(g); console.log(`  live: ${live.length} real-time facts prepended`); }
+        if (live.length) { g = live.concat(g); hasLive = true; console.log(`  live: ${live.length} real-time facts prepended`); }
       } catch (e) {
         console.log(`  ! live context skipped (${e.message})`);
       }
     }
+    // When we have real-time figures, force the script to actually ANALYZE them (not stay generic).
+    const dataRule = hasLive
+      ? `\nDATA-BACKED: real-time prices/headlines are in the grounding above. Build the video AROUND them — state the exact current price and the move (direction + %/level), explain WHY it's moving using the headlines, and end with a concrete takeaway. Use the real numbers; never be vague.`
+      : "";
     const researchLines = ["# Research (auto)\n"];
     if (g.length) g.forEach((x) => researchLines.push(`- ${x.title ? x.title + ": " : ""}${x.extract}${x.url ? "\n  Source: " + x.url : ""}`));
     else researchLines.push("- (no external grounding — verify facts before publishing)");
@@ -449,8 +459,8 @@ async function main() {
     if (shortsOnly) {
       // SHORTS-ONLY: write standalone reels DIRECTLY from the topic — no long video first.
       const n = cfg.makeShorts || 3;
-      const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}${avoidRule}`;
-      const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
+      const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}${avoidRule}${igTone}`;
+      const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}${dataRule}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
       let shortsModel;
       try {
         shortsModel = DRY ? drySample().shorts : await callGroq(nativeSystem, nativePrompt);
@@ -475,8 +485,8 @@ async function main() {
       const funnel = cfg.funnel ? `\nEnd with a final line that is a soft CTA: "${cfg.funnel}"` : "";
       const minutes = Math.max(2, Math.round((cfg.targetSeconds || 240) / 60));
       const longPrompt = tilShort
-        ? `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite 8-11 short punchy lines.${funnel}\nReturn the JSON now.`
-        : `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite a COMPLETE, in-depth ${minutes}-minute script: about ${neededLong} lines/scenes, one clear idea per line. Do NOT stop early, summarize, or skip the middle — develop the full story/analysis with specifics and examples.${funnel}\nReturn the JSON now.`;
+        ? `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}${dataRule}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite 8-11 short punchy lines.${funnel}\nReturn the JSON now.`
+        : `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}${dataRule}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite a COMPLETE, in-depth ${minutes}-minute script: about ${neededLong} lines/scenes, one clear idea per line. Do NOT stop early, summarize, or skip the middle — develop the full story/analysis with specifics and examples.${funnel}\nReturn the JSON now.`;
 
       const longModel = DRY ? drySample().long : await callGroq(system, longPrompt);
       let rawLong = getLines(longModel);

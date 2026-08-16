@@ -59,12 +59,44 @@ async function pexelsVideo(query, orientation) {
   return hd?.link || null;
 }
 
-async function download(url, dest) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`download ${res.status}`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  fs.writeFileSync(dest, buf);
-  return buf.length;
+async function download(url, dest, timeoutMs) {
+  const ctrl = new AbortController();
+  const t = timeoutMs ? setTimeout(() => ctrl.abort(), timeoutMs) : null;
+  try {
+    const res = await fetch(url, timeoutMs ? { signal: ctrl.signal } : {});
+    if (!res.ok) throw new Error(`download ${res.status}`);
+    const buf = Buffer.from(await res.arrayBuffer());
+    fs.writeFileSync(dest, buf);
+    return buf.length;
+  } finally {
+    if (t) clearTimeout(t);
+  }
+}
+
+// AI images (Pollinations, free + keyless — the same generator the thumbnail step uses). Turned on
+// with AI_IMAGES=1 (the Instagram/Facebook workflow sets it). Used for IMAGE scenes; video scenes
+// still come from Pexels so the reel keeps some motion.
+const AI_STYLE = {
+  finance: "financial markets, gold, currency, trading floor, professional",
+  business: "modern business, startup, office energy",
+  deeptech: "futuristic technology, robotics, sensors, sci-fi",
+  facts: "vivid science and space, colorful",
+};
+function hashNum(s) {
+  let h = 0;
+  for (let i = 0; i < String(s).length; i++) h = (h * 31 + String(s).charCodeAt(i)) >>> 0;
+  return h;
+}
+function aiPrompt(keywords, style, niche) {
+  const subject = (keywords || []).filter(Boolean).slice(0, 2).join(", ") || niche || "cinematic background";
+  const flavor = style || AI_STYLE[niche] || "cinematic professional background";
+  // Atmospheric only — AI renders text/charts as gibberish, so the engine's chart/stat layouts carry
+  // the real numbers while these images set the mood.
+  return `${subject}, ${flavor}, cinematic, dramatic lighting, dark moody, depth of field, high detail, no text, no letters, no numbers, no watermark, no logo`;
+}
+function pollinationsUrl(prompt, orientation, seed) {
+  const [w, h] = orientation === "portrait" ? [1080, 1920] : [1280, 720];
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=${w}&height=${h}&nologo=true&model=flux&seed=${seed}`;
 }
 
 async function main() {
@@ -100,55 +132,80 @@ async function main() {
 
   log(`Missing ${need.size} unique asset(s): ${[...need.keys()].join(", ")}`);
 
-  if (!PEXELS_KEY) {
-    log("\nNo PEXELS_API_KEY set — skipping auto-download.");
+  const AI = process.env.AI_IMAGES === "1";
+  const thumbStyle = script.meta?.thumbStyle || "";
+  if (!PEXELS_KEY && !AI) {
+    log("\nNo PEXELS_API_KEY set and AI_IMAGES not enabled — skipping auto-download.");
     log("Either add the missing files to public/assets/ manually,");
-    log("or get a free key at https://www.pexels.com/api/ and set PEXELS_API_KEY.\n");
+    log("get a free key at https://www.pexels.com/api/ (PEXELS_API_KEY), or set AI_IMAGES=1.\n");
     return;
   }
 
   const niche = String(script.meta?.niche || "").trim();
   for (const [assetName, info] of need) {
     const dest = path.join(ASSET_DIR, assetName);
-    // Try the specific keyword first, then progressively more generic fallbacks — so a keyword with
-    // NO Pexels match (e.g. a company name like "atlassian") still gets a relevant clip instead of
-    // leaving a blank/404 scene.
-    const queries = [
-      info.keywords[0],
-      info.keywords[1],
-      path.parse(assetName).name.replace(/_/g, " "),
-      niche && `${niche}`,
-      "cinematic abstract dark background",
-    ].filter(Boolean);
-
     let done = false;
-    for (const query of queries) {
+
+    function compressNote(bytes) {
+      let note = `${(bytes / 1e6).toFixed(2)} MB`;
       try {
-        const link =
-          info.type === "video"
-            ? await pexelsVideo(query, orientation)
-            : await pexelsImage(query, orientation);
-        if (!link) continue; // no result for this query — try the next fallback
-        const bytes = await download(link, dest);
-        if (bytes < 1500) { fs.rmSync(dest, { force: true }); continue; } // tiny/corrupt — try next
-        let note = `${(bytes / 1e6).toFixed(1)} MB`;
-        try {
-          const res = compressAsset(dest, orientation, manifest);
-          if (res.before && res.after) {
-            const pct = Math.round((1 - res.after / res.before) * 100);
-            note = `${(res.after / 1e6).toFixed(1)} MB, -${pct}% compressed`;
-          }
-        } catch (e) {
-          note += ` (compress skipped: ${e.message})`;
+        const res = compressAsset(dest, orientation, manifest);
+        if (res.before && res.after) {
+          const pct = Math.round((1 - res.after / res.before) * 100);
+          note = `${(res.after / 1e6).toFixed(2)} MB${pct > 0 ? `, -${pct}% compressed` : ""}`;
         }
-        log(`  + ${assetName}  <- "${query}"  (${note})`);
-        done = true;
-        break;
-      } catch (err) {
-        /* try the next fallback query */
+      } catch (e) {
+        note += ` (compress skipped: ${e.message})`;
+      }
+      return note;
+    }
+
+    // AI image FIRST for image scenes when enabled (free Pollinations). Video scenes still use Pexels
+    // so the reel keeps motion. AI can be slow, so allow up to 90s per image.
+    if (AI && info.type !== "video") {
+      try {
+        const seed = hashNum(assetName) % 100000;
+        const url = pollinationsUrl(aiPrompt(info.keywords, thumbStyle, niche), orientation, seed);
+        const bytes = await download(url, dest, 90000);
+        if (bytes > 3000) {
+          log(`  + ${assetName}  <- AI image (pollinations)  (${compressNote(bytes)})`);
+          done = true;
+        } else {
+          fs.rmSync(dest, { force: true });
+        }
+      } catch (e) {
+        log(`  ! AI image failed for ${assetName} (${String(e.message).slice(0, 60)}) — trying Pexels`);
       }
     }
-    if (!done) log(`  ! could not fetch ${assetName} (tried: ${queries.join(", ")}) — scene will show a dark background`);
+
+    // Pexels: primary for video scenes, and the fallback for images. Try the specific keyword first,
+    // then progressively more generic fallbacks so a keyword with NO match still gets a relevant clip.
+    if (!done && PEXELS_KEY) {
+      const queries = [
+        info.keywords[0],
+        info.keywords[1],
+        path.parse(assetName).name.replace(/_/g, " "),
+        niche && `${niche}`,
+        "cinematic abstract dark background",
+      ].filter(Boolean);
+      for (const query of queries) {
+        try {
+          const link =
+            info.type === "video"
+              ? await pexelsVideo(query, orientation)
+              : await pexelsImage(query, orientation);
+          if (!link) continue; // no result for this query — try the next fallback
+          const bytes = await download(link, dest);
+          if (bytes < 1500) { fs.rmSync(dest, { force: true }); continue; } // tiny/corrupt — try next
+          log(`  + ${assetName}  <- "${query}"  (${compressNote(bytes)})`);
+          done = true;
+          break;
+        } catch (err) {
+          /* try the next fallback query */
+        }
+      }
+    }
+    if (!done) log(`  ! could not fetch ${assetName} — scene will show a dark background`);
   }
   saveManifest(manifest);
   log("\nAsset fetch complete.\n");
