@@ -146,6 +146,35 @@ async function postInstagram(igUserId, token, videoUrl, caption) {
   log(`✓ Instagram Reel published (media id ${j.id})`);
 }
 
+// Instagram STORY (the "new post" teaser): same video, media_type=STORIES. Ephemeral (24h), shown to
+// followers — a nudge that a fresh reel is live. Container -> poll -> publish, like a reel.
+async function postInstagramStory(igUserId, token, videoUrl) {
+  let res = await fetch(`${GRAPH}/${igUserId}/media`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ media_type: "STORIES", video_url: videoUrl, access_token: token }).toString(),
+  });
+  let j = await res.json();
+  if (!res.ok || !j.id) throw new Error(`IG story container: ${JSON.stringify(j.error || j).slice(0, 250)}`);
+  const creationId = j.id;
+  for (let i = 0; i < 30; i++) {
+    await sleep(10000);
+    const s = await fetch(`${GRAPH}/${creationId}?fields=status_code&access_token=${encodeURIComponent(token)}`);
+    const sj = await s.json();
+    if (sj.status_code === "FINISHED") break;
+    if (sj.status_code === "ERROR" || sj.status_code === "EXPIRED") throw new Error(`IG story ${sj.status_code}`);
+    if (i === 29) throw new Error("IG story timed out");
+  }
+  res = await fetch(`${GRAPH}/${igUserId}/media_publish`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({ creation_id: creationId, access_token: token }).toString(),
+  });
+  j = await res.json();
+  if (!res.ok || !j.id) throw new Error(`IG story publish: ${JSON.stringify(j.error || j).slice(0, 250)}`);
+  log(`✓ Instagram Story posted (media id ${j.id})`);
+}
+
 async function main() {
   const meta = readMeta();
   const caps = buildMetaCaptions(meta);
@@ -178,6 +207,11 @@ async function main() {
   if (wantIg) {
     try { await postInstagram(igUserId, token, host.url, caps.ig); }
     catch (e) { log(`! Instagram failed: ${e.message}`); }
+  }
+  // Optional: also drop the reel to the Instagram Story (the "new post" teaser for followers).
+  if (wantIg && process.env.META_STORY === "1") {
+    try { await postInstagramStory(igUserId, token, host.url); }
+    catch (e) { log(`! Instagram Story failed: ${e.message}`); }
   }
 }
 

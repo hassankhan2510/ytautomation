@@ -22,6 +22,12 @@ on:
         options: [publish, test]
         default: publish
         required: false
+      story:
+        description: "Also drop the reel to your Instagram Story (the 'new post' teaser)"
+        type: choice
+        options: [on, off]
+        default: on
+        required: false
 
 jobs:
   make:
@@ -62,10 +68,14 @@ jobs:
           # Publish unless this is a manual "test" run (scheduled runs always publish).
           UPLOAD=1
           if [ "${{ github.event_name }}" != "schedule" ] && [ "${{ github.event.inputs.publish }}" = "test" ]; then UPLOAD=0; fi
+          # Story on by default; off if the run is a test (no upload) or the dropdown says off.
+          STORY=1
+          if [ "$UPLOAD" = "0" ] || [ "${{ github.event.inputs.story }}" = "off" ]; then STORY=0; fi
           echo "asset=$ASSET" >> "$GITHUB_OUTPUT"
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
           echo "upload=$UPLOAD" >> "$GITHUB_OUTPUT"
-          echo "Asset: $ASSET  Mode: ${MODE:-auto}  Upload: $UPLOAD"
+          echo "story=$STORY" >> "$GITHUB_OUTPUT"
+          echo "Asset: $ASSET  Mode: ${MODE:-auto}  Upload: $UPLOAD  Story: $STORY"
       - name: Build the analysis reel (real data + charts + Groq narration)
         env:
           CHANNEL: equitier
@@ -87,6 +97,7 @@ jobs:
           VOICE: kokoro
           # Meta-only — no YouTube here. "1" to post, "0" for a test render (set by the dropdown).
           META_UPLOAD: ${{ steps.pick.outputs.upload }}
+          META_STORY: ${{ steps.pick.outputs.story }}
           META_PAGE_ID_EQUITIER: ${{ vars.META_PAGE_ID_EQUITIER || secrets.META_PAGE_ID_EQUITIER }}
           META_IG_USER_ID_EQUITIER: ${{ vars.META_IG_USER_ID_EQUITIER || secrets.META_IG_USER_ID_EQUITIER }}
           META_PAGE_TOKEN_EQUITIER: ${{ secrets.META_PAGE_TOKEN_EQUITIER }}
