@@ -53,5 +53,10 @@
     "date": "2026-08-16",
     "topic": "Apple",
     "title": "Apple Stock Analysis"
+  },
+  {
+    "date": "2026-08-16",
+    "topic": "Nvidia",
+    "title": "Nvidia Deep Dive"
   }
 ]
