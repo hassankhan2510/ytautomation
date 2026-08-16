@@ -44,9 +44,11 @@ const KaraokeText: React.FC<{
     {tokens.map((w, i) => {
       const spoken = frame >= w.end;
       const current = frame >= w.start && frame < w.end;
-      const color = current ? accent : spoken ? "#f8fafc" : "rgba(248,250,252,0.38)";
+      const color = current ? accent : spoken ? "#f8fafc" : "rgba(248,250,252,0.5)";
+      // Strong dark shadow so text stays readable over ANY background now that the glass box is gone.
+      const read = "0 2px 12px rgba(0,0,0,0.92), 0 0 4px rgba(0,0,0,0.95)";
       return (
-        <span key={i} style={{ color, textShadow: current ? `0 0 24px ${accent}88` : "none" }}>
+        <span key={i} style={{ color, textShadow: current ? `0 0 24px ${accent}88, ${read}` : read }}>
           {w.text}
           {i < tokens.length - 1 ? " " : ""}
         </span>
@@ -106,11 +108,6 @@ export const Caption: React.FC<Props> = ({
     extrapolateLeft: "clamp",
   });
   const opacity = frame > durationInFrames - 12 ? opacityOut : opacityIn;
-
-  const progress = interpolate(frame, [0, durationInFrames], [0, 100], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-  });
 
   const tokens: Word[] =
     words && words.length > 0
@@ -178,28 +175,18 @@ export const Caption: React.FC<Props> = ({
       style={{
         justifyContent: centered || portrait ? "center" : "flex-end",
         alignItems: centered || portrait ? "center" : "flex-start",
-        padding: centered ? "0 9%" : portrait ? "0 80px" : "0 0 120px 150px",
+        padding: centered ? "0 8%" : portrait ? "0 70px 160px" : "0 0 130px 150px",
       }}
     >
+      {/* No blocking card — text sits directly on the video/chart, kept readable by its shadow. */}
       <div
         style={{
-          background: "linear-gradient(135deg, rgba(20,20,20,0.88) 0%, rgba(5,5,5,0.96) 100%)",
-          backdropFilter: "blur(10px)",
-          WebkitBackdropFilter: "blur(10px)",
-          borderTop: "1px solid rgba(255,255,255,0.10)",
-          borderRight: "1px solid rgba(255,255,255,0.10)",
-          borderBottom: "1px solid rgba(255,255,255,0.10)",
-          borderLeft: `12px solid ${accent}`,
-          borderRadius: 16,
-          padding: portrait ? "44px 48px" : "48px 66px",
-          maxWidth: centered ? maxWidth * 0.92 : maxWidth,
+          maxWidth: centered ? maxWidth * 0.96 : maxWidth,
           opacity,
-          transform: `translateX(${(1 - slide) * (centered || portrait ? 0 : -400)}px) translateY(${
-            (1 - slide) * (centered || portrait ? 60 : 0) + floatY
+          textAlign: centered ? "center" : "left",
+          transform: `translateX(${(1 - slide) * (centered || portrait ? 0 : -120)}px) translateY(${
+            (1 - slide) * (centered || portrait ? 40 : 0) + floatY
           }px)`,
-          boxShadow: `0 40px 100px rgba(0,0,0,0.9), inset 0 0 40px ${accent}0d`,
-          position: "relative",
-          overflow: "hidden",
         }}
       >
         {kicker ? <Kicker text={kicker} accent={accent} frame={frame} size={kickerSize} /> : null}
@@ -209,18 +196,7 @@ export const Caption: React.FC<Props> = ({
           accent={accent}
           fontSize={boxFont}
           align={centered ? "center" : "left"}
-          weight={600}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: 0,
-            left: 0,
-            height: 4,
-            width: `${progress}%`,
-            backgroundColor: accent,
-            boxShadow: `0 0 20px ${accent}`,
-          }}
+          weight={centered ? 700 : 600}
         />
       </div>
     </AbsoluteFill>

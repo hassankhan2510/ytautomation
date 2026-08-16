@@ -193,9 +193,6 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
 
       {/* Cinematic film grain over everything */}
       <Grain />
-
-      {/* Cinematic vignette */}
-      <AbsoluteFill style={{ boxShadow: "inset 0 0 400px rgba(0,0,0,0.92)", pointerEvents: "none" }} />
     </AbsoluteFill>
   );
 };
