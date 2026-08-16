@@ -28,6 +28,12 @@ on:
         options: [on, off]
         default: on
         required: false
+      carousel:
+        description: "Also post the chart CAROUSEL to Instagram (saveable 'today's levels')"
+        type: choice
+        options: [on, off]
+        default: on
+        required: false
 
 jobs:
   make:
@@ -71,11 +77,14 @@ jobs:
           # Story on by default; off if the run is a test (no upload) or the dropdown says off.
           STORY=1
           if [ "$UPLOAD" = "0" ] || [ "${{ github.event.inputs.story }}" = "off" ]; then STORY=0; fi
+          CAROUSEL=1
+          if [ "$UPLOAD" = "0" ] || [ "${{ github.event.inputs.carousel }}" = "off" ]; then CAROUSEL=0; fi
           echo "asset=$ASSET" >> "$GITHUB_OUTPUT"
           echo "mode=$MODE" >> "$GITHUB_OUTPUT"
           echo "upload=$UPLOAD" >> "$GITHUB_OUTPUT"
           echo "story=$STORY" >> "$GITHUB_OUTPUT"
-          echo "Asset: $ASSET  Mode: ${MODE:-auto}  Upload: $UPLOAD  Story: $STORY"
+          echo "carousel=$CAROUSEL" >> "$GITHUB_OUTPUT"
+          echo "Asset: $ASSET  Mode: ${MODE:-auto}  Upload: $UPLOAD  Story: $STORY  Carousel: $CAROUSEL"
       - name: Build the analysis reel (real data + charts + Groq narration)
         env:
           CHANNEL: equitier
@@ -98,6 +107,7 @@ jobs:
           # Meta-only — no YouTube here. "1" to post, "0" for a test render (set by the dropdown).
           META_UPLOAD: ${{ steps.pick.outputs.upload }}
           META_STORY: ${{ steps.pick.outputs.story }}
+          META_CAROUSEL: ${{ steps.pick.outputs.carousel }}
           META_PAGE_ID_EQUITIER: ${{ vars.META_PAGE_ID_EQUITIER || secrets.META_PAGE_ID_EQUITIER }}
           META_IG_USER_ID_EQUITIER: ${{ vars.META_IG_USER_ID_EQUITIER || secrets.META_IG_USER_ID_EQUITIER }}
           META_PAGE_TOKEN_EQUITIER: ${{ secrets.META_PAGE_TOKEN_EQUITIER }}

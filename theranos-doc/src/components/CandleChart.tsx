@@ -36,20 +36,22 @@ export const CandleChart: React.FC<{
   decimals: number;
   callout?: string | null; // short key words/numbers overlaid on the chart (the only "caption")
   dateLabel?: string | null; // the analysis date, so viewers know when it's from
+  still?: boolean; // static render (carousel slide) — show everything, no frame animation
   accent: string;
   fontSize: number;
   portrait: boolean;
-}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, dateLabel, accent, fontSize, portrait }) => {
+}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, dateLabel, still, accent, fontSize, portrait }) => {
   const frame = useCurrentFrame();
   const { width, height, durationInFrames } = useVideoConfig();
 
   const fadeIn = interpolate(frame, [0, 12], [0, 1], { extrapolateRight: "clamp" });
   const fadeOut = interpolate(frame, [durationInFrames - 12, durationInFrames], [1, 0], { extrapolateLeft: "clamp" });
-  const opacity = frame > durationInFrames - 12 ? fadeOut : fadeIn;
+  const opacity = still ? 1 : frame > durationInFrames - 12 ? fadeOut : fadeIn;
 
   const n = Math.max(candles.length, 1);
-  // Candles reveal progressively across the first ~65% of the scene.
-  const shown = Math.max(1, Math.floor(interpolate(frame, [8, durationInFrames * 0.65], [1, n], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })));
+  // Candles reveal progressively across the first ~65% of the scene (all shown at once when `still`).
+  const revealEnd = Math.max(9, durationInFrames * 0.65);
+  const shown = still ? n : Math.max(1, Math.floor(interpolate(frame, [8, revealEnd], [1, n], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })));
 
   // Chart geometry (inside the SVG viewBox = pixel space).
   const W = width;
@@ -128,7 +130,7 @@ export const CandleChart: React.FC<{
 
           {/* support / resistance / key levels — line at the real price, label staggered to avoid overlap */}
           {leveled.map((lv, i) => {
-            const o = interpolate(frame, [20 + i * 4, 32 + i * 4], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+            const o = still ? 1 : interpolate(frame, [20 + i * 4, 32 + i * 4], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
             const col = levelColor(lv.kind);
             return (
               <g key={`lv${i}`} opacity={o}>
@@ -191,8 +193,8 @@ export const CandleChart: React.FC<{
             style={{
               position: "absolute", left: 0, right: 0, bottom: portrait ? H * 0.09 : H * 0.07,
               display: "flex", justifyContent: "center", padding: "0 6%",
-              opacity: interpolate(frame, [6, 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
-              transform: `translateY(${(1 - interpolate(frame, [6, 22], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })) * 22}px)`,
+              opacity: still ? 1 : interpolate(frame, [6, 18], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }),
+              transform: still ? "none" : `translateY(${(1 - interpolate(frame, [6, 22], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" })) * 22}px)`,
             }}
           >
             <div

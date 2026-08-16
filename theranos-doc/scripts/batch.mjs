@@ -130,7 +130,7 @@ function postToMeta(name, outFile) {
   if (process.env.META_UPLOAD !== "1") return;
   const channel = name.split("_")[0];
   try {
-    run(`node scripts/meta_upload.mjs --channel=${channel} --script=jobs/${name}.json --video=${outFile}`);
+    run(`node scripts/meta_upload.mjs --channel=${channel} --script=jobs/${name}.json --video=${outFile} --name=${name}`);
   } catch (e) {
     console.log(`  ! meta post failed (${String(e.message).split("\n")[0]}) — non-fatal`);
   }

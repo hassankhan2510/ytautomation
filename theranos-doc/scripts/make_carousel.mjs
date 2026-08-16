@@ -110,6 +110,34 @@ function buildCarousel(meta, points) {
   };
 }
 
+// When the script is a chart-based analysis reel, make a CHART carousel: cover -> the real charts
+// (1H/4H/Daily/Weekly) -> a save-me CTA. Highly saveable "today's levels" reference.
+function buildChartCarousel(meta, scenes) {
+  const brand = meta.brand || (meta.channel || "").toUpperCase();
+  const name = scenes[0].assetName || meta.title || brand;
+  const date = scenes[0].dateLabel || "";
+  const toChart = (s) => ({
+    kind: "chart", candles: s.candles, overlays: s.overlays || [], levels: s.levels || [],
+    name: s.assetName, pair: s.pair, timeframe: s.timeframe, price: s.priceNow,
+    changePct: s.changePct, decimals: s.decimals, callout: s.callout, dateLabel: s.dateLabel,
+  });
+  // One chart per distinct timeframe, in order.
+  const order = ["1h", "4h", "daily", "weekly"];
+  const chosen = order
+    .map((p) => scenes.find((s) => String(s.timeframe || "").toLowerCase().startsWith(p)))
+    .filter(Boolean);
+  const chartSlides = (chosen.length ? chosen : scenes.slice(0, 4)).map(toChart);
+  return {
+    accentColor: meta.accentColor || "#10b981",
+    brand, tagline: meta.tagline || "",
+    slides: [
+      { kind: "cover", headline: `${name} — Today's Levels`, sub: date },
+      ...chartSlides,
+      { kind: "cta", headline: "Save this for the session", body: clip(meta.description || `Follow ${brand} for daily market levels & analysis.`, 200) },
+    ],
+  };
+}
+
 /* ---------- render slides + assemble PDF ---------- */
 function renderSlides(count) {
   const framesDir = path.join(OUT, `_carousel_${NAME}`);
@@ -211,8 +239,16 @@ async function main() {
   const lines = script.lines || [];
   if (!lines.length) { console.log("  (carousel skipped — no lines)"); return; }
 
-  const points = (await groqSlides(meta, lines)) || heuristicSlides(lines);
-  const carousel = buildCarousel(meta, points);
+  // Chart-based analysis reels -> a real CHART carousel; everything else -> the text carousel.
+  const candleScenes = lines.filter((l) => l.layout === "candles" && Array.isArray(l.candles) && l.candles.length);
+  let carousel;
+  if (candleScenes.length >= 2) {
+    carousel = buildChartCarousel(meta, candleScenes);
+    console.log(`  carousel: chart mode (${carousel.slides.length} slides)`);
+  } else {
+    const points = (await groqSlides(meta, lines)) || heuristicSlides(lines);
+    carousel = buildCarousel(meta, points);
+  }
   fs.writeFileSync(CAROUSEL_JSON, JSON.stringify(carousel, null, 2));
 
   const { framesDir, files } = renderSlides(carousel.slides.length);

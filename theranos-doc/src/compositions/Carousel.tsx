@@ -1,17 +1,25 @@
 import React from "react";
 import { AbsoluteFill, useCurrentFrame, useVideoConfig } from "remotion";
 import carousel from "../data/carousel.json";
+import { CandleChart, Candle, Overlay, Level } from "../components/CandleChart";
 
 /**
  * A swipeable LinkedIn / Instagram carousel, rendered as one still per slide.
  * The composition shows slide[frame], so `remotion render --sequence` emits one image per slide.
  * Square (1080x1080) — the safe format for both platforms.
+ * Slides are either text cards (cover/point/cta) or full real CHART slides (kind: "chart").
  */
 
+type ChartSlide = {
+  kind: "chart"; candles: Candle[]; overlays?: Overlay[]; levels?: Level[];
+  name: string; pair: string; timeframe: string; price: number; changePct: number;
+  decimals: number; callout?: string; dateLabel?: string;
+};
 type Slide =
   | { kind: "cover"; headline: string; sub?: string }
   | { kind: "point"; n?: number; headline: string; body?: string }
-  | { kind: "cta"; headline: string; body?: string };
+  | { kind: "cta"; headline: string; body?: string }
+  | ChartSlide;
 
 const FONT = "Inter, system-ui, sans-serif";
 
@@ -28,6 +36,30 @@ export const Carousel: React.FC = () => {
   const slide = slides[Math.min(frame, slides.length - 1)] || { kind: "cover", headline: data.brand };
   const accent = data.accentColor || "#e11d48";
   const points = slides.filter((s) => s.kind === "point").length;
+
+  // Full-bleed real chart slide.
+  if (slide.kind === "chart") {
+    const c = slide as ChartSlide;
+    return (
+      <CandleChart
+        candles={c.candles}
+        overlays={c.overlays || []}
+        levels={c.levels || []}
+        name={c.name}
+        pair={c.pair}
+        timeframe={c.timeframe}
+        price={c.price}
+        changePct={c.changePct}
+        decimals={c.decimals}
+        callout={c.callout}
+        dateLabel={c.dateLabel}
+        still
+        accent={accent}
+        fontSize={Math.round(width * 0.04)}
+        portrait={false}
+      />
+    );
+  }
 
   const pad = width * 0.09;
   const brandRow = (

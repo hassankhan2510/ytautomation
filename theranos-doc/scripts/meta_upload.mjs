@@ -83,19 +83,20 @@ async function pruneOldAssets(repo, release, maxAgeMs = 24 * 3600 * 1000) {
   }
 }
 
-async function hostVideo(filePath, name) {
+let _hostSeq = 0, _pruned = false;
+async function hostFile(filePath, name, ext = "mp4") {
   const repo = process.env.GITHUB_REPOSITORY || arg("repo", "");
-  if (!process.env.GITHUB_TOKEN || !repo) throw new Error("GITHUB_TOKEN / GITHUB_REPOSITORY not set (needed to host the video)");
+  if (!process.env.GITHUB_TOKEN || !repo) throw new Error("GITHUB_TOKEN / GITHUB_REPOSITORY not set (needed to host media)");
   const release = await ensureRelease(repo);
-  await pruneOldAssets(repo, release);
-  const assetName = `${name}_${Date.now()}.mp4`;
+  if (!_pruned) { await pruneOldAssets(repo, release); _pruned = true; }
+  const assetName = `${name}_${Date.now()}_${_hostSeq++}.${ext}`;
   const bytes = fs.readFileSync(filePath);
   const up = await gh(`/repos/${repo}/releases/${release.id}/assets?name=${encodeURIComponent(assetName)}`, {
     method: "POST", upload: true, body: bytes,
   });
   if (!up.ok) throw new Error(`asset upload: ${up.status} ${(await up.text()).slice(0, 200)}`);
   const asset = await up.json();
-  log(`hosted video: ${asset.browser_download_url}`);
+  log(`hosted: ${asset.browser_download_url}`);
   return { url: asset.browser_download_url, repo, assetId: asset.id };
 }
 
@@ -175,6 +176,33 @@ async function postInstagramStory(igUserId, token, videoUrl) {
   log(`✓ Instagram Story posted (media id ${j.id})`);
 }
 
+// Instagram CAROUSEL (multi-image): each image -> carousel-item container -> CAROUSEL container ->
+// publish. Highly saveable "today's levels" reference; a strong complement to the reel.
+async function postInstagramCarousel(igUserId, token, imageUrls, caption) {
+  const form = { "Content-Type": "application/x-www-form-urlencoded" };
+  const children = [];
+  for (const url of imageUrls) {
+    const r = await fetch(`${GRAPH}/${igUserId}/media`, { method: "POST", headers: form, body: new URLSearchParams({ image_url: url, is_carousel_item: "true", access_token: token }).toString() });
+    const j = await r.json();
+    if (!r.ok || !j.id) throw new Error(`IG carousel item: ${JSON.stringify(j.error || j).slice(0, 220)}`);
+    children.push(j.id);
+  }
+  const cr = await fetch(`${GRAPH}/${igUserId}/media`, { method: "POST", headers: form, body: new URLSearchParams({ media_type: "CAROUSEL", children: children.join(","), caption, access_token: token }).toString() });
+  const cj = await cr.json();
+  if (!cr.ok || !cj.id) throw new Error(`IG carousel container: ${JSON.stringify(cj.error || cj).slice(0, 250)}`);
+  for (let i = 0; i < 12; i++) {
+    await sleep(5000);
+    const s = await fetch(`${GRAPH}/${cj.id}?fields=status_code&access_token=${encodeURIComponent(token)}`);
+    const sj = await s.json();
+    if (sj.status_code === "FINISHED") break;
+    if (sj.status_code === "ERROR") throw new Error("IG carousel processing error");
+  }
+  const pub = await fetch(`${GRAPH}/${igUserId}/media_publish`, { method: "POST", headers: form, body: new URLSearchParams({ creation_id: cj.id, access_token: token }).toString() });
+  const pj = await pub.json();
+  if (!pub.ok || !pj.id) throw new Error(`IG carousel publish: ${JSON.stringify(pj.error || pj).slice(0, 250)}`);
+  log(`✓ Instagram Carousel posted (${imageUrls.length} slides, id ${pj.id})`);
+}
+
 async function main() {
   const meta = readMeta();
   const caps = buildMetaCaptions(meta);
@@ -198,7 +226,7 @@ async function main() {
 
   // Host once, reuse for both platforms.
   const name = path.basename(VIDEO).replace(/\.[^.]+$/, "");
-  const host = await hostVideo(videoPath, name);
+  const host = await hostFile(videoPath, name, "mp4");
 
   if (wantFb) {
     try { await postFacebook(pageId, token, host.url, caps.fb); }
@@ -212,6 +240,25 @@ async function main() {
   if (wantIg && process.env.META_STORY === "1") {
     try { await postInstagramStory(igUserId, token, host.url); }
     catch (e) { log(`! Instagram Story failed: ${e.message}`); }
+  }
+  // Optional: also post the chart CAROUSEL to Instagram (saveable "today's levels" reference).
+  if (wantIg && process.env.META_CAROUSEL === "1") {
+    try {
+      const outDir = path.join(ROOT, "out");
+      const nm = arg("name", path.basename(VIDEO).replace(/_[a-z]+\.mp4$/i, ""));
+      const slidePaths = fs.existsSync(outDir)
+        ? fs.readdirSync(outDir).filter((f) => f.startsWith(`${nm}_slide_`) && /\.jpe?g$/i.test(f)).sort().map((f) => path.join(outDir, f))
+        : [];
+      if (slidePaths.length >= 2) {
+        const urls = [];
+        for (const sp of slidePaths) urls.push((await hostFile(sp, nm, "jpg")).url);
+        await postInstagramCarousel(igUserId, token, urls, caps.ig);
+      } else {
+        log(`carousel skipped — no slides found for "${nm}"`);
+      }
+    } catch (e) {
+      log(`! Instagram Carousel failed: ${e.message}`);
+    }
   }
 }
 
