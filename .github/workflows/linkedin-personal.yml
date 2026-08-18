@@ -1,0 +1,88 @@
+name: "LinkedIn — Personal Studio (carousel, every 2 days)"
+
+# Fully automated personal-brand studio: pick a fresh breakout repo OR paper (never mixed, never
+# repeated), write the insight-hook + POV + dual CEO/CTO breakdown, render a code-drawn diagram
+# carousel, and post it to your PERSONAL profile as a document with the source link in the first
+# comment. Nothing posts until LI_ACCESS_TOKEN is set; manual runs default to a safe dry-run.
+on:
+  schedule:
+    - cron: "0 8 */2 * *" # ~every 2 days, 08:00 UTC
+  workflow_dispatch:
+    inputs:
+      kind:
+        description: "Subject kind"
+        type: choice
+        options: [auto, repo, paper]
+        default: auto
+        required: false
+      publish:
+        description: "publish = post to LinkedIn · test = build only, no post (download the artifact)"
+        type: choice
+        options: [test, publish]
+        default: test
+        required: false
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: theranos-doc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: theranos-doc/package-lock.json
+      - name: Install headless-Chrome libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji
+      - run: npm ci
+      - name: Pick a fresh subject (repo or paper, deduped)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          KIND="${{ github.event.inputs.kind }}"
+          if [ -n "$KIND" ] && [ "$KIND" != "auto" ]; then node scripts/li_source.mjs --kind="$KIND"; else node scripts/li_source.mjs; fi
+      - name: Write content (hook + POV + diagram selection)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          LI_BRAND: ${{ vars.LI_BRAND }}
+          LI_HANDLE: ${{ vars.LI_HANDLE }}
+          LI_ACCENT: ${{ vars.LI_ACCENT }}
+        run: node scripts/li_content.mjs
+      - name: Render the carousel -> PDF
+        run: node scripts/li_render.mjs
+      - name: Post to LinkedIn (or dry-run)
+        env:
+          LI_ACCESS_TOKEN: ${{ secrets.LI_ACCESS_TOKEN }}
+          LI_PERSON_URN: ${{ secrets.LI_PERSON_URN }}
+          LI_VERSION: ${{ vars.LI_VERSION }}
+        run: |
+          if [ "${{ github.event.inputs.publish }}" = "test" ]; then node scripts/li_post.mjs --dry; else node scripts/li_post.mjs; fi
+      - name: Persist dedup history
+        if: ${{ github.event.inputs.publish != 'test' }}
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add channels/li_history.json 2>/dev/null || true
+          git commit -m "chore(li): posted subject [skip ci]" || { echo "no history change"; exit 0; }
+          git pull --rebase --autostash || true
+          git push || echo "push skipped"
+      - name: Deliver the carousel for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: linkedin-carousel-run${{ github.run_number }}
+          path: |
+            theranos-doc/out/li_carousel.pdf
+            theranos-doc/out/li_slide_*.jpg
+          retention-days: 30
+          if-no-files-found: warn
