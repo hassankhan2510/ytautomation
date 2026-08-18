@@ -2,9 +2,11 @@ import React from "react";
 import { Composition } from "remotion";
 import { DocVideo } from "./compositions/DocVideo";
 import { Carousel } from "./compositions/Carousel";
+import { LiCarousel } from "./compositions/LiCarousel";
 import { Thumbnail } from "./compositions/Thumbnail";
 import timeline from "./data/timeline.json";
 import carousel from "./data/carousel.json";
+import liCarousel from "./data/li_carousel.json";
 
 const fps = timeline.fps;
 const durationInFrames = timeline.totalDurationInFrames;
@@ -54,6 +56,15 @@ export const RemotionRoot: React.FC = () => {
         fps={fps}
         width={1080}
         height={1080}
+      />
+      {/* LinkedIn diagram carousel — one code-drawn slide per frame, 4:5. */}
+      <Composition
+        id="LiCarousel"
+        component={LiCarousel}
+        durationInFrames={Math.max(1, (liCarousel as { slides?: unknown[] }).slides?.length ?? 1)}
+        fps={fps}
+        width={1080}
+        height={1350}
       />
       {/* YouTube thumbnail — 1280x720, rendered as a single still. */}
       <Composition id="Thumbnail" component={Thumbnail} durationInFrames={1} fps={fps} width={1280} height={720} />

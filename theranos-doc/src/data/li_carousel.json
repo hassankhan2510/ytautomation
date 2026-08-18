@@ -1,0 +1,53 @@
+{
+  "brand": "HASSAN KHAN",
+  "handle": "Building Syndar & Equitier",
+  "accent": "#4f8cff",
+  "slides": [
+    {
+      "type": "cover",
+      "kicker": "The Frontier",
+      "title": "Someone made every AI tool a plugin — and 158k engineers noticed.",
+      "sub": "DeepSeek Harness quietly reframed how agents get their capabilities. Here's why it matters."
+    },
+    {
+      "type": "thesis",
+      "label": "My Take",
+      "text": "The winner in agents won't own the model — it'll own the plugin interface everything else has to speak."
+    },
+    {
+      "type": "flow",
+      "title": "How the harness works",
+      "steps": [
+        "Every capability — tools, memory, models — is a hot-swappable plugin.",
+        "The harness routes an agent's intent to the right plugin at runtime.",
+        "New abilities ship without touching the core — just drop in a plugin."
+      ]
+    },
+    {
+      "type": "compare",
+      "title": "Why this is different",
+      "left": { "title": "The old way", "items": ["Capabilities hard-wired into the agent", "Every new tool = a code change", "Vendor lock-in to one framework"] },
+      "right": { "title": "The harness way", "items": ["Capabilities are plugins", "New tools drop in, zero core changes", "Swap models & tools freely"] }
+    },
+    {
+      "type": "stat",
+      "value": "158k",
+      "label": "stars in under 90 days",
+      "sub": "One of the fastest-growing agent repos of the year."
+    },
+    {
+      "type": "bullets",
+      "title": "How I'd apply it",
+      "items": [
+        "CTO: standardize your internal tools as plugins now — cut future rewrites.",
+        "CEO: your moat isn't the model; it's the interface competitors must integrate with.",
+        "Both: bet on composability over any single vendor's stack."
+      ]
+    },
+    {
+      "type": "cta",
+      "title": "The abstraction layer is where the next platforms get built.",
+      "sub": "I break down one frontier shift every few days. Link to the repo in the comments."
+    }
+  ]
+}
