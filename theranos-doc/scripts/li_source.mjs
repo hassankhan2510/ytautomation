@@ -51,14 +51,27 @@ function loadHistory() { try { const a = JSON.parse(fs.readFileSync(HISTORY, "ut
 // Junk we don't want as a "product" post: lists, courses, books, dotfiles, etc.
 const REPO_BLOCK = /awesome|\bbook\b|roadmap|tutorial|\bcourse\b|interview|cheat.?sheet|dotfiles|\bresources?\b|\blist\b|handbook|notes|examples?$/i;
 async function fetchRepos() {
-  const q = `created:>${daysAgoISO(90)} stars:>800`;
-  const d = await fetchJSON(`https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=40`);
-  return (d.items || [])
+  const map = (items) => items
     .filter((x) => x.description && x.language && !x.fork && !REPO_BLOCK.test(`${x.full_name} ${x.description}`))
     .map((x) => ({
       kind: "repo", id: x.full_name, title: x.name, url: x.html_url, stars: x.stargazers_count,
       language: x.language, topics: x.topics || [], description: x.description, createdAt: x.created_at,
     }));
+  const query = async (days, minStars) => {
+    const q = `created:>${daysAgoISO(days)} stars:>${minStars}`;
+    const d = await fetchJSON(`https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=40`);
+    return map(d.items || []);
+  };
+  // Prefer genuinely NEW breakouts (born this week/fortnight), NOT old repos with big star counts.
+  // Widen the window only if the fresh pool is too thin. The tightest (newest) window comes first.
+  const windows = [[14, 250], [30, 500], [90, 1000]];
+  const seen = new Set();
+  const pool = [];
+  for (const [days, minStars] of windows) {
+    for (const it of await query(days, minStars)) if (!seen.has(it.id)) { seen.add(it.id); pool.push(it); }
+    if (pool.length >= 12) break;
+  }
+  return pool;
 }
 async function enrichRepo(s) {
   try {
