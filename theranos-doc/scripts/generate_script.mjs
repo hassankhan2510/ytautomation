@@ -29,7 +29,7 @@ const DRY = process.argv.includes("--dry");
 const CHANNEL = (process.env.CHANNEL || process.argv[2] || "").toLowerCase().replace(/^--/, "");
 const TOPIC = process.env.TOPIC || "";
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 const SEC_PER_LINE = { "youtube-long": 7, linkedin: 6, shorts: 4.5, reel: 4.5 };
 

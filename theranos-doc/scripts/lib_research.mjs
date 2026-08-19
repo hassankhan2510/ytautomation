@@ -10,7 +10,7 @@
  * degrades gracefully and generation still proceeds. Returns { items:[{title,extract,url}], brief }.
  */
 
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 async function fetchJSON(url, ms = 10000) {
   const ctrl = new AbortController();

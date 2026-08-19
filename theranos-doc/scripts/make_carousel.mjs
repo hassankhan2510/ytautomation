@@ -28,7 +28,7 @@ const OUT = path.join(ROOT, "out");
 const NAME = process.argv[2] || "carousel";
 const MAX_POINTS = 7;
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 const SCRATCH = process.platform === "win32" ? "D:/remotion-temp" : path.join(os.tmpdir(), "remotion-temp");
 const ENV = { ...process.env, TMP: SCRATCH, TEMP: SCRATCH, TMPDIR: SCRATCH };

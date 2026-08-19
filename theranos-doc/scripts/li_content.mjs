@@ -24,7 +24,7 @@ const CAROUSEL = path.join(ROOT, "src", "data", "li_carousel.json");
 const POST = path.join(LI_DIR, "post.json");
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 const BRAND = process.env.LI_BRAND || "HASSAN KHAN";
 const HANDLE = process.env.LI_HANDLE || "Building Syndar & Equitier";
 const ACCENT = process.env.LI_ACCENT || "#4f8cff";

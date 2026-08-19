@@ -28,7 +28,7 @@ const JOBS = path.join(ROOT, "jobs");
 const CHANNEL = (process.env.CHANNEL || "equitier").toLowerCase();
 const ASSET = (process.env.ASSET || "gold").toLowerCase();
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
-const GROQ_MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 
 // Weekend = US market closed → deep-dive instead of live analysis. Use PKT day (UTC+5) since we post
 // in the morning PKT. MODE=deepdive forces it; MODE=analysis forces the market reel.
