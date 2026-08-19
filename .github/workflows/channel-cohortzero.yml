@@ -95,6 +95,7 @@ jobs:
           SHORTS: ${{ github.event.inputs.shorts_count }}
           LANGUAGE: ${{ github.event.inputs.language }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/generate_script.mjs
       - name: Render long + shorts + upload to YouTube (private)

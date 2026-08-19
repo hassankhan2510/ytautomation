@@ -91,6 +91,7 @@ jobs:
           ASSET: ${{ steps.pick.outputs.asset }}
           MODE: ${{ steps.pick.outputs.mode }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
         run: node scripts/analysis_reel.mjs
       - name: Persist history (weekend deep-dive dedup)
         working-directory: ${{ github.workspace }}
