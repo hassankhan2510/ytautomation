@@ -68,13 +68,18 @@ export async function groqJSON(system, user, opts = {}) {
   }
 
   for (const model of models) {
+    // Compound is an agentic SYSTEM (auto web-search/code-exec) and rejects response_format json_object.
+    // Drop that param for compound and rely on the prompt ("Return ONLY JSON") + our tolerant parser.
+    const isCompound = /compound/i.test(model);
     for (let attempt = 1; attempt <= 4; attempt++) {
       await reserve(inputEst + cap);
       try {
+        const payload = { model, temperature, max_tokens: cap, messages: [{ role: "system", content: system }, { role: "user", content: user }] };
+        if (!isCompound) payload.response_format = { type: "json_object" };
         const res = await fetch(API, {
           method: "POST",
           headers: { Authorization: `Bearer ${KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ model, temperature, max_tokens: cap, response_format: { type: "json_object" }, messages: [{ role: "system", content: system }, { role: "user", content: user }] }),
+          body: JSON.stringify(payload),
         });
         if (res.status === 413) {
           const body = await res.text().catch(() => "");

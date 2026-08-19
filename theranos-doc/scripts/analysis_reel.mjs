@@ -68,7 +68,11 @@ function slug(s) {
 }
 
 /* ---------- Groq (shared throttled client; deterministic fallback if it fails) ---------- */
-const callGroq = (system, user) => groqJSON(system, user, { maxTokens: 1400, temperature: 0.5 });
+// The markets reels guarantee every on-screen number comes from lib_market. Set GROQ_MODEL_ANALYSIS to
+// pin narration to a grounded chat model (e.g. openai/gpt-oss-120b) even if GROQ_MODEL is an agentic
+// system like groq/compound that could web-search and speak numbers that differ from the chart.
+const ANALYSIS_MODEL = process.env.GROQ_MODEL_ANALYSIS || undefined;
+const callGroq = (system, user) => groqJSON(system, user, { maxTokens: 1400, temperature: 0.5, model: ANALYSIS_MODEL });
 
 const NARRATION_RULES = `
 You are a top-tier markets analyst writing a short vertical reel (Instagram/Facebook). Voice: sharp,

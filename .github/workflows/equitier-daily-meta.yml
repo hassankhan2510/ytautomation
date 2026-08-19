@@ -94,6 +94,8 @@ jobs:
           GROQ_MODEL: ${{ vars.GROQ_MODEL }}
           GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
           GROQ_TPM: ${{ vars.GROQ_TPM }}
+          # Pin the data-grounded reel narration to a chat model even if GROQ_MODEL is agentic (compound).
+          GROQ_MODEL_ANALYSIS: ${{ vars.GROQ_MODEL_ANALYSIS }}
         run: node scripts/analysis_reel.mjs
       - name: Persist history + hero-level track record
         working-directory: ${{ github.workspace }}

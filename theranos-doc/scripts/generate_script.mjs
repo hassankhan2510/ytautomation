@@ -51,8 +51,9 @@ function readNichePack(niche) {
 
 /* ---------- Groq (shared throttled client; free-tier TPM-safe) ---------- */
 async function callGroq(system, user) {
-  // 4800 output keeps (input + output) inside the 8k TPM budget; the shared client clamps further if needed.
-  const parsed = await groqJSON(system, user, { maxTokens: 4800, temperature: 0.6 });
+  // Big models (e.g. groq/compound at 70k TPM) get full-length scripts; the shared client auto-clamps
+  // this down to fit if you're on a smaller-budget model like gpt-oss-120b (8k TPM).
+  const parsed = await groqJSON(system, user, { maxTokens: 7000, temperature: 0.6 });
   if (!parsed) throw new Error("Groq returned no usable content (rate-limited or unavailable)");
   return parsed;
 }
