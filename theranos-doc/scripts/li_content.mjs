@@ -46,14 +46,23 @@ const THEMES = [
   { name: "lime",          accent: "#a3e635", bg: ["#141a0a", "#0e1207", "#070a04"], angle: 158 },
   { name: "indigo",        accent: "#6366f1", bg: ["#0f1024", "#0a0a18", "#05050d"], angle: 168 },
 ];
-function pickTheme(subj) {
+// Extra axes of variety, each rotated on a different hash offset so combinations rarely repeat:
+const MOTIFS = ["plain", "grid", "rays", "rings"];   // faint background texture
+const COVERS = ["standard", "centered", "rule", "mark"]; // cover-slide layout
+const SHAPES = ["square", "circle", "diamond"];      // brand + bullet marker shape
+function pickStyle(subj) {
   const now = new Date();
-  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  const day = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
   const id = String(subj.id || subj.title || "");
   let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
-  const theme = THEMES[(h + dayOfYear) % THEMES.length];
-  // An explicit LI_ACCENT still wins for the accent (keeps the theme's tinted background).
-  return ACCENT ? { ...theme, accent: ACCENT, name: `${theme.name}+pin` } : theme;
+  const theme = THEMES[(h + day) % THEMES.length];
+  const style = {
+    ...(ACCENT ? { ...theme, accent: ACCENT, name: `${theme.name}+pin` } : theme),
+    motif: MOTIFS[(h * 3 + day) % MOTIFS.length],
+    cover: COVERS[(h * 7 + day) % COVERS.length],
+    shape: SHAPES[(h * 5 + day) % SHAPES.length],
+  };
+  return style;
 }
 
 const callGroq = (system, user, maxTokens = 2400) => groqJSON(system, user, { maxTokens, temperature: 0.6 });
@@ -273,9 +282,9 @@ async function main() {
     model = fallback(subj, brief);
   }
   const slides = sanitize(model, subj);
-  const theme = pickTheme(subj);
+  const theme = pickStyle(subj);
 
-  fs.writeFileSync(CAROUSEL, JSON.stringify({ brand: BRAND, handle: HANDLE, accent: theme.accent, bg: theme.bg, angle: theme.angle, theme: theme.name, slides }, null, 2));
+  fs.writeFileSync(CAROUSEL, JSON.stringify({ brand: BRAND, handle: HANDLE, accent: theme.accent, bg: theme.bg, angle: theme.angle, theme: theme.name, motif: theme.motif, cover: theme.cover, shape: theme.shape, slides }, null, 2));
   fs.mkdirSync(LI_DIR, { recursive: true });
   fs.writeFileSync(POST, JSON.stringify({
     kind: subj.kind, id: subj.id, url: subj.url,
@@ -285,7 +294,8 @@ async function main() {
   }, null, 2));
 
   console.log(`\n  ${slides.length} slides: ${slides.map((s) => s.type).join(" -> ")}`);
-  console.log(`  theme: ${theme.name} (${theme.accent}) | hook: ${slides[0].title}`);
+  console.log(`  style: ${theme.name} (${theme.accent}) | cover:${theme.cover} motif:${theme.motif} shape:${theme.shape}`);
+  console.log(`  hook: ${slides[0].title}`);
   console.log(`  -> src/data/li_carousel.json + li/post.json`);
 }
 main().catch((e) => { console.error("li_content failed:", e.message); process.exit(1); });

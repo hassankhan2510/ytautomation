@@ -58,11 +58,54 @@ export type LiSlide =
   | { type: "quote"; text: string; author: string; role?: string }
   | { type: "cta"; title: string; sub?: string };
 
-type Meta = { brand: string; handle?: string; accent: string; bg?: [string, string, string]; angle?: number };
+type Meta = {
+  brand: string; handle?: string; accent: string;
+  bg?: [string, string, string]; angle?: number;
+  motif?: string; // background texture: plain | grid | rays | rings
+  cover?: string; // cover layout: standard | centered | rule | mark
+  shape?: string; // marker shape: square | circle | diamond
+};
+
+// A small shape used for the brand mark + bullet markers, so the accent motif is consistent per post.
+const Mark: React.FC<{ shape?: string; size: number; color: string; glow?: boolean }> = ({ shape, size, color, glow }) => {
+  const base = { width: size, height: size, background: color, boxShadow: glow ? `0 0 16px ${color}` : undefined, flexShrink: 0 } as React.CSSProperties;
+  if (shape === "circle") return <div style={{ ...base, borderRadius: "50%" }} />;
+  if (shape === "diamond") return <div style={{ ...base, borderRadius: 2, transform: "rotate(45deg)" }} />;
+  return <div style={{ ...base, borderRadius: 4 }} />; // square (default)
+};
+
+// A very faint accent-tinted background texture — rotates per post for another axis of variety.
+const Motif: React.FC<{ motif?: string; width: number; height: number; accent: string }> = ({ motif, width, height, accent }) => {
+  if (!motif || motif === "plain") return null;
+  if (motif === "grid") {
+    const gap = Math.round(width * 0.06);
+    return (
+      <svg width={width} height={height} style={{ position: "absolute", inset: 0, opacity: 0.06 }}>
+        <defs><pattern id="mgrid" width={gap} height={gap} patternUnits="userSpaceOnUse"><circle cx={2} cy={2} r={2} fill={accent} /></pattern></defs>
+        <rect width={width} height={height} fill="url(#mgrid)" />
+      </svg>
+    );
+  }
+  if (motif === "rays") {
+    const gap = Math.round(width * 0.09);
+    const lines = [];
+    for (let x = -height; x < width; x += gap) lines.push(<line key={x} x1={x} y1={height} x2={x + height} y2={0} stroke={accent} strokeWidth={1.5} />);
+    return <svg width={width} height={height} style={{ position: "absolute", inset: 0, opacity: 0.05 }}>{lines}</svg>;
+  }
+  if (motif === "rings") {
+    const cx = width * 0.86, cy = height * 0.14;
+    return (
+      <svg width={width} height={height} style={{ position: "absolute", inset: 0, opacity: 0.08 }}>
+        {[0.12, 0.2, 0.3, 0.42].map((r, i) => <circle key={i} cx={cx} cy={cy} r={width * r} fill="none" stroke={accent} strokeWidth={1.5} />)}
+      </svg>
+    );
+  }
+  return null;
+};
 
 /* ---------- shared frame ---------- */
 const Frame: React.FC<{ meta: Meta; page: number; total: number; children: React.ReactNode; footer?: string }> = ({ meta, page, total, children, footer }) => {
-  const { width } = useVideoConfig();
+  const { width, height } = useVideoConfig();
   const pad = Math.round(width * 0.085);
   // Per-post theme (rotated by the content engine): a tinted dark gradient + accent glow. Keeps each
   // carousel visually distinct so the feed doesn't look like the same post every time.
@@ -74,12 +117,14 @@ const Frame: React.FC<{ meta: Meta; page: number; total: number; children: React
     <AbsoluteFill style={{ background: `linear-gradient(${angle}deg, ${bg[0]} 0%, ${bg[1]} 60%, ${bg[2]} 100%)`, color: "#f5f7fa" }}>
       {/* soft accent glow (position alternates per slide) */}
       <div style={{ position: "absolute", top: -width * 0.28, [glowLeft ? "left" : "right"]: -width * 0.22, width: width * 0.7, height: width * 0.7, borderRadius: "50%", background: meta.accent, opacity: 0.11, filter: "blur(70px)" }} />
+      {/* rotating background motif (plain/grid/rays/rings) — another axis of per-post variety */}
+      <Motif motif={meta.motif} width={width} height={height} accent={meta.accent} />
       {/* faint accent hairline under the header — a small, consistent signature detail */}
       <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${meta.accent}, transparent 70%)`, opacity: 0.8 }} />
       <AbsoluteFill style={{ padding: pad, justifyContent: "space-between" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: DISPLAY, fontWeight: 800, fontSize: width * 0.026, letterSpacing: 1.5 }}>
-            <div style={{ width: 14, height: 14, borderRadius: 4, background: meta.accent, boxShadow: `0 0 16px ${meta.accent}` }} />
+            <Mark shape={meta.shape} size={14} color={meta.accent} glow />
             {meta.brand}
           </div>
           <div style={{ fontFamily: MONO, color: "#5b6b7c", fontSize: width * 0.024, fontWeight: 700 }}>
@@ -115,15 +160,38 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
   const a = meta.accent;
 
   if (slide.type === "cover") {
-    return (
-      <Frame meta={meta} page={page} total={total} footer="swipe →">
-        <div>
-          {slide.kicker ? kickerEl(slide.kicker, a, width * 0.026) : null}
-          <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: width * 0.088, lineHeight: 1.02, letterSpacing: -1.5 }}>{txt(slide.title)}</div>
-          {slide.sub ? <div style={{ marginTop: 30, fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.036, lineHeight: 1.4, color: "#aeb8c6" }}>{txt(slide.sub)}</div> : null}
+    const cover = meta.cover || "standard";
+    const kick = slide.kicker ? txt(slide.kicker) : "";
+    const titleNode = (size: number) => <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: width * size, lineHeight: 1.02, letterSpacing: -1.5 }}>{txt(slide.title)}</div>;
+    const subNode = (center: boolean) => (slide.sub ? <div style={{ marginTop: 30, fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.036, lineHeight: 1.4, color: "#aeb8c6", textAlign: center ? "center" : "left" }}>{txt(slide.sub)}</div> : null);
+    const kickMono = (mb: number) => (kick ? <div style={{ fontFamily: MONO, fontSize: width * 0.026, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase", color: a, marginBottom: mb }}>{kick}</div> : null);
+    let body;
+    if (cover === "centered") {
+      body = (
+        <div style={{ textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          {kickMono(24)}{titleNode(0.092)}{subNode(true)}
         </div>
-      </Frame>
-    );
+      );
+    } else if (cover === "rule") {
+      body = (
+        <div style={{ display: "flex", gap: 28, alignItems: "stretch" }}>
+          <div style={{ width: 10, borderRadius: 6, background: a, boxShadow: `0 0 26px ${a}88`, minHeight: width * 0.4 }} />
+          <div>{kickMono(20)}{titleNode(0.082)}{subNode(false)}</div>
+        </div>
+      );
+    } else if (cover === "mark") {
+      body = (
+        <div>
+          <div style={{ marginBottom: 34 }}><Mark shape={meta.shape} size={Math.round(width * 0.15)} color={a} glow /></div>
+          {kick ? kickerEl(kick, a, width * 0.026) : null}{titleNode(0.084)}{subNode(false)}
+        </div>
+      );
+    } else {
+      body = (
+        <div>{kick ? kickerEl(kick, a, width * 0.026) : null}{titleNode(0.088)}{subNode(false)}</div>
+      );
+    }
+    return <Frame meta={meta} page={page} total={total} footer="swipe →">{body}</Frame>;
   }
 
   if (slide.type === "thesis") {
@@ -213,7 +281,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
         <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
           {(slide.items || []).map((it, i) => (
             <div key={i} style={{ display: "flex", gap: 20, alignItems: "flex-start" }}>
-              <div style={{ width: 14, height: 14, marginTop: 8, borderRadius: 4, background: a, boxShadow: `0 0 14px ${a}`, flexShrink: 0 }} />
+              <div style={{ marginTop: 8 }}><Mark shape={meta.shape} size={14} color={a} glow /></div>
               <div style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.035, lineHeight: 1.38, color: "#eef2f7" }}>{txt(it)}</div>
             </div>
           ))}

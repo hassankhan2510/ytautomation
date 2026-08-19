@@ -9,10 +9,10 @@ import { LiSlideView, LiSlide } from "../components/LiSlides";
  */
 export const LiCarousel: React.FC = () => {
   const frame = useCurrentFrame();
-  const data = liData as unknown as { brand: string; handle?: string; accent: string; bg?: [string, string, string]; angle?: number; slides: LiSlide[] };
+  const data = liData as unknown as { brand: string; handle?: string; accent: string; bg?: [string, string, string]; angle?: number; motif?: string; cover?: string; shape?: string; slides: LiSlide[] };
   const slides = data.slides || [];
   const i = Math.min(frame, slides.length - 1);
   const slide = slides[i] || { type: "cover", title: data.brand };
-  const meta = { brand: data.brand, handle: data.handle, accent: data.accent || "#4f8cff", bg: data.bg, angle: data.angle };
+  const meta = { brand: data.brand, handle: data.handle, accent: data.accent || "#4f8cff", bg: data.bg, angle: data.angle, motif: data.motif, cover: data.cover, shape: data.shape };
   return <LiSlideView slide={slide as LiSlide} meta={meta} page={i + 1} total={slides.length} />;
 };
