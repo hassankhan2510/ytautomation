@@ -91,6 +91,7 @@ jobs:
           ASSET: ${{ steps.pick.outputs.asset }}
           MODE: ${{ steps.pick.outputs.mode }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL }}
           GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
           GROQ_TPM: ${{ vars.GROQ_TPM }}
