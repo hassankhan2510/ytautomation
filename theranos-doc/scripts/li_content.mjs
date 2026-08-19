@@ -147,17 +147,26 @@ ${HOOK_RULES}`;
   return await callGroq(sys, usr, 3000);
 }
 
-/* ---------- fallback (deterministic, no Groq) ---------- */
+/* ---------- fallback (deterministic, no Groq) — richer, uses the real subject data ---------- */
 function fallback(subj, brief) {
-  const name = subj.kind === "repo" ? subj.title : subj.title.split(":")[0];
-  const how = Array.isArray(brief.how) && brief.how.length >= 2 ? brief.how : [subj.description || "A new approach to the problem.", "It changes the default workflow.", "Adoption is spreading fast."];
-  const slides = [
-    { type: "cover", kicker: subj.kind === "repo" ? "The Frontier" : "New Research", title: (brief.hooks && brief.hooks[0]) || (subj.description || name), sub: subj.kind === "repo" ? `${subj.stars} stars, and here's why it matters.` : "Here's what it actually changes." },
-    { type: "flow", title: "How it works", steps: how.slice(0, 4).map(String) },
-    { type: "thesis", label: "My Take", text: brief.pov || "The interface layer wins — not the model." },
-    { type: "checklist", title: "How I'd apply it", items: [{ text: brief.cto || "Standardize this in your stack early.", ok: true }, { text: brief.ceo || "Don't bet the moat on the wrong layer.", ok: false }] },
-    { type: "cta", title: "I break down one frontier shift every few days.", sub: "Source in the comments — follow for the next one." },
-  ];
+  const isRepo = subj.kind === "repo";
+  const name = (isRepo ? subj.title : String(subj.title).split(":")[0]).trim();
+  // Pull real sentences from the README / abstract for substance, not placeholder text.
+  const body = String(subj.readme || subj.abstract || subj.description || "").replace(/\s+/g, " ");
+  const sentences = body.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter((s) => s.length > 30 && s.length < 170);
+  const how = Array.isArray(brief.how) && brief.how.length >= 3 ? brief.how.slice(0, 4).map(String) : null;
+
+  const slides = [];
+  slides.push({ type: "cover", kicker: isRepo ? "The Frontier" : "New Research", title: (brief.hooks && brief.hooks[0]) || subj.description || name, sub: isRepo ? `${Number(subj.stars || 0).toLocaleString()} stars — here's why it matters.` : "Here's what it actually changes." });
+  if (isRepo && subj.stars) slides.push({ type: "stat", value: subj.stars >= 1000 ? `${Math.round(subj.stars / 1000)}k` : String(subj.stars), label: "GitHub stars", sub: subj.language ? `Built in ${subj.language}.` : "" });
+  if (how) slides.push({ type: "flow", title: "How it works", steps: how });
+  else if (sentences.length >= 3) slides.push({ type: "bullets", title: "What it does", items: sentences.slice(0, 3) });
+  if (isRepo && Array.isArray(subj.topics) && subj.topics.length >= 2) slides.push({ type: "pillars", title: "What it covers", columns: subj.topics.slice(0, 4).map((t) => ({ title: String(t), desc: "" })) });
+  if (brief.pov) slides.push({ type: "thesis", label: "My Take", text: brief.pov });
+  if (slides.length < 6 && sentences.length >= 5) slides.push({ type: "bullets", title: "Worth knowing", items: sentences.slice(3, 6) });
+  slides.push({ type: "checklist", title: "How I'd apply it", items: [{ text: brief.cto || "Standardize this in your stack early.", ok: true }, { text: brief.ceo || "Don't bet the moat on the wrong layer.", ok: false }] });
+  slides.push({ type: "cta", title: "I break down one frontier shift every few days.", sub: "Source in the comments — follow for the next one." });
+
   return {
     caption: `${(brief.hooks && brief.hooks[0]) || name}\n\n${brief.why || subj.description || ""}\n\nWhat would you build on top of it?`,
     firstComment: `Source: ${subj.url}`,
