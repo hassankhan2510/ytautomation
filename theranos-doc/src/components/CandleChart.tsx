@@ -16,9 +16,10 @@ const mono = '"SF Mono", "Roboto Mono", ui-monospace, Menlo, Consolas, monospace
 const UP = "#16c784";
 const DOWN = "#ea3943";
 
-const Scrim: React.FC = () => (
-  <AbsoluteFill style={{ background: "radial-gradient(120% 100% at 50% 0%, #0d1622 0%, #060a12 70%, #04070c 100%)" }} />
-);
+const Scrim: React.FC<{ bg?: [string, string, string] | null }> = ({ bg }) => {
+  const c = bg && bg.length === 3 ? bg : ["#0d1622", "#060a12", "#04070c"];
+  return <AbsoluteFill style={{ background: `radial-gradient(120% 100% at 50% 0%, ${c[0]} 0%, ${c[1]} 70%, ${c[2]} 100%)` }} />;
+};
 
 function fmt(n: number, decimals: number) {
   return n.toLocaleString("en-US", { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
@@ -43,11 +44,12 @@ export const CandleChart: React.FC<{
     bull?: { target: number };  // above the line → bulls run it here
     bear?: { target: number };  // below the line → bears flush it here
   } | null;
+  bg?: [string, string, string] | null; // per-reel rotating background tint
   still?: boolean; // static render (carousel slide) — show everything, no frame animation
   accent: string;
   fontSize: number;
   portrait: boolean;
-}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, dateLabel, decision, still, accent, fontSize, portrait }) => {
+}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, dateLabel, decision, bg, still, accent, fontSize, portrait }) => {
   const frame = useCurrentFrame();
   const { width, height, durationInFrames } = useVideoConfig();
 
@@ -105,7 +107,9 @@ export const CandleChart: React.FC<{
 
   return (
     <AbsoluteFill style={{ opacity }}>
-      <Scrim />
+      <Scrim bg={bg} />
+      {/* accent hairline — a small per-reel signature that rotates colour with the theme */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 5, background: `linear-gradient(90deg, ${accent}, transparent 75%)`, opacity: 0.85 }} />
       <AbsoluteFill>
         {/* Header */}
         <div style={{ position: "absolute", top: portrait ? H * 0.07 : H * 0.06, left: padX, right: padX, display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>

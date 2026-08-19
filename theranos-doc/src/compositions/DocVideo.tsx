@@ -61,6 +61,7 @@ type TimelineLine = {
     bull?: { target: number };
     bear?: { target: number };
   } | null;
+  bg?: [string, string, string] | null;
 };
 
 /** Group consecutive lines that share the same asset into one background segment. */
@@ -151,6 +152,7 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
             callout={line.callout}
             dateLabel={line.dateLabel}
             decision={line.decision}
+            bg={line.bg}
             {...common}
           />
         ) : null;

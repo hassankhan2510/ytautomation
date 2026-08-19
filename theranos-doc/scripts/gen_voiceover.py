@@ -336,6 +336,7 @@ async def main():
                 "callout": line.get("callout"),
                 "dateLabel": line.get("dateLabel"),
                 "decision": line.get("decision"),
+                "bg": line.get("bg"),
                 "words": word_frames,
             }
         )

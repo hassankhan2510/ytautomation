@@ -56,6 +56,27 @@ const OVER = { sma20: "#38bdf8", sma50: "#f5a623", sma200: "#a78bfa", vwap: "#fa
 // The date the reel is generated — shown on the chart so viewers know the analysis is time-stamped.
 const DATE_LABEL = new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
+// Rotating "desk" palettes so the reels don't look identical every day. The accent recolours the VWAP
+// line, level labels, the hero/decision map and the top hairline; the bg gives each reel its own tint.
+// Candle up/down stay green/red (those carry meaning). Gold and BTC hash differently, so they differ.
+const REEL_THEMES = [
+  { name: "emerald", accent: "#10b981", bg: ["#0d1a16", "#081210", "#04080a"] },
+  { name: "azure",   accent: "#3b82f6", bg: ["#0d1524", "#080e18", "#04070c"] },
+  { name: "gold",    accent: "#f5a623", bg: ["#1a1408", "#120d06", "#0a0704"] },
+  { name: "cyan",    accent: "#22d3ee", bg: ["#08191c", "#061214", "#04090c"] },
+  { name: "violet",  accent: "#8b5cf6", bg: ["#150f24", "#0d0a18", "#07050d"] },
+  { name: "indigo",  accent: "#6366f1", bg: ["#0f1024", "#0a0a18", "#05050d"] },
+];
+function pickReelTheme(asset) {
+  const pin = process.env.REEL_THEME;
+  if (pin) { const t = REEL_THEMES.find((x) => x.name === pin); if (t) return t; }
+  const now = new Date();
+  const day = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  const id = String(asset);
+  let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  return REEL_THEMES[(h + day) % REEL_THEMES.length];
+}
+
 function loadConfig() {
   const cfg = JSON.parse(fs.readFileSync(path.join(REPO, "channels", "config.json"), "utf-8"));
   return cfg[CHANNEL] || {};
@@ -134,11 +155,12 @@ function tfScene(snap, tfKey, tfLabel, text, callout, keywords, vwap = false, de
     pair: snap.pair, assetName: snap.name, priceNow: snap.price, changePct: snap.changePct, decimals: snap.decimals,
     dateLabel: DATE_LABEL,
     decision, // {hero, side, sideText, bull:{target}, bear:{target}} → drawn on the chart as a bull/bear map
+    bg: snap.bg || null, // per-reel rotating background tint (set from the theme in marketReel/deepDive)
   };
 }
 
 /* ---------- meta ---------- */
-function buildMeta(cfg, { title, description, hashtags, tags, topic, thumb }, lineCount) {
+function buildMeta(cfg, { title, description, hashtags, tags, topic, thumb, accent }, lineCount) {
   return {
     title: (title || topic).slice(0, 100),
     titleOptions: [], hashtags: hashtags && hashtags.length ? hashtags.slice(0, 12) : ["markets"],
@@ -148,7 +170,7 @@ function buildMeta(cfg, { title, description, hashtags, tags, topic, thumb }, li
     voiceRate: cfg.voiceRate || "+6%", language: "en",
     brand: cfg.brand || CHANNEL.toUpperCase(), tagline: cfg.tagline || "", links: cfg.links || null,
     disclaimer: cfg.disclaimer || "", thumbStyle: cfg.thumbStyle || "", thumb: thumb || null,
-    pauseBetweenLinesSec: 0.15, accentColor: cfg.accentColor || "#10b981",
+    pauseBetweenLinesSec: 0.15, accentColor: accent || cfg.accentColor || "#10b981",
     description: description || title || topic,
     tags: tags && tags.length >= 3 ? tags.slice(0, 15) : ["markets", "analysis", "trading"],
     researchFile: "research.md", requireResearch: false,
@@ -206,6 +228,8 @@ function accountabilityBeat(snap, grade) {
 /* ---------- WEEKDAY: market analysis reel (driver + accountability + hero + decision map + rotation) ---------- */
 async function marketReel(cfg) {
   const snap = await analyze(ASSET);
+  const reelTheme = pickReelTheme(ASSET);
+  snap.bg = reelTheme.bg;
   snap.driver = await driverFor(ASSET).catch(() => null);
   const heads = await news(`${snap.name} price today`, 3).catch(() => []);
   const headTxt = heads.map((h) => `- ${h.extract}`).join("\n") || "(no fresh headlines)";
@@ -308,10 +332,11 @@ Write a HARD multi-timeframe technical breakdown as spoken beats + short on-scre
   const fmtLabel = FORMAT === "weekahead" ? "WEEK AHEAD" : FORMAT === "review" ? "WEEK IN REVIEW" : "ANALYSIS";
   const meta = buildMeta(cfg, {
     title: g.title, description: g.description, hashtags: g.hashtags, tags: g.tags && g.tags.length >= 3 ? g.tags : defaultTags,
-    topic: `${snap.name} ${FORMAT} analysis`, thumb: { line1: snap.name, line2: fmtLabel, sub: `${pct} today` },
+    topic: `${snap.name} ${FORMAT} analysis`, thumb: { line1: snap.name, line2: fmtLabel, sub: `${pct} today` }, accent: reelTheme.accent,
   }, lines.length);
 
   writeJob(`${CHANNEL}_${ASSET}`, meta, lines, heads);
+  console.log(`  reel theme: ${reelTheme.name} (${reelTheme.accent})`);
 
   // Record today's hero level so tomorrow's reel can grade it (the track record).
   saveLevel(CHANNEL, ASSET, {
@@ -333,6 +358,8 @@ async function deepDive(cfg) {
   const recent = recentTopicKeys(CHANNEL, 21);
   const pick = STOCKS.find((s) => !recent.has(normKey(s.name))) || STOCKS[(new Date().getUTCDate()) % STOCKS.length];
   const snap = await analyzeSymbol(pick.sym, { name: pick.name.toUpperCase(), pair: pick.sym, decimals: 2 });
+  const reelTheme = pickReelTheme(pick.sym);
+  snap.bg = reelTheme.bg;
   const heads = await news(`${pick.name} stock`, 4).catch(() => []);
   const headTxt = heads.map((h) => `- ${h.extract}`).join("\n") || "(no fresh headlines)";
 
@@ -363,10 +390,11 @@ Write an advanced but accessible breakdown as beats + short callouts: hook, busi
     title: g.title || `${pick.name} Stock, Explained: What Smart Investors Actually Watch`,
     description: g.description, hashtags: g.hashtags,
     tags: g.tags && g.tags.length >= 3 ? g.tags : [pick.name.toLowerCase(), pick.sym.toLowerCase(), "stocks", "investing", "stock market", "finance"],
-    topic: `${pick.name} stock deep dive`, thumb: { line1: pick.name.toUpperCase(), line2: "EXPLAINED", sub: "What investors watch" },
+    topic: `${pick.name} stock deep dive`, thumb: { line1: pick.name.toUpperCase(), line2: "EXPLAINED", sub: "What investors watch" }, accent: reelTheme.accent,
   }, lines.length);
 
   writeJob(`${CHANNEL}_deepdive`, meta, lines, heads);
+  console.log(`  reel theme: ${reelTheme.name} (${reelTheme.accent})`);
   appendHistory(CHANNEL, { topic: pick.name, title: meta.title });
 }
 
