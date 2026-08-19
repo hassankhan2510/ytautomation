@@ -69,8 +69,11 @@ async function callGroq(system, user) {
       if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text()).slice(0, 200)}`);
       const data = await res.json();
       const content = data.choices?.[0]?.message?.content || "";
-      return extractJson(content);
+      const parsed = extractJson(content);
+      console.log(`  ✓ Groq OK (${GROQ_MODEL})`);
+      return parsed;
     } catch (e) {
+      console.log(`  ! Groq attempt ${attempt + 1}/4 failed: ${e.message}`);
       if (attempt === 3) throw e;
       await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
     }
@@ -407,6 +410,7 @@ async function main() {
   const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}${avoidRule}${igTone}`;
 
   console.log(`Channel ${CHANNEL} | mode ${MODE} | ${topics.length} topic(s) queued`);
+  console.log(`Groq: key ${GROQ_API_KEY ? "SET" : "MISSING"} | model ${GROQ_MODEL}`);
   let totalWritten = 0;
 
   for (let ti = 0; ti < topics.length; ti++) {

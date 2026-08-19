@@ -30,7 +30,7 @@ const HANDLE = process.env.LI_HANDLE || "Building Syndar & Equitier";
 const ACCENT = process.env.LI_ACCENT || "#4f8cff";
 
 async function callGroq(system, user, maxTokens = 2600) {
-  if (!GROQ_API_KEY) return null;
+  if (!GROQ_API_KEY) { console.log("  ! GROQ_API_KEY not set — using fallback"); return null; }
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -42,12 +42,18 @@ async function callGroq(system, user, maxTokens = 2600) {
           messages: [{ role: "system", content: system }, { role: "user", content: user }],
         }),
       });
-      if (!res.ok) throw new Error(`Groq ${res.status}`);
+      if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
       const d = await res.json();
       const txt = d.choices?.[0]?.message?.content || "";
-      try { return JSON.parse(txt); } catch { const m = txt.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null; }
-    } catch { await new Promise((r) => setTimeout(r, 1500 * (attempt + 1))); }
+      const parsed = (() => { try { return JSON.parse(txt); } catch { const m = txt.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null; } })();
+      if (parsed) { console.log(`  ✓ Groq OK (${GROQ_MODEL})`); return parsed; }
+      throw new Error("Groq returned empty/unparseable JSON");
+    } catch (e) {
+      console.log(`  ! Groq attempt ${attempt + 1}/3 failed: ${e.message}`);
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+    }
   }
+  console.log("  ! Groq unavailable after retries — using deterministic fallback");
   return null;
 }
 
@@ -193,6 +199,7 @@ async function main() {
   if (!fs.existsSync(SUBJECT)) { console.error("li/subject.json not found — run li_source.mjs first."); process.exit(1); }
   const subj = JSON.parse(fs.readFileSync(SUBJECT, "utf-8"));
   console.log(`Composing for ${subj.kind}: ${subj.kind === "repo" ? subj.id : subj.title}`);
+  console.log(`Groq: key ${GROQ_API_KEY ? "SET" : "MISSING"} | model ${GROQ_MODEL}`);
 
   const brief = await analyze(subj);
   let model = await compose(subj, brief);

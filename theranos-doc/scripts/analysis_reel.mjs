@@ -56,7 +56,7 @@ function slug(s) {
 
 /* ---------- Groq (best-effort; deterministic fallback if it fails) ---------- */
 async function callGroq(system, user) {
-  if (!GROQ_API_KEY) return null;
+  if (!GROQ_API_KEY) { console.log("  ! GROQ_API_KEY not set — using fallback narration"); return null; }
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -68,14 +68,18 @@ async function callGroq(system, user) {
           messages: [{ role: "system", content: system }, { role: "user", content: user }],
         }),
       });
-      if (!res.ok) throw new Error(`Groq ${res.status}`);
+      if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
       const data = await res.json();
       const txt = data.choices?.[0]?.message?.content || "";
-      try { return JSON.parse(txt); } catch { const m = txt.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null; }
-    } catch {
-      await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
+      const parsed = (() => { try { return JSON.parse(txt); } catch { const m = txt.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null; } })();
+      if (parsed) { console.log(`  ✓ Groq OK (${GROQ_MODEL})`); return parsed; }
+      throw new Error("Groq returned empty/unparseable JSON");
+    } catch (e) {
+      console.log(`  ! Groq attempt ${attempt + 1}/3 failed: ${e.message}`);
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
     }
   }
+  console.log("  ! Groq unavailable after retries — using fallback narration");
   return null;
 }
 
@@ -282,6 +286,7 @@ Write an advanced but accessible breakdown as beats + short callouts: hook, busi
 async function main() {
   const cfg = loadConfig();
   console.log(`analysis_reel | channel ${CHANNEL} | mode ${MODE}${MODE === "analysis" ? ` | asset ${ASSET}` : ""}`);
+  console.log(`Groq: key ${GROQ_API_KEY ? "SET" : "MISSING"} | model ${GROQ_MODEL}`);
   if (MODE === "deepdive") await deepDive(cfg);
   else await marketReel(cfg);
   console.log(`Done. Render with: npm run batch -- --only=${CHANNEL}`);

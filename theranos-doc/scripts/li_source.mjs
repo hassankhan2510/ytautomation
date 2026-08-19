@@ -119,10 +119,17 @@ async function main() {
   const freshPapers = papers.filter((p) => !seen.has(p.id));
   console.log(`  found ${freshRepos.length} fresh repos, ${freshPapers.length} fresh papers (of ${repos.length}/${papers.length})`);
 
-  // Alternate repo/paper by post count so the feed varies; force via --kind.
-  const preferRepo = FORCE_KIND ? FORCE_KIND === "repo" : hist.length % 2 === 0;
-  let subject = preferRepo ? (freshRepos[0] || freshPapers[0]) : (freshPapers[0] || freshRepos[0]);
+  // Alternate repo/paper by DAY (not history length) so the feed varies even on a fresh history,
+  // and rotate the pick within the chosen list by day so it isn't always item[0] (was: always DeepSeek).
+  const now = new Date();
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  const preferRepo = FORCE_KIND ? FORCE_KIND === "repo" : dayOfYear % 2 === 0;
+  const primary = preferRepo ? freshRepos : freshPapers;
+  const secondary = preferRepo ? freshPapers : freshRepos;
+  const pick = (list) => (list.length ? list[dayOfYear % list.length] : null);
+  let subject = pick(primary) || pick(secondary);
   if (!subject) { console.error("No fresh subject found (all recent ones already posted)."); process.exit(1); }
+  console.log(`  day ${dayOfYear} -> prefer ${preferRepo ? "repo" : "paper"} | rotated pick index ${primary.length ? dayOfYear % primary.length : 0}`);
   if (subject.kind === "repo") await enrichRepo(subject);
 
   fs.writeFileSync(path.join(LI_DIR, "subject.json"), JSON.stringify(subject, null, 2));
