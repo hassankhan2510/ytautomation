@@ -58,16 +58,24 @@ export type LiSlide =
   | { type: "quote"; text: string; author: string; role?: string }
   | { type: "cta"; title: string; sub?: string };
 
-type Meta = { brand: string; handle?: string; accent: string };
+type Meta = { brand: string; handle?: string; accent: string; bg?: [string, string, string]; angle?: number };
 
 /* ---------- shared frame ---------- */
 const Frame: React.FC<{ meta: Meta; page: number; total: number; children: React.ReactNode; footer?: string }> = ({ meta, page, total, children, footer }) => {
   const { width } = useVideoConfig();
   const pad = Math.round(width * 0.085);
+  // Per-post theme (rotated by the content engine): a tinted dark gradient + accent glow. Keeps each
+  // carousel visually distinct so the feed doesn't look like the same post every time.
+  const bg = meta.bg || ["#0c141f", "#080d14", "#05080d"];
+  const angle = meta.angle ?? 160;
+  // Alternate the glow corner by page so slides within one deck breathe, not just post-to-post.
+  const glowLeft = page % 2 === 0;
   return (
-    <AbsoluteFill style={{ background: "linear-gradient(160deg, #0c141f 0%, #080d14 60%, #05080d 100%)", color: "#f5f7fa" }}>
-      {/* soft accent glow */}
-      <div style={{ position: "absolute", top: -width * 0.28, right: -width * 0.22, width: width * 0.7, height: width * 0.7, borderRadius: "50%", background: meta.accent, opacity: 0.1, filter: "blur(70px)" }} />
+    <AbsoluteFill style={{ background: `linear-gradient(${angle}deg, ${bg[0]} 0%, ${bg[1]} 60%, ${bg[2]} 100%)`, color: "#f5f7fa" }}>
+      {/* soft accent glow (position alternates per slide) */}
+      <div style={{ position: "absolute", top: -width * 0.28, [glowLeft ? "left" : "right"]: -width * 0.22, width: width * 0.7, height: width * 0.7, borderRadius: "50%", background: meta.accent, opacity: 0.11, filter: "blur(70px)" }} />
+      {/* faint accent hairline under the header — a small, consistent signature detail */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${meta.accent}, transparent 70%)`, opacity: 0.8 }} />
       <AbsoluteFill style={{ padding: pad, justifyContent: "space-between" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: DISPLAY, fontWeight: 800, fontSize: width * 0.026, letterSpacing: 1.5 }}>

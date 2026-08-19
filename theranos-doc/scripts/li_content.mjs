@@ -31,7 +31,30 @@ const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
 const REQUIRE_GROQ = process.env.LI_REQUIRE_GROQ !== "0";
 const BRAND = process.env.LI_BRAND || "HASSAN KHAN";
 const HANDLE = process.env.LI_HANDLE || "Building Syndar & Equitier";
-const ACCENT = process.env.LI_ACCENT || "#4f8cff";
+const ACCENT = process.env.LI_ACCENT || ""; // optional: pin the accent; otherwise a theme rotates per post
+
+// Curated premium themes — each a distinct accent + a dark gradient tinted toward that hue. One is
+// picked per post (by subject + day) so the feed looks fresh every time instead of the same blue deck,
+// while every theme still reads as a designed, elite editorial carousel.
+const THEMES = [
+  { name: "electric-blue", accent: "#4f8cff", bg: ["#0c1524", "#080e18", "#05080d"], angle: 160 },
+  { name: "emerald",       accent: "#2ece8a", bg: ["#0a1a14", "#07120d", "#040a07"], angle: 155 },
+  { name: "violet",        accent: "#9b7bff", bg: ["#140f22", "#0d0a18", "#07050d"], angle: 170 },
+  { name: "amber",         accent: "#f5a623", bg: ["#1c150a", "#130e07", "#0a0704"], angle: 150 },
+  { name: "cyan",          accent: "#22d3ee", bg: ["#08191c", "#061214", "#040a0c"], angle: 165 },
+  { name: "rose",          accent: "#fb7185", bg: ["#1c0f14", "#13090d", "#0a0507"], angle: 175 },
+  { name: "lime",          accent: "#a3e635", bg: ["#141a0a", "#0e1207", "#070a04"], angle: 158 },
+  { name: "indigo",        accent: "#6366f1", bg: ["#0f1024", "#0a0a18", "#05050d"], angle: 168 },
+];
+function pickTheme(subj) {
+  const now = new Date();
+  const dayOfYear = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 86400000);
+  const id = String(subj.id || subj.title || "");
+  let h = 0; for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  const theme = THEMES[(h + dayOfYear) % THEMES.length];
+  // An explicit LI_ACCENT still wins for the accent (keeps the theme's tinted background).
+  return ACCENT ? { ...theme, accent: ACCENT, name: `${theme.name}+pin` } : theme;
+}
 
 const callGroq = (system, user, maxTokens = 2400) => groqJSON(system, user, { maxTokens, temperature: 0.6 });
 
@@ -250,8 +273,9 @@ async function main() {
     model = fallback(subj, brief);
   }
   const slides = sanitize(model, subj);
+  const theme = pickTheme(subj);
 
-  fs.writeFileSync(CAROUSEL, JSON.stringify({ brand: BRAND, handle: HANDLE, accent: ACCENT, slides }, null, 2));
+  fs.writeFileSync(CAROUSEL, JSON.stringify({ brand: BRAND, handle: HANDLE, accent: theme.accent, bg: theme.bg, angle: theme.angle, theme: theme.name, slides }, null, 2));
   fs.mkdirSync(LI_DIR, { recursive: true });
   fs.writeFileSync(POST, JSON.stringify({
     kind: subj.kind, id: subj.id, url: subj.url,
@@ -261,7 +285,7 @@ async function main() {
   }, null, 2));
 
   console.log(`\n  ${slides.length} slides: ${slides.map((s) => s.type).join(" -> ")}`);
-  console.log(`  hook: ${slides[0].title}`);
+  console.log(`  theme: ${theme.name} (${theme.accent}) | hook: ${slides[0].title}`);
   console.log(`  -> src/data/li_carousel.json + li/post.json`);
 }
 main().catch((e) => { console.error("li_content failed:", e.message); process.exit(1); });
