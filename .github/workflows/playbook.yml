@@ -1,0 +1,73 @@
+name: "Playbook Studio (60-page e-book)"
+
+# Autonomous top-1% playbook generator. Manual-only (it's a long, heavy run). Real research -> One-Spine ->
+# map-reduce writing -> citation-or-cut verify -> vector-SVG graphics -> Vogue HTML -> vector PDF.
+# Fully isolated: touches nothing in the video/LinkedIn pipelines.
+on:
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Book topic (e.g. 'The Future of Graph Neural Networks')"
+        type: string
+        required: true
+      id:
+        description: "Short run id (optional; derived from topic if blank)"
+        type: string
+        required: false
+      pages:
+        description: "Target page count"
+        type: string
+        default: "60"
+        required: false
+      no_images:
+        description: "Skip AI images (SVG-only, fully deterministic)"
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    defaults:
+      run:
+        working-directory: playbook
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: playbook/package-lock.json
+      - name: Chromium system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation
+      - name: Cache Puppeteer Chromium
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/puppeteer
+          key: puppeteer-${{ runner.os }}-${{ hashFiles('playbook/package-lock.json') }}
+      - run: npm install
+      - name: Generate the playbook
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_API_KEY_3: ${{ secrets.GROQ_API_KEY_3 }}
+          PB_MODELS: ${{ vars.PB_MODELS }}
+          PB_TOPIC: ${{ github.event.inputs.topic }}
+          PB_ID: ${{ github.event.inputs.id }}
+          PB_PAGES: ${{ github.event.inputs.pages }}
+          PB_NO_IMAGES: ${{ github.event.inputs.no_images == 'true' && '1' || '' }}
+        run: node src/pb_run.mjs
+      - name: Upload the playbook
+        uses: actions/upload-artifact@v4
+        with:
+          name: playbook-${{ github.run_number }}
+          path: |
+            playbook/runs/*/*.pdf
+            playbook/runs/*/book.json
+            playbook/runs/*/book.html
+          retention-days: 30
+          if-no-files-found: warn

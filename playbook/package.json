@@ -1,0 +1,23 @@
+{
+  "name": "playbook-studio",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Autonomous top-1% playbook / e-book generator. Real research -> One-Spine JSON -> map-reduce writing -> citation-or-cut verification -> Visual Router graphics (SVG-native) -> Vogue HTML/CSS layout -> vector PDF. Free-tier: Groq (model x key rotation) + Puppeteer on GitHub Actions.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "run": "node src/pb_run.mjs",
+    "research": "node src/pb_research.mjs",
+    "architect": "node src/pb_architect.mjs",
+    "write": "node src/pb_write.mjs",
+    "verify": "node src/pb_verify.mjs",
+    "graphics": "node src/pb_graphics.mjs",
+    "layout": "node src/pb_layout.mjs",
+    "render": "node src/pb_render.mjs",
+    "edit": "node src/pb_edit.mjs",
+    "doctor": "node src/pb_llm.mjs --doctor"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0"
+  }
+}
