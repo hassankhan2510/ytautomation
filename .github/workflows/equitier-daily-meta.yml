@@ -92,14 +92,16 @@ jobs:
           MODE: ${{ steps.pick.outputs.mode }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
         run: node scripts/analysis_reel.mjs
-      - name: Persist history (weekend deep-dive dedup)
+      - name: Persist history + hero-level track record
         working-directory: ${{ github.workspace }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add channels/history/*.json 2>/dev/null || true
-          git commit -m "chore(history): equitier analysis reel [skip ci]" || { echo "no history change"; exit 0; }
+          git add channels/history/*.json channels/levels/*.json 2>/dev/null || true
+          git commit -m "chore(equitier): reel history + hero level [skip ci]" || { echo "no change"; exit 0; }
           git pull --rebase --autostash || true
           git push || echo "push skipped"
       - name: Render (Kokoro voice) + post to Instagram + Facebook

@@ -10,7 +10,7 @@
  * degrades gracefully and generation still proceeds. Returns { items:[{title,extract,url}], brief }.
  */
 
-const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+import { groqJSON } from "./lib_groq.mjs";
 
 async function fetchJSON(url, ms = 10000) {
   const ctrl = new AbortController();
@@ -28,33 +28,13 @@ async function fetchJSON(url, ms = 10000) {
 
 /* ---------- 1) query expansion ---------- */
 async function subQuestions(topic, niche) {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) return [];
-  try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        temperature: 0.3,
-        max_tokens: 400,
-        response_format: { type: "json_object" },
-        messages: [
-          {
-            role: "system",
-            content: `You are a research assistant for a ${niche} video. Break the topic into 3-4 focused, factual sub-questions worth researching before writing. Return JSON {"questions": string[]} only.`,
-          },
-          { role: "user", content: `TOPIC: ${topic}` },
-        ],
-      }),
-    });
-    if (!res.ok) return [];
-    const d = await res.json();
-    const j = JSON.parse(d.choices?.[0]?.message?.content || "{}");
-    return (j.questions || []).map(String).map((s) => s.trim()).filter(Boolean).slice(0, 4);
-  } catch {
-    return [];
-  }
+  const j = await groqJSON(
+    `You are a research assistant for a ${niche} video. Break the topic into 3-4 focused, factual sub-questions worth researching before writing. Return JSON {"questions": string[]} only.`,
+    `TOPIC: ${topic}`,
+    { maxTokens: 400, temperature: 0.3 },
+  );
+  if (!j) return [];
+  return (j.questions || []).map(String).map((s) => s.trim()).filter(Boolean).slice(0, 4);
 }
 
 /* ---------- 2) sources ---------- */

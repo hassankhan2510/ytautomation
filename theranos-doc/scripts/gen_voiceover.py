@@ -335,6 +335,7 @@ async def main():
                 "decimals": line.get("decimals"),
                 "callout": line.get("callout"),
                 "dateLabel": line.get("dateLabel"),
+                "decision": line.get("decision"),
                 "words": word_frames,
             }
         )

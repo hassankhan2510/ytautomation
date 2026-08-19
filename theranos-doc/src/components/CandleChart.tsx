@@ -36,11 +36,18 @@ export const CandleChart: React.FC<{
   decimals: number;
   callout?: string | null; // short key words/numbers overlaid on the chart (the only "caption")
   dateLabel?: string | null; // the analysis date, so viewers know when it's from
+  decision?: {
+    hero: number;               // the ONE "line in the sand"
+    side?: string;
+    sideText?: string;          // "hold above" / "reclaim"
+    bull?: { target: number };  // above the line → bulls run it here
+    bear?: { target: number };  // below the line → bears flush it here
+  } | null;
   still?: boolean; // static render (carousel slide) — show everything, no frame animation
   accent: string;
   fontSize: number;
   portrait: boolean;
-}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, dateLabel, still, accent, fontSize, portrait }) => {
+}> = ({ candles, overlays = [], levels = [], name, pair, timeframe, price, changePct, decimals, callout, dateLabel, decision, still, accent, fontSize, portrait }) => {
   const frame = useCurrentFrame();
   const { width, height, durationInFrames } = useVideoConfig();
 
@@ -66,8 +73,12 @@ export const CandleChart: React.FC<{
   const priceH = priceBottom - chartTop;
   const chartW = W - padX * 2 - (portrait ? 150 : 190); // leave room for the right-side price axis
 
-  const allHi = Math.max(...candles.map((c) => c.h), ...levels.map((l) => l.price));
-  const allLo = Math.min(...candles.map((c) => c.l), ...levels.map((l) => l.price));
+  // Decision-map prices must be inside the visible range so the hero line + bull/bear zones show.
+  const decPrices = decision
+    ? [decision.hero, decision.bull?.target, decision.bear?.target].filter((v): v is number => v != null)
+    : [];
+  const allHi = Math.max(...candles.map((c) => c.h), ...levels.map((l) => l.price), ...decPrices);
+  const allLo = Math.min(...candles.map((c) => c.l), ...levels.map((l) => l.price), ...decPrices);
   const pad = (allHi - allLo) * 0.08 || 1;
   const hi = allHi + pad, lo = allLo - pad;
 
@@ -177,6 +188,49 @@ export const CandleChart: React.FC<{
               .join(" ");
             return <polyline key={`o${oi}`} points={pts} fill="none" stroke={ov.color || accent} strokeWidth={2.5} opacity={0.9} strokeLinejoin="round" />;
           })}
+
+          {/* DECISION MAP — the money slide: one hero line + a drawn bull path (green, up) and bear path
+              (red, down). Traders screenshot decision maps; this is the save-rate lever. */}
+          {decision ? (() => {
+            const dOpacity = still ? 1 : interpolate(frame, [16, 32], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+            const heroY = yFor(decision.hero);
+            const bullT = decision.bull?.target;
+            const bearT = decision.bear?.target;
+            const bullY = bullT != null ? yFor(bullT) : chartTop;
+            const bearY = bearT != null ? yFor(bearT) : priceBottom;
+            const lab = Math.round(fontSize * 0.56);
+            const pillTxt = `LINE ${fmt(decision.hero, decimals)}`;
+            const pillW = Math.round(fontSize * (pillTxt.length * 0.6 + 2.4));
+            const pillH = Math.round(fontSize * 1.5);
+            return (
+              <g opacity={dOpacity}>
+                {/* bull zone (hero → bull target) */}
+                <rect x={padX} y={Math.min(heroY, bullY)} width={chartW} height={Math.abs(heroY - bullY)} fill={UP} opacity={0.14} />
+                {/* bear zone (hero → bear target) */}
+                <rect x={padX} y={Math.min(heroY, bearY)} width={chartW} height={Math.abs(heroY - bearY)} fill={DOWN} opacity={0.14} />
+                {/* target lines */}
+                {bullT != null ? <line x1={padX} y1={bullY} x2={padX + chartW} y2={bullY} stroke={UP} strokeWidth={2} strokeDasharray="7 8" opacity={0.75} /> : null}
+                {bearT != null ? <line x1={padX} y1={bearY} x2={padX + chartW} y2={bearY} stroke={DOWN} strokeWidth={2} strokeDasharray="7 8" opacity={0.75} /> : null}
+                {/* target labels */}
+                {bullT != null ? (
+                  <text x={padX + chartW - 10} y={bullY + lab + 6} textAnchor="end" fill={UP} fontFamily={mono} fontWeight={800} fontSize={lab}>
+                    ▲ BULLS → {fmt(bullT, decimals)}
+                  </text>
+                ) : null}
+                {bearT != null ? (
+                  <text x={padX + chartW - 10} y={bearY - 8} textAnchor="end" fill={DOWN} fontFamily={mono} fontWeight={800} fontSize={lab}>
+                    ▼ BEARS → {fmt(bearT, decimals)}
+                  </text>
+                ) : null}
+                {/* hero "line in the sand" — bold + a centered pill */}
+                <line x1={padX} y1={heroY} x2={padX + chartW} y2={heroY} stroke={accent} strokeWidth={3.5} opacity={0.95} />
+                <rect x={padX + chartW / 2 - pillW / 2} y={heroY - pillH / 2} width={pillW} height={pillH} rx={7} fill={accent} />
+                <text x={padX + chartW / 2} y={heroY + Math.round(fontSize * 0.2)} textAnchor="middle" fill="#04070c" fontFamily={mono} fontWeight={800} fontSize={Math.round(fontSize * 0.62)}>
+                  {pillTxt}
+                </text>
+              </g>
+            );
+          })() : null}
 
           {/* current-price line + a solid price tag on the axis */}
           <g>

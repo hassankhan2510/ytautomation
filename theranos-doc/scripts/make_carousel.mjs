@@ -18,6 +18,7 @@ import path from "node:path";
 import { execSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import os from "node:os";
+import { groqJSON } from "./lib_groq.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -48,33 +49,13 @@ async function groqSlides(meta, lines) {
   const user =
     `TITLE: ${meta.title || ""}\nSCRIPT LINES:\n` +
     JSON.stringify(lines.map((l) => l.caption || l.text).slice(0, 40));
-  try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        temperature: 0.5,
-        max_tokens: 2000,
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: sys },
-          { role: "user", content: user },
-        ],
-      }),
-    });
-    if (!res.ok) throw new Error(`Groq ${res.status}`);
-    const data = await res.json();
-    const parsed = JSON.parse(data.choices?.[0]?.message?.content || "{}");
-    const slides = (parsed.slides || [])
-      .filter((s) => s && s.headline)
-      .slice(0, MAX_POINTS)
-      .map((s) => ({ headline: clip(s.headline, 60), body: clip(s.body, 200) }));
-    return slides.length >= 3 ? slides : null;
-  } catch (e) {
-    console.log(`  ! carousel Groq pass failed (${e.message}) — using deterministic slides.`);
-    return null;
-  }
+  const parsed = await groqJSON(sys, user, { maxTokens: 1800, temperature: 0.5 });
+  if (!parsed) { console.log(`  ! carousel Groq pass unavailable — using deterministic slides.`); return null; }
+  const slides = (parsed.slides || [])
+    .filter((s) => s && s.headline)
+    .slice(0, MAX_POINTS)
+    .map((s) => ({ headline: clip(s.headline, 60), body: clip(s.body, 200) }));
+  return slides.length >= 3 ? slides : null;
 }
 
 // No-API fallback: distil the strongest lines into slides.

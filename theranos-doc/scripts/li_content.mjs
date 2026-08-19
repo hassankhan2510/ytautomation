@@ -15,6 +15,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { groqJSON } from "./lib_groq.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -32,33 +33,7 @@ const BRAND = process.env.LI_BRAND || "HASSAN KHAN";
 const HANDLE = process.env.LI_HANDLE || "Building Syndar & Equitier";
 const ACCENT = process.env.LI_ACCENT || "#4f8cff";
 
-async function callGroq(system, user, maxTokens = 2600) {
-  if (!GROQ_API_KEY) { console.log("  ! GROQ_API_KEY not set — using fallback"); return null; }
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: GROQ_MODEL, temperature: 0.6, max_tokens: maxTokens,
-          response_format: { type: "json_object" },
-          messages: [{ role: "system", content: system }, { role: "user", content: user }],
-        }),
-      });
-      if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text().catch(() => "")).slice(0, 200)}`);
-      const d = await res.json();
-      const txt = d.choices?.[0]?.message?.content || "";
-      const parsed = (() => { try { return JSON.parse(txt); } catch { const m = txt.match(/\{[\s\S]*\}/); return m ? JSON.parse(m[0]) : null; } })();
-      if (parsed) { console.log(`  ✓ Groq OK (${GROQ_MODEL})`); return parsed; }
-      throw new Error("Groq returned empty/unparseable JSON");
-    } catch (e) {
-      console.log(`  ! Groq attempt ${attempt + 1}/3 failed: ${e.message}`);
-      if (attempt < 2) await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
-    }
-  }
-  console.log("  ! Groq unavailable after retries — using deterministic fallback");
-  return null;
-}
+const callGroq = (system, user, maxTokens = 2400) => groqJSON(system, user, { maxTokens, temperature: 0.6 });
 
 /* ---------- slide validation ---------- */
 const REQ = {
@@ -186,8 +161,8 @@ RUBRIC — every item must pass:
 7. No slide is vague or padded; cut any slide that says nothing new.
 ${SLIDE_MENU}
 Return ONLY the JSON.`;
-  const usr = `SUBJECT: ${subj.kind === "repo" ? subj.id : subj.title}\nURL: ${subj.url}\nBRIEF:\n${JSON.stringify(brief).slice(0, 2500)}\nDRAFT:\n${JSON.stringify(draft).slice(0, 6000)}\nReturn the improved carousel.`;
-  return await callGroq(sys, usr, 3600);
+  const usr = `SUBJECT: ${subj.kind === "repo" ? subj.id : subj.title}\nURL: ${subj.url}\nBRIEF:\n${JSON.stringify(brief).slice(0, 2000)}\nDRAFT:\n${JSON.stringify(draft).slice(0, 4500)}\nReturn the improved carousel.`;
+  return await callGroq(sys, usr, 2800);
 }
 
 /* ---------- fallback (deterministic, no Groq) — richer, uses the real subject data ---------- */

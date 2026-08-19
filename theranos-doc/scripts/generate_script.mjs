@@ -19,6 +19,7 @@ import { fileURLToPath } from "node:url";
 import { research } from "./lib_research.mjs";
 import { liveContext } from "./lib_live.mjs";
 import { recentTitles, appendHistory } from "./lib_history.mjs";
+import { groqJSON } from "./lib_groq.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -48,36 +49,12 @@ function readNichePack(niche) {
   return fs.existsSync(p) ? fs.readFileSync(p, "utf-8") : "";
 }
 
-/* ---------- Groq ---------- */
+/* ---------- Groq (shared throttled client; free-tier TPM-safe) ---------- */
 async function callGroq(system, user) {
-  for (let attempt = 0; attempt < 4; attempt++) {
-    try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${GROQ_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: GROQ_MODEL,
-          temperature: 0.6,
-          max_tokens: 8000,
-          response_format: { type: "json_object" },
-          messages: [
-            { role: "system", content: system },
-            { role: "user", content: user },
-          ],
-        }),
-      });
-      if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text()).slice(0, 200)}`);
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content || "";
-      const parsed = extractJson(content);
-      console.log(`  ✓ Groq OK (${GROQ_MODEL})`);
-      return parsed;
-    } catch (e) {
-      console.log(`  ! Groq attempt ${attempt + 1}/4 failed: ${e.message}`);
-      if (attempt === 3) throw e;
-      await new Promise((r) => setTimeout(r, 2000 * (attempt + 1)));
-    }
-  }
+  // 4800 output keeps (input + output) inside the 8k TPM budget; the shared client clamps further if needed.
+  const parsed = await groqJSON(system, user, { maxTokens: 4800, temperature: 0.6 });
+  if (!parsed) throw new Error("Groq returned no usable content (rate-limited or unavailable)");
+  return parsed;
 }
 
 function extractJson(text) {

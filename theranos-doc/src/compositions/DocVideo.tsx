@@ -54,6 +54,13 @@ type TimelineLine = {
   decimals?: number | null;
   callout?: string | null;
   dateLabel?: string | null;
+  decision?: {
+    hero: number;
+    side?: string;
+    sideText?: string;
+    bull?: { target: number };
+    bear?: { target: number };
+  } | null;
 };
 
 /** Group consecutive lines that share the same asset into one background segment. */
@@ -143,6 +150,7 @@ export const DocVideo: React.FC<{ accent: string }> = ({ accent }) => {
             decimals={line.decimals ?? 2}
             callout={line.callout}
             dateLabel={line.dateLabel}
+            decision={line.decision}
             {...common}
           />
         ) : null;
