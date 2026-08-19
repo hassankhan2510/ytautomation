@@ -25,6 +25,9 @@ const POST = path.join(LI_DIR, "post.json");
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
+// Quality gate: if Groq can't produce real content, ABORT (no render, no upload) rather than ship
+// the deterministic fallback. On by default; set LI_REQUIRE_GROQ=0 to allow the fallback.
+const REQUIRE_GROQ = process.env.LI_REQUIRE_GROQ !== "0";
 const BRAND = process.env.LI_BRAND || "HASSAN KHAN";
 const HANDLE = process.env.LI_HANDLE || "Building Syndar & Equitier";
 const ACCENT = process.env.LI_ACCENT || "#4f8cff";
@@ -250,13 +253,24 @@ async function main() {
 
   const brief = await analyze(subj);
   let model = await compose(subj, brief);
-  if (model && Array.isArray(model.slides) && model.slides.length >= 5) {
+  const haveGroqContent = !!(model && Array.isArray(model.slides) && model.slides.length >= 5);
+  if (haveGroqContent) {
     console.log("  editing (ruthless quality pass)...");
     const edited = await editPass(subj, brief, model);
     if (edited && Array.isArray(edited.slides) && edited.slides.length >= 5) model = edited;
     else console.log("  (edit pass skipped — keeping composed draft)");
   }
-  if (!model || !Array.isArray(model.slides) || model.slides.length < 3) {
+  if (!haveGroqContent) {
+    if (REQUIRE_GROQ) {
+      // Remove any stale output so a previous run's carousel can never be rendered/posted by mistake.
+      for (const f of [CAROUSEL, POST]) { try { fs.rmSync(f, { force: true }); } catch {} }
+      console.error("\n  ✗ QUALITY GATE: Groq produced no usable content — ABORTING this run.");
+      console.error("    No carousel is written, so nothing will render and nothing will post to LinkedIn.");
+      console.error("    (Better to skip a day than ship a weak deck.) Fix Groq — check the ✓/✗ lines above");
+      console.error("    for the key/model status — then re-run. To allow the deterministic fallback instead,");
+      console.error("    set the repo variable LI_REQUIRE_GROQ=0.");
+      process.exit(3);
+    }
     console.log("  (Groq compose unavailable/short — using deterministic fallback)");
     model = fallback(subj, brief);
   }
