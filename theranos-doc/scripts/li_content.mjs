@@ -121,36 +121,70 @@ BANNED openers (auto-reject): "blew up", "just dropped", "just released", "every
 
 async function analyze(subj) {
   const src = subj.kind === "repo"
-    ? `REPO: ${subj.id} (${subj.stars} stars, ${subj.language})\nDESCRIPTION: ${subj.description}\nREADME (excerpt):\n${(subj.readme || "").slice(0, 3500)}`
+    ? `REPO: ${subj.id} (${subj.stars} stars, ${subj.language})\nDESCRIPTION: ${subj.description}\nREADME (excerpt):\n${(subj.readme || "").slice(0, 4000)}`
     : `PAPER: ${subj.title}\nAUTHORS: ${(subj.authors || []).join(", ")}\nABSTRACT:\n${subj.abstract || ""}`;
-  const sys = `You are a top-0.01% tech analyst. Read the source and extract the real substance. Return ONLY JSON:
-{"shift": string (what actually changed, one sentence),
+  const sys = `You are a top-0.01% tech analyst whose gift is making frontier AI make sense to smart builders.
+Read the source and extract the substance that lets a reader finish SMARTER (not just informed). Return ONLY JSON:
+{"coreIdea": string (the ONE idea this whole post teaches, in plain words),
+ "bridge": string (ONE honest sentence bridging this to the reader's world / AI agents / building —
+    e.g. "The same reason human teams stall is now the #1 bug in multi-agent AI". Must be an HONEST analogy, not a stretch),
+ "runningExample": string (one concrete, everyday example you can thread through the whole deck),
+ "shift": string (what actually changed, one sentence),
  "why": string (the non-obvious implication),
- "how": [3-5 short steps of how it works],
+ "how": [3-5 short steps of the real MECHANISM — what you'd DRAW to show how it works],
+ "terms": [{"term": string, "plain": string}]  (2-4 key jargon terms a non-expert wouldn't know, each in plain English),
+ "surprisingFinding": {"value": string, "label": string, "meaning": string} | null
+    (a REAL number/result FROM the source — NOT GitHub stars — plus what it means; null if the source has none),
+ "source": string (who made it — authors, lab, or org — the authority worth naming),
  "cto": string (how a builder/CTO applies this in a real system),
  "ceo": string (the business/strategy bet a CEO should make),
- "pov": string (a sharp, opinionated one-liner — YOUR take, a bet or reframe, not a summary),
- "stat": {"value": string, "label": string} | null,
+ "pov": string (a sharp, opinionated one-liner — YOUR bet or reframe, not a summary),
  "hooks": [3 candidate hooks per the rules]}
+Translate every term a non-expert wouldn't know. surprisingFinding must be a genuine result from the text, or null.
 ${HOOK_RULES}`;
-  return (await callGroq(sys, src, 1600)) || {};
+  return (await callGroq(sys, src, 2000)) || {};
 }
 
 async function compose(subj, brief) {
-  const sys = `You compose a premium LinkedIn CAROUSEL for a tech founder building authority. One subject only.
-Return ONLY JSON: {"caption": string, "firstComment": string, "hashtags": [4-6], "slides": [ ...6-8 slides... ]}.
+  const sys = `You compose a premium, TEACHING LinkedIn CAROUSEL that makes the reader finish SMARTER and positions the
+author as "the person who makes frontier AI finally make sense." ONE subject only.
+Return ONLY JSON: {"caption": string, "firstComment": string, "hashtags": [4-6], "slides": [ ...7-9 slides... ]}.
 ${SLIDE_MENU}
-RULES:
-- slides[0] MUST be "cover" (the hook). slides[last] MUST be "cta".
-- Include at least one "how it works" diagram (flow OR architecture OR code) and at least one "apply"
-  slide (checklist OR pillars OR compare OR matrix), plus one "thesis" (the POV). VARY the diagram types.
-- Every slide is skimmable: short, concrete, specific to THIS subject. No fluff, no hashtags inside slides.
-- "caption" = the LinkedIn post text: a scroll-stopping first line (same insight as the hook), 2-4 short lines
-  (the shift + why it matters + a dual CTO/CEO note), end with a soft question. NO link in the caption.
-- "firstComment" = a short line pointing to the source ("Source: <url>").
+FOLLOW THIS SPINE — this fixed order is the author's SIGNATURE structure; keep it:
+1. cover     — the hook: a sharp, concrete, surprising claim about THIS subject.
+2. thesis    — make the BRIDGE explicit: the honest analogy to the reader's world (use brief.bridge). By slide 2 the reader knows why THEY care.
+3. TRANSLATE — define the key jargon in plain English. Use a "table" (headers ["Term","In plain English"], rows from brief.terms) OR a "stack" (layers name=term, desc=plain).
+4. MECHANISM — how it ACTUALLY works, DRAWN as a diagram: "architecture" (core + parts) or "flow" (steps from brief.how). This is the signature geometry — draw it, never a plain bullet list.
+5. FINDING   — the surprising real result as a "stat": value + label from brief.surprisingFinding, and NAME THE SOURCE in its "sub" (e.g. "— <source>"). Skip only if surprisingFinding is null (then use a "quote" or another mechanism slide).
+6. APPLY     — what a builder/CEO does with this: "checklist" (do/don't) or "compare" or "pillars".
+7. thesis    — the POV (brief.pov): your bet or reframe.
+8. cta        — closing follow prompt.
+THREAD brief.runningExample through at least 2 body slides so the deck reads as ONE lesson, not a list.
+Every slide: concrete, specific to THIS subject, jargon already translated, no fluff, no hashtags inside slides.
+"caption" = the LinkedIn post: a scroll-stopping first line (the hook), then the shift + why it matters + a builder note, end with a real question. NO link.
+"firstComment" = "Source: <url>".
 ${HOOK_RULES}`;
-  const usr = `SUBJECT (${subj.kind}): ${subj.kind === "repo" ? subj.id : subj.title}\nURL: ${subj.url}\nBRIEF:\n${JSON.stringify(brief).slice(0, 3000)}\nCompose the carousel now.`;
-  return await callGroq(sys, usr, 3000);
+  const usr = `SUBJECT (${subj.kind}): ${subj.kind === "repo" ? subj.id : subj.title}\nURL: ${subj.url}\nBRIEF:\n${JSON.stringify(brief).slice(0, 3500)}\nCompose the carousel now, following the spine.`;
+  return await callGroq(sys, usr, 3400);
+}
+
+// PASS 3 — a ruthless editor that scores the draft against the rubric and rewrites weak slides.
+async function editPass(subj, brief, draft) {
+  const sys = `You are a ruthless editor making this LinkedIn carousel worth paying real attention to.
+Score the draft against this rubric, REWRITE any slide that fails, keep what already passes, and return the
+FULL improved carousel in the SAME JSON shape: {"caption","firstComment","hashtags":[4-6],"slides":[7-9]}.
+RUBRIC — every item must pass:
+1. Slide 2 makes the analogy/bridge to the reader's world EXPLICIT (not a generic intro).
+2. Every technical term is translated to plain English somewhere in the deck.
+3. The core mechanism is DRAWN as a real diagram (architecture/flow), not a plain bullet list.
+4. There is ONE surprising, real finding shown as a number, WITH the source named (unless the source truly has none).
+5. A single running example carries through at least two slides.
+6. The hook is a concrete, specific claim — no hype ("blew up", "the future of", "game-changer").
+7. No slide is vague or padded; cut any slide that says nothing new.
+${SLIDE_MENU}
+Return ONLY the JSON.`;
+  const usr = `SUBJECT: ${subj.kind === "repo" ? subj.id : subj.title}\nURL: ${subj.url}\nBRIEF:\n${JSON.stringify(brief).slice(0, 2500)}\nDRAFT:\n${JSON.stringify(draft).slice(0, 6000)}\nReturn the improved carousel.`;
+  return await callGroq(sys, usr, 3600);
 }
 
 /* ---------- fallback (deterministic, no Groq) — richer, uses the real subject data ---------- */
@@ -162,19 +196,32 @@ function fallback(subj, brief) {
   const sentences = body.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter((s) => s.length > 30 && s.length < 170);
   const how = Array.isArray(brief.how) && brief.how.length >= 3 ? brief.how.slice(0, 4).map(String) : null;
 
+  const terms = Array.isArray(brief.terms) ? brief.terms.filter((t) => t && t.term && t.plain).slice(0, 4) : [];
+  const finding = brief.surprisingFinding && brief.surprisingFinding.value ? brief.surprisingFinding : null;
+
   const slides = [];
+  // 1. hook
   slides.push({ type: "cover", kicker: isRepo ? "The Frontier" : "New Research", title: (brief.hooks && brief.hooks[0]) || subj.description || name, sub: isRepo ? `${Number(subj.stars || 0).toLocaleString()} stars — here's why it matters.` : "Here's what it actually changes." });
-  if (isRepo && subj.stars) slides.push({ type: "stat", value: subj.stars >= 1000 ? `${Math.round(subj.stars / 1000)}k` : String(subj.stars), label: "GitHub stars", sub: subj.language ? `Built in ${subj.language}.` : "" });
-  if (how) slides.push({ type: "flow", title: "How it works", steps: how });
+  // 2. bridge (make the reader care)
+  if (brief.bridge) slides.push({ type: "thesis", label: "Why you care", text: brief.bridge });
+  // 3. translate the jargon
+  if (terms.length >= 2) slides.push({ type: "table", title: "In plain English", headers: ["Term", "What it means"], rows: terms.map((t) => [String(t.term), String(t.plain)]) });
+  // 4. mechanism, drawn
+  if (how) slides.push({ type: "flow", title: "How it actually works", steps: how });
   else if (sentences.length >= 3) slides.push({ type: "bullets", title: "What it does", items: sentences.slice(0, 3) });
-  if (isRepo && Array.isArray(subj.topics) && subj.topics.length >= 2) slides.push({ type: "pillars", title: "What it covers", columns: subj.topics.slice(0, 4).map((t) => ({ title: String(t), desc: "" })) });
-  if (brief.pov) slides.push({ type: "thesis", label: "My Take", text: brief.pov });
-  if (slides.length < 6 && sentences.length >= 5) slides.push({ type: "bullets", title: "Worth knowing", items: sentences.slice(3, 6) });
+  // 5. the surprising real finding (with source named), else fall back to a covers-topics slide
+  if (finding) slides.push({ type: "stat", value: String(finding.value), label: String(finding.label || "the result"), sub: brief.source ? `${finding.meaning ? finding.meaning + " " : ""}— ${brief.source}` : (finding.meaning || "") });
+  else if (isRepo && subj.stars) slides.push({ type: "stat", value: subj.stars >= 1000 ? `${Math.round(subj.stars / 1000)}k` : String(subj.stars), label: "GitHub stars", sub: subj.language ? `Built in ${subj.language}.` : "" });
+  else if (isRepo && Array.isArray(subj.topics) && subj.topics.length >= 2) slides.push({ type: "pillars", title: "What it covers", columns: subj.topics.slice(0, 4).map((t) => ({ title: String(t), desc: "" })) });
+  // 6. apply
   slides.push({ type: "checklist", title: "How I'd apply it", items: [{ text: brief.cto || "Standardize this in your stack early.", ok: true }, { text: brief.ceo || "Don't bet the moat on the wrong layer.", ok: false }] });
+  // 7. POV
+  if (brief.pov) slides.push({ type: "thesis", label: "My Take", text: brief.pov });
+  // 8. cta
   slides.push({ type: "cta", title: "I break down one frontier shift every few days.", sub: "Source in the comments — follow for the next one." });
 
   return {
-    caption: `${(brief.hooks && brief.hooks[0]) || name}\n\n${brief.why || subj.description || ""}\n\nWhat would you build on top of it?`,
+    caption: `${(brief.hooks && brief.hooks[0]) || name}\n\n${brief.bridge ? brief.bridge + "\n\n" : ""}${brief.why || subj.description || ""}\n\nWhat would you build on top of it?`,
     firstComment: `Source: ${subj.url}`,
     hashtags: ["AI", "buildinpublic", "tech", "startups"],
     slides,
@@ -203,6 +250,12 @@ async function main() {
 
   const brief = await analyze(subj);
   let model = await compose(subj, brief);
+  if (model && Array.isArray(model.slides) && model.slides.length >= 5) {
+    console.log("  editing (ruthless quality pass)...");
+    const edited = await editPass(subj, brief, model);
+    if (edited && Array.isArray(edited.slides) && edited.slides.length >= 5) model = edited;
+    else console.log("  (edit pass skipped — keeping composed draft)");
+  }
   if (!model || !Array.isArray(model.slides) || model.slides.length < 3) {
     console.log("  (Groq compose unavailable/short — using deterministic fallback)");
     model = fallback(subj, brief);
