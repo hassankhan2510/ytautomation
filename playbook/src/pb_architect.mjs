@@ -27,7 +27,7 @@ best-selling science author). Design the CHAPTER skeleton that proves the thesis
 {"chapters":[{"title":"specific, magazine-grade","summary":"2 sentences: what this chapter proves and why it belongs here"}]}.
 Exactly ${nChapters} chapters. No generic titles ("Introduction","Conclusion" are OK only if truly earned).`;
   const usr = `TOPIC: ${spine.meta.topic}\nAUDIENCE: ${spine.meta.audience}\nTHESIS: ${spine.thesis}\nEVIDENCE (ids you can draw on):\n${ledgerText(spine.evidence)}`;
-  const r = await llmJSON(sys, usr, { tier: "high", maxTokens: 1400, temperature: 0.55 });
+  const r = await llmJSON(sys, usr, { tier: "high", maxTokens: 1400, temperature: 0.55, reasoning: "medium" });
   return (r && Array.isArray(r.chapters)) ? r.chapters : [];
 }
 
@@ -47,7 +47,7 @@ RULES: exactly ${nSections} sections. VARY the visual kinds across sections (not
 "bigstat","statgrid","table" only when there is a real NUMBER in the cited evidence; otherwise use "diagram",
 "flow","timeline","matrix","conceptmap","compare" or "quote". Only cite evidence ids that exist.`;
   const usr = `BOOK THESIS: ${spine.thesis}\nCHAPTER: ${chapter.title}\nCHAPTER PURPOSE: ${chapter.summary}\nEVIDENCE LEDGER:\n${ledgerText(spine.evidence)}`;
-  const r = await llmJSON(sys, usr, { tier: "high", maxTokens: 1800, temperature: 0.5 });
+  const r = await llmJSON(sys, usr, { tier: "high", maxTokens: 1800, temperature: 0.5, reasoning: "medium" });
   return (r && Array.isArray(r.sections)) ? r.sections : [];
 }
 

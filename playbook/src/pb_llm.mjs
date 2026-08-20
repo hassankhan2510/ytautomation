@@ -35,10 +35,10 @@ const TIER_RANK = { fast: 1, mid: 2, high: 3 };
 // Groq's response_format:json_object 400s constantly on gpt-oss reasoning models — skip it for them.
 const supportsJsonMode = (id) => !/gpt-oss/i.test(id);
 // gpt-oss are REASONING models: with a tight max_tokens they spend the WHOLE budget "thinking" and
-// return EMPTY content (the "empty completion" failures). A caller can pass reasoning:"low" to leave
-// room for the real answer (the write phase does). PB_REASONING sets a global default; unset = leave
-// Groq's default (so the planning phases that already work are untouched).
-const REASONING = (process.env.PB_REASONING || "").toLowerCase();
+// return EMPTY content (the "empty completion" failures across write/verify/graphics). Default every
+// gpt-oss call to LOW effort so the tokens go to the ANSWER; the architect phase opts UP to "medium"
+// where planning depth matters. Override globally with PB_REASONING=medium|high.
+const REASONING = (process.env.PB_REASONING || "low").toLowerCase();
 
 function loadModels() {
   if (process.env.PB_MODELS) {
