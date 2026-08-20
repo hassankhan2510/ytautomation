@@ -27,13 +27,19 @@ const API = "https://api.groq.com/openai/v1/chat/completions";
 // Default pool = the two models that are reliably available on the Groq free tier. gpt-oss-120b for
 // quality work, gpt-oss-20b for cheap/bulk work. Override with PB_MODELS to add others (e.g. a qwen id
 // you actually have access to).
+// High tier runs on BOTH qwen3.6-27b and gpt-oss-120b. qwen has a far bigger free budget
+// (~30k TPM / 14.4k RPD vs gpt-oss's 8k / 1k), so the scheduler — which prefers the slot with the
+// most free budget — routes most high-tier work to qwen and only spills to gpt-oss when qwen is busy.
+// That's what stops the mid-run 429 wall you were hitting (gpt-oss's 1k/day cap exhausting).
 const DEFAULT_MODELS = [
-  { id: "openai/gpt-oss-120b", tier: "high", tpm: 8000, rpm: 30, rpd: 1000 },
-  { id: "openai/gpt-oss-20b",  tier: "mid",  tpm: 8000, rpm: 30, rpd: 1000 },
+  { id: "qwen/qwen3.6-27b",    tier: "high", tpm: 30000, rpm: 30, rpd: 14000 },
+  { id: "openai/gpt-oss-120b", tier: "high", tpm: 8000,  rpm: 30, rpd: 1000 },
+  { id: "openai/gpt-oss-20b",  tier: "mid",  tpm: 8000,  rpm: 30, rpd: 1000 },
 ];
 const TIER_RANK = { fast: 1, mid: 2, high: 3 };
-// Groq's response_format:json_object 400s constantly on gpt-oss reasoning models — skip it for them.
-const supportsJsonMode = (id) => !/gpt-oss/i.test(id);
+// Skip Groq's strict json_object mode for models that 400 on it (gpt-oss reasoning models) or whose
+// support is uncertain (qwen) — rely on "return ONLY JSON" + the tolerant parser instead.
+const supportsJsonMode = (id) => !/gpt-oss|qwen/i.test(id);
 // gpt-oss are REASONING models: with a tight max_tokens they spend the WHOLE budget "thinking" and
 // return EMPTY content (the "empty completion" failures across write/verify/graphics). Default every
 // gpt-oss call to LOW effort so the tokens go to the ANSWER; the architect phase opts UP to "medium"
