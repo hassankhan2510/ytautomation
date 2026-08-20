@@ -1,0 +1,16 @@
+[
+  {
+    "date": "2026-08-20",
+    "hero": 4555.19,
+    "side": "hold-above",
+    "price": 4555.7,
+    "structure": "bullish",
+    "bullTarget": 4556.3,
+    "bearTarget": 4512.7,
+    "driver": {
+      "kind": "gold",
+      "oi": null,
+      "dxy": 98.83
+    }
+  }
+]
