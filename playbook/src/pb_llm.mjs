@@ -34,6 +34,11 @@ const DEFAULT_MODELS = [
 const TIER_RANK = { fast: 1, mid: 2, high: 3 };
 // Groq's response_format:json_object 400s constantly on gpt-oss reasoning models — skip it for them.
 const supportsJsonMode = (id) => !/gpt-oss/i.test(id);
+// gpt-oss are REASONING models: with a tight max_tokens they spend the WHOLE budget "thinking" and
+// return EMPTY content (the "empty completion" failures). A caller can pass reasoning:"low" to leave
+// room for the real answer (the write phase does). PB_REASONING sets a global default; unset = leave
+// Groq's default (so the planning phases that already work are untouched).
+const REASONING = (process.env.PB_REASONING || "").toLowerCase();
 
 function loadModels() {
   if (process.env.PB_MODELS) {
@@ -147,31 +152,45 @@ async function call(system, user, opts = {}) {
   const temperature = opts.temperature ?? 0.5;
   const wantJson = opts.json !== false;
   const inputEst = est(system) + est(user);
+  let maxT = opts.maxTokens ?? 1400; // grows if a reasoning model returns empty (see below)
+  let noReasoning = false; // set if a model rejects the reasoning_effort param (400)
 
   for (let attempt = 1; attempt <= 6; attempt++) {
     let slot;
-    try { slot = await reserve(inputEst + (opts.maxTokens ?? 1400), floorRank); }
+    try { slot = await reserve(inputEst + maxT, floorRank); }
     catch (e) { console.log(`  ! ${e.message}`); return null; }
     const budget = budgetOf(slot.model);
-    const cap = Math.max(256, Math.min(opts.maxTokens ?? 1400, budget - inputEst - 200));
+    const cap = Math.max(256, Math.min(maxT, budget - inputEst - 200));
     const useJsonMode = wantJson && supportsJsonMode(slot.model.id);
+    const isGptOss = /gpt-oss/i.test(slot.model.id);
     try {
       const payload = { model: slot.model.id, temperature, max_tokens: cap, messages: [{ role: "system", content: system }, { role: "user", content: user }] };
       if (useJsonMode) payload.response_format = { type: "json_object" };
+      // Keep reasoning light on gpt-oss so the token budget goes to the ANSWER, not the thinking.
+      const effort = opts.reasoning || REASONING;
+      if (isGptOss && effort && !noReasoning) payload.reasoning_effort = effort;
       const res = await fetch(API, { method: "POST", headers: { Authorization: `Bearer ${slot.key}`, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
 
       if (res.status === 404) { const b = await res.text().catch(() => ""); console.log(`  ! 404 ${slot.model.id} — disabling this model (${b.slice(0, 80)})`); killModel(slot.model.id); continue; }
-      if (res.status === 413) { console.log(`  ! 413 too-large on ${slot.model.id} — retrying smaller`); continue; }
+      if (res.status === 413) { console.log(`  ! 413 too-large on ${slot.model.id} — retrying smaller`); maxT = Math.max(256, Math.floor(maxT * 0.6)); continue; }
       if (res.status === 429) { const b = await res.text().catch(() => ""); markCooldown(slot, parseRetryMs(b) ?? 12000); if (attempt <= 2) console.log(`  ! 429 ${slot.model.id} key#${slot.keyIdx + 1} — cooling + rotating`); continue; }
-      if (res.status === 400) { const b = await res.text().catch(() => ""); console.log(`  ! 400 ${slot.model.id} — ${b.slice(0, 90)} (retrying)`); await sleep(600 * attempt); continue; }
+      if (res.status === 400) { const b = await res.text().catch(() => ""); if (/reasoning/i.test(b) && !noReasoning) { noReasoning = true; console.log(`  ! 400 ${slot.model.id} rejected reasoning_effort — dropping it and retrying`); continue; } console.log(`  ! 400 ${slot.model.id} — ${b.slice(0, 90)} (retrying)`); await sleep(600 * attempt); continue; }
       if (res.status >= 500) { console.log(`  ! ${res.status} ${slot.model.id} — retrying`); await sleep(1200 * attempt); continue; }
       if (!res.ok) throw new Error(`${res.status}: ${(await res.text().catch(() => "")).slice(0, 140)}`);
 
       const d = await res.json();
       const used = d?.usage?.total_tokens;
       if (used) slot.tpmUsed += Math.max(0, used - (inputEst + cap));
-      const content = d.choices?.[0]?.message?.content || "";
-      if (!content.trim()) throw new Error("empty completion");
+      const content = (d.choices?.[0]?.message?.content || "").trim();
+      if (!content) {
+        // Reasoning ate the whole budget. Raise the output room (bounded) and retry — this is the fix
+        // for the repeated "empty completion" on hard sections, alongside reasoning_effort above.
+        const bumped = Math.min(Math.floor(maxT * 1.7), 6000);
+        if (bumped > maxT) { console.log(`  ! empty completion on ${slot.model.id} — raising output ${maxT}→${bumped} + retry`); maxT = bumped; }
+        else console.log(`  ! empty completion on ${slot.model.id} — retry`);
+        await sleep(400 * attempt);
+        continue;
+      }
       return { content, model: slot.model.id, keyIdx: slot.keyIdx };
     } catch (e) {
       console.log(`  ! LLM attempt ${attempt}/6 on ${slot.model.id}: ${e.message}`);

@@ -44,7 +44,9 @@ PREVIOUS SECTION: ${prev ? prev.title + " — " + prev.thesis : "(this is the fi
 NEXT SECTION: ${next ? next.title + " — " + next.thesis : "(this is the last section)"}
 EVIDENCE YOU MAY CITE:
 ${evidenceBlock(section, emap)}`;
-  return await llmJSON(sys, usr, { tier: "high", maxTokens: 1200, temperature: 0.62 });
+  // 1800 + light reasoning gives a reasoning model room for both its thinking AND the 2-4 paragraphs
+  // of JSON — the fix for the "empty completion" failures on longer sections.
+  return await llmJSON(sys, usr, { tier: "high", maxTokens: 1800, temperature: 0.62, reasoning: "low" });
 }
 
 async function main() {
