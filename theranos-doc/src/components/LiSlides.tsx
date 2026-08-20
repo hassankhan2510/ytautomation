@@ -1,5 +1,5 @@
 import React from "react";
-import { AbsoluteFill, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, staticFile, useVideoConfig } from "remotion";
 
 /**
  * LINKEDIN diagram primitives — clean, CODE-DRAWN graphics (no AI images) that the content stage
@@ -64,7 +64,45 @@ type Meta = {
   motif?: string; // background texture: plain | grid | rays | rings
   cover?: string; // cover layout: standard | centered | rule | mark
   shape?: string; // marker shape: square | circle | diamond
+  name?: string;   // author display name shown in the byline ("Hassan Khan")
+  at?: string;     // author handle ("@hassankhan")
+  avatar?: string; // filename in public/ for the real profile photo; falls back to a monogram
 };
+
+// Blue "verified" seal — a persistent byline signal that a real creator made this.
+const Verified: React.FC<{ size: number }> = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" style={{ flexShrink: 0 }}>
+    <circle cx={12} cy={12} r={11} fill="#1d9bf0" />
+    <path d="M7 12.4l3.2 3.1 6.8-6.9" fill="none" stroke="#fff" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+// Profile avatar: the real photo from public/ if provided, else a clean monogram in the accent colour.
+const Avatar: React.FC<{ meta: Meta; size: number }> = ({ meta, size }) => {
+  const initials = (meta.name || meta.brand || "HK").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+  if (meta.avatar) {
+    return <Img src={staticFile(meta.avatar)} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: `2px solid ${meta.accent}55`, flexShrink: 0 }} />;
+  }
+  return (
+    <div style={{ width: size, height: size, borderRadius: "50%", background: `linear-gradient(135deg, ${meta.accent}, #1b2536)`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontWeight: 800, fontSize: size * 0.38, color: "#fff", border: "2px solid rgba(255,255,255,0.15)", flexShrink: 0 }}>
+      {initials}
+    </div>
+  );
+};
+
+// The persistent author byline shown at the top of every slide (avatar + name + verified + @handle).
+const Byline: React.FC<{ meta: Meta; width: number }> = ({ meta, width }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: width * 0.02 }}>
+    <Avatar meta={meta} size={Math.round(width * 0.085)} />
+    <div style={{ lineHeight: 1.15 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: width * 0.008, fontFamily: DISPLAY, fontWeight: 700, fontSize: width * 0.032, color: "#f5f7fa" }}>
+        {meta.name || meta.brand}
+        <Verified size={Math.round(width * 0.032)} />
+      </div>
+      <div style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.024, color: "#6b7684" }}>{meta.at || meta.handle || ""}</div>
+    </div>
+  </div>
+);
 
 // A small shape used for the brand mark + bullet markers, so the accent motif is consistent per post.
 const Mark: React.FC<{ shape?: string; size: number; color: string; glow?: boolean }> = ({ shape, size, color, glow }) => {
@@ -109,24 +147,22 @@ const Frame: React.FC<{ meta: Meta; page: number; total: number; children: React
   const pad = Math.round(width * 0.085);
   // Per-post theme (rotated by the content engine): a tinted dark gradient + accent glow. Keeps each
   // carousel visually distinct so the feed doesn't look like the same post every time.
-  const bg = meta.bg || ["#0c141f", "#080d14", "#05080d"];
+  // CREATOR look: a clean near-black base (a whisper of the accent hue), so the byline + big type carry
+  // the slide — reads like a real person's carousel, not a template. The accent still rotates per post
+  // for highlights (dots, numbers, kickers), so the feed stays varied without looking busy.
+  const bg = meta.bg || ["#0c0e13", "#08090d", "#050609"];
   const angle = meta.angle ?? 160;
-  // Alternate the glow corner by page so slides within one deck breathe, not just post-to-post.
   const glowLeft = page % 2 === 0;
   return (
     <AbsoluteFill style={{ background: `linear-gradient(${angle}deg, ${bg[0]} 0%, ${bg[1]} 60%, ${bg[2]} 100%)`, color: "#f5f7fa" }}>
       {/* soft accent glow (position alternates per slide) */}
-      <div style={{ position: "absolute", top: -width * 0.28, [glowLeft ? "left" : "right"]: -width * 0.22, width: width * 0.7, height: width * 0.7, borderRadius: "50%", background: meta.accent, opacity: 0.11, filter: "blur(70px)" }} />
-      {/* rotating background motif (plain/grid/rays/rings) — another axis of per-post variety */}
+      <div style={{ position: "absolute", top: -width * 0.28, [glowLeft ? "left" : "right"]: -width * 0.22, width: width * 0.7, height: width * 0.7, borderRadius: "50%", background: meta.accent, opacity: 0.1, filter: "blur(70px)" }} />
+      {/* rotating background motif (plain/grid/rays/rings) — subtle per-post texture */}
       <Motif motif={meta.motif} width={width} height={height} accent={meta.accent} />
-      {/* faint accent hairline under the header — a small, consistent signature detail */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 4, background: `linear-gradient(90deg, ${meta.accent}, transparent 70%)`, opacity: 0.8 }} />
       <AbsoluteFill style={{ padding: pad, justifyContent: "space-between" }}>
+        {/* AUTHOR HEADER — avatar + name + verified + handle on every slide, page counter on the right */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: DISPLAY, fontWeight: 800, fontSize: width * 0.026, letterSpacing: 1.5 }}>
-            <Mark shape={meta.shape} size={14} color={meta.accent} glow />
-            {meta.brand}
-          </div>
+          <Byline meta={meta} width={width} />
           <div style={{ fontFamily: MONO, color: "#5b6b7c", fontSize: width * 0.024, fontWeight: 700 }}>
             {String(page).padStart(2, "0")}<span style={{ color: "#3a4453" }}>/{String(total).padStart(2, "0")}</span>
           </div>
@@ -134,9 +170,14 @@ const Frame: React.FC<{ meta: Meta; page: number; total: number; children: React
 
         <div style={{ flex: 1, display: "flex", flexDirection: "column", justifyContent: "center", padding: `${pad * 0.4}px 0` }}>{children}</div>
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontFamily: MONO, color: "#5b6b7c", fontSize: width * 0.022, letterSpacing: 1 }}>
-          <span>{meta.handle || ""}</span>
-          <span style={{ color: meta.accent }}>{footer || ""}</span>
+        {/* FOOTER — page dots (active = accent) + swipe cue */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: width * 0.014 }}>
+            {Array.from({ length: Math.min(total, 12) }, (_, k) => (
+              <div key={k} style={{ width: width * 0.014, height: width * 0.014, borderRadius: "50%", background: k === page - 1 ? meta.accent : "rgba(255,255,255,0.22)" }} />
+            ))}
+          </div>
+          <span style={{ fontFamily: MONO, color: meta.accent, fontSize: width * 0.024, fontWeight: 700, letterSpacing: 1 }}>{footer || ""}</span>
         </div>
       </AbsoluteFill>
     </AbsoluteFill>

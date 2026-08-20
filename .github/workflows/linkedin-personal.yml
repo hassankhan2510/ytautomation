@@ -61,6 +61,10 @@ jobs:
           LI_BRAND: ${{ vars.LI_BRAND }}
           LI_HANDLE: ${{ vars.LI_HANDLE }}
           LI_ACCENT: ${{ vars.LI_ACCENT }}
+          # Author byline on every slide. LI_AVATAR = a filename you commit under theranos-doc/public/
+          LI_NAME: ${{ vars.LI_NAME }}
+          LI_AT: ${{ vars.LI_AT }}
+          LI_AVATAR: ${{ vars.LI_AVATAR }}
         run: node scripts/li_content.mjs
       - name: Render the carousel -> PDF
         run: node scripts/li_render.mjs

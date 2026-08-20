@@ -32,19 +32,24 @@ const REQUIRE_GROQ = process.env.LI_REQUIRE_GROQ !== "0";
 const BRAND = process.env.LI_BRAND || "HASSAN KHAN";
 const HANDLE = process.env.LI_HANDLE || "Building Syndar & Equitier";
 const ACCENT = process.env.LI_ACCENT || ""; // optional: pin the accent; otherwise a theme rotates per post
+// Author byline shown on EVERY slide (the "creator carousel" signal). Drop a headshot at
+// theranos-doc/public/<file> and set LI_AVATAR=<file>; else a clean accent monogram is used.
+const LI_NAME = process.env.LI_NAME || "Hassan Khan";
+const LI_AT = process.env.LI_AT || "@hassankhan";
+const LI_AVATAR = process.env.LI_AVATAR || "";
 
-// Curated premium themes — each a distinct accent + a dark gradient tinted toward that hue. One is
-// picked per post (by subject + day) so the feed looks fresh every time instead of the same blue deck,
-// while every theme still reads as a designed, elite editorial carousel.
+// CREATOR look: a clean near-black base with just a whisper of the accent hue, so the author byline +
+// big type carry the slide (not a busy background). The accent still rotates per post for highlights —
+// dots, numbers, kickers — so the feed stays varied without looking like a template.
 const THEMES = [
-  { name: "electric-blue", accent: "#4f8cff", bg: ["#0c1524", "#080e18", "#05080d"], angle: 160 },
-  { name: "emerald",       accent: "#2ece8a", bg: ["#0a1a14", "#07120d", "#040a07"], angle: 155 },
-  { name: "violet",        accent: "#9b7bff", bg: ["#140f22", "#0d0a18", "#07050d"], angle: 170 },
-  { name: "amber",         accent: "#f5a623", bg: ["#1c150a", "#130e07", "#0a0704"], angle: 150 },
-  { name: "cyan",          accent: "#22d3ee", bg: ["#08191c", "#061214", "#040a0c"], angle: 165 },
-  { name: "rose",          accent: "#fb7185", bg: ["#1c0f14", "#13090d", "#0a0507"], angle: 175 },
-  { name: "lime",          accent: "#a3e635", bg: ["#141a0a", "#0e1207", "#070a04"], angle: 158 },
-  { name: "indigo",        accent: "#6366f1", bg: ["#0f1024", "#0a0a18", "#05050d"], angle: 168 },
+  { name: "electric-blue", accent: "#4f8cff", bg: ["#0b0d12", "#08090d", "#050609"], angle: 160 },
+  { name: "emerald",       accent: "#2ece8a", bg: ["#0a0f0d", "#07090a", "#050708"], angle: 155 },
+  { name: "violet",        accent: "#9b7bff", bg: ["#0d0b12", "#09080d", "#060509"], angle: 170 },
+  { name: "amber",         accent: "#f5a623", bg: ["#0f0d09", "#0a0908", "#060505"], angle: 150 },
+  { name: "cyan",          accent: "#22d3ee", bg: ["#0a0e10", "#07090b", "#050708"], angle: 165 },
+  { name: "rose",          accent: "#fb7185", bg: ["#0f0b0d", "#0a080a", "#060506"], angle: 175 },
+  { name: "lime",          accent: "#a3e635", bg: ["#0c0e0a", "#080a07", "#060706"], angle: 158 },
+  { name: "indigo",        accent: "#6366f1", bg: ["#0b0c12", "#08080d", "#050609"], angle: 168 },
 ];
 // Extra axes of variety, each rotated on a different hash offset so combinations rarely repeat:
 const MOTIFS = ["plain", "grid", "rays", "rings"];   // faint background texture
@@ -284,7 +289,7 @@ async function main() {
   const slides = sanitize(model, subj);
   const theme = pickStyle(subj);
 
-  fs.writeFileSync(CAROUSEL, JSON.stringify({ brand: BRAND, handle: HANDLE, accent: theme.accent, bg: theme.bg, angle: theme.angle, theme: theme.name, motif: theme.motif, cover: theme.cover, shape: theme.shape, slides }, null, 2));
+  fs.writeFileSync(CAROUSEL, JSON.stringify({ brand: BRAND, handle: HANDLE, name: LI_NAME, at: LI_AT, avatar: LI_AVATAR, accent: theme.accent, bg: theme.bg, angle: theme.angle, theme: theme.name, motif: theme.motif, cover: theme.cover, shape: theme.shape, slides }, null, 2));
   fs.mkdirSync(LI_DIR, { recursive: true });
   fs.writeFileSync(POST, JSON.stringify({
     kind: subj.kind, id: subj.id, url: subj.url,
