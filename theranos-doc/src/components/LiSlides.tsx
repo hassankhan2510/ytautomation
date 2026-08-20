@@ -260,7 +260,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
                 <div style={{ width: 48, height: 48, borderRadius: 12, background: `${a}22`, border: `1.5px solid ${a}`, color: a, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: MONO, fontWeight: 800, fontSize: width * 0.03 }}>{i + 1}</div>
                 {i < slide.steps.length - 1 ? <div style={{ width: 2, flex: 1, minHeight: 18, background: `${a}44`, marginTop: 4 }} /> : null}
               </div>
-              <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "22px 26px", fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.032, lineHeight: 1.35, display: "flex", alignItems: "center" }}>{txt(s)}</div>
+              <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.10)", borderRadius: 14, padding: "22px 26px", fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.032, lineHeight: 1.35, display: "flex", alignItems: "center" }}>{txt(s)}</div>
             </div>
           ))}
         </div>
@@ -286,7 +286,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
 
   if (slide.type === "compare") {
     const col = (p: { title: string; items: string[] }, accentCol: string) => (
-      <div style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderTop: `4px solid ${accentCol}`, borderRadius: 16, padding: "28px 26px" }}>
+      <div style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.11)", borderTop: `4px solid ${accentCol}`, borderRadius: 16, padding: "28px 26px" }}>
         <div style={{ fontFamily: MONO, fontWeight: 800, fontSize: width * 0.03, letterSpacing: 1.5, textTransform: "uppercase", color: accentCol, marginBottom: 22 }}>{txt(p.title)}</div>
         {(p.items || []).map((it, i) => (
           <div key={i} style={{ display: "flex", gap: 12, marginBottom: 16, fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.028, color: "#e7ebf1", lineHeight: 1.35 }}>
@@ -385,7 +385,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
           <div style={{ flex: 1 }}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "1fr 1fr", gap: 14, height: width * 0.62 }}>
               {q.map((item, i) => (
-                <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "22px 22px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.11)", borderRadius: 12, padding: "22px 22px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: width * 0.032, color: a }}>{txt(item.label)}</div>
                   {item.note ? <div style={{ marginTop: 8, fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.024, color: "#aeb8c6", lineHeight: 1.3 }}>{txt(item.note)}</div> : null}
                 </div>
@@ -404,7 +404,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
         {slide.title ? titleEl(slide.title, width) : null}
         <div style={{ display: "flex", gap: 16 }}>
           {(slide.columns || []).slice(0, 4).map((c, i) => (
-            <div key={i} style={{ flex: 1, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderTop: `4px solid ${a}`, borderRadius: 14, padding: "26px 22px" }}>
+            <div key={i} style={{ flex: 1, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.11)", borderTop: `4px solid ${a}`, borderRadius: 14, padding: "26px 22px" }}>
               <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: width * 0.034, marginBottom: 14, lineHeight: 1.15 }}>{txt(c.title)}</div>
               <div style={{ fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.026, color: "#aeb8c6", lineHeight: 1.4 }}>{txt(c.desc)}</div>
             </div>
@@ -421,7 +421,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
         {slide.title ? titleEl(slide.title, width) : null}
         <div style={{ display: "grid", gridTemplateColumns: st.length <= 2 ? "1fr" : "1fr 1fr", gap: 22 }}>
           {st.map((s, i) => (
-            <div key={i} style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "28px 24px", textAlign: "center" }}>
+            <div key={i} style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.11)", borderRadius: 14, padding: "28px 24px", textAlign: "center" }}>
               <div style={{ fontFamily: DISPLAY, fontWeight: 800, fontSize: width * 0.09, color: a, lineHeight: 1, letterSpacing: -1 }}>{txt(s.value)}</div>
               <div style={{ marginTop: 12, fontFamily: DISPLAY, fontWeight: 500, fontSize: width * 0.026, color: "#c7cfda", lineHeight: 1.3 }}>{txt(s.label)}</div>
             </div>
@@ -436,7 +436,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
       <Frame meta={meta} page={page} total={total}>
         {slide.title ? titleEl(slide.title, width) : null}
         <div style={{ background: "#0a0f16", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 14, overflow: "hidden" }}>
-          <div style={{ display: "flex", gap: 8, padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.08)", alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 8, padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.11)", alignItems: "center" }}>
             <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ff5f56" }} />
             <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#ffbd2e" }} />
             <div style={{ width: 12, height: 12, borderRadius: "50%", background: "#27c93f" }} />
@@ -479,7 +479,7 @@ export const LiSlideView: React.FC<{ slide: LiSlide; meta: Meta; page: number; t
             ))}
           </div>
           {(slide.rows || []).slice(0, 6).map((r, ri) => (
-            <div key={ri} style={{ display: "flex", borderTop: "1px solid rgba(255,255,255,0.07)", background: ri % 2 ? "rgba(255,255,255,0.02)" : "transparent" }}>
+            <div key={ri} style={{ display: "flex", borderTop: "1px solid rgba(255,255,255,0.10)", background: ri % 2 ? "rgba(255,255,255,0.02)" : "transparent" }}>
               {(Array.isArray(r) ? r : [r]).map((c, ci) => (
                 <div key={ci} style={{ flex: 1, padding: "18px 22px", fontFamily: DISPLAY, fontWeight: ci === 0 ? 600 : 500, fontSize: width * 0.026, color: ci === 1 ? "#eef2f7" : "#aeb8c6", lineHeight: 1.3 }}>{txt(c)}</div>
               ))}
