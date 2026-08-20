@@ -45,7 +45,7 @@ function evBlock(section, emap) {
 async function buildSpec(section, kind, emap) {
   const sys = `You produce the DATA SPEC for one figure in a premium book. Return ONLY JSON matching this schema for
 kind "${kind}": ${SCHEMA[kind] || SCHEMA.diagram}.
-RULES: be specific to the section; keep labels short. ${NUMERIC.has(kind) ? "Use ONLY numbers that appear in the evidence. If the evidence has no usable numbers, return {\"data\":[]} (or empty) so a non-numeric figure is used instead." : "Do not invent statistics."} No commentary.`;
+RULES: be specific to the section. LABELS MUST BE SHORT — a "core"/"center" is at most 3 words, each node/part/step/quadrant label is at most 4 words (a "note" may add a short phrase). NEVER put a sentence inside a node, hub, or cell — these are diagram labels, not prose. ${NUMERIC.has(kind) ? "Use ONLY numbers that appear in the evidence. If the evidence has no usable numbers, return {\"data\":[]} (or empty) so a non-numeric figure is used instead." : "Do not invent statistics."} No commentary.`;
   const usr = `SECTION: ${section.title}\nPOINT: ${section.thesis}\nFIGURE INTENT: ${section.visual?.dataHint || ""}\nEVIDENCE:\n${evBlock(section, emap)}`;
   return await llmJSON(sys, usr, { tier: "mid", maxTokens: 900, temperature: 0.3 });
 }

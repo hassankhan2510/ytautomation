@@ -57,13 +57,17 @@ async function main() {
     await new Promise((r) => setTimeout(r, 600));
 
     const brand = (spine.meta.brand || "").replace(/</g, "");
-    const footer = `<div style="width:100%;font-family:Inter,sans-serif;font-size:8px;color:#9aa1ab;padding:0 24mm;display:flex;justify-content:space-between;">
+    const footer = `<div style="width:100%;font-family:Inter,sans-serif;font-size:8px;color:#9aa1ab;padding:0 18mm;display:flex;justify-content:space-between;">
       <span>${brand}</span><span class="pageNumber"></span></div>`;
-    await page.pdf({
-      path: p.pdf, format: "A4", printBackground: true,
+    // Uniform margins on EVERY page -> flowing section text is always correctly margined, never full-bleed.
+    // Return the buffer (no `path`) and write it ourselves — passing `path` streams via DevTools IO, which
+    // intermittently throws "Protocol error (IO.read): Read failed" on some Chrome builds.
+    const buf = await page.pdf({
+      format: "A4", printBackground: true,
       displayHeaderFooter: true, headerTemplate: "<div></div>", footerTemplate: footer,
-      margin: { top: "0mm", bottom: "14mm", left: "0mm", right: "0mm" }, preferCSSPageSize: false,
+      margin: { top: "16mm", bottom: "16mm", left: "18mm", right: "18mm" }, preferCSSPageSize: false,
     });
+    fs.writeFileSync(p.pdf, buf);
     const kb = Math.round(fs.statSync(p.pdf).size / 1024);
     spine.stages.render = true;
     saveSpine(ID, spine);

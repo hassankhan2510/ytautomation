@@ -34,6 +34,7 @@ RULES:
 - Any sentence stating a FACT or NUMBER must be supported by the cited evidence; put those evidence ids in
   that paragraph's sourceIds. NEVER invent a fact, statistic, date, or name not in the evidence.
 - A purely analytical/transitional paragraph may have "sourceIds":[] — but then it must contain no new facts.
+- NEVER write evidence ids like "(E3)" or "(E21)" inside the prose — ids go ONLY in each paragraph's sourceIds array. The visible text must read like a finished book, with no citation codes.
 - Write so it flows from the previous section and sets up the next; do not repeat their points.
 - Address the reader as a smart practitioner. British/US neutral. No emojis, no headings inside the text.`;
   const usr = `BOOK THESIS: ${spine.thesis}

@@ -16,6 +16,9 @@ const MONO = "'IBM Plex Mono', 'SF Mono', ui-monospace, monospace";
 
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const num = (v) => { const n = typeof v === "number" ? v : parseFloat(String(v).replace(/[^0-9.\-]/g, "")); return Number.isFinite(n) ? n : 0; };
+// Clip a label to at most n chars on a word boundary (no ellipsis) — keeps node/hub labels short so they
+// never overflow their shape, even when the LLM hands us a whole sentence.
+const clip = (s, n) => { const t = String(s || "").replace(/\s+/g, " ").trim(); if (t.length <= n) return t; let o = ""; for (const w of t.split(" ")) { if ((o + " " + w).trim().length > n) break; o = (o + " " + w).trim(); } return o || t.slice(0, n); };
 function tint(hex, alpha) { const h = hex.replace("#", ""); const r = parseInt(h.slice(0, 2), 16), g = parseInt(h.slice(2, 4), 16), b = parseInt(h.slice(4, 6), 16); return `rgba(${r},${g},${b},${alpha})`; }
 // crude word-wrap into tspans
 function wrapLines(text, max) {
@@ -94,14 +97,24 @@ export function timeline(spec, accent) {
 /* ---------- MATRIX (2x2) ---------- */
 export function matrix(spec, accent) {
   const q = (spec.quadrants || []).slice(0, 4); if (q.length < 4) return null;
-  const W = 1000, H = 760, m = 120, size = W - m - 60;
+  const W = 1000, size = 600, x0 = 200, y0 = 100, H = y0 + size + 70;
   let body = `<text x="0" y="52" font-family="${DISPLAY}" font-size="40" font-weight="700" fill="${INK}">${esc(spec.title || "")}</text>`;
-  const x0 = m, y0 = 90, cell = size / 2;
-  body += `<rect x="${x0}" y="${y0}" width="${size}" height="${size}" fill="none" stroke="${HAIR}" stroke-width="2"/>`;
-  body += `<line x1="${x0 + cell}" y1="${y0}" x2="${x0 + cell}" y2="${y0 + size}" stroke="${HAIR}" stroke-width="2"/><line x1="${x0}" y1="${y0 + cell}" x2="${x0 + size}" y2="${y0 + cell}" stroke="${HAIR}" stroke-width="2"/>`;
-  q.forEach((it, i) => { const cx = x0 + (i % 2) * cell + 30; const cy = y0 + Math.floor(i / 2) * cell + 60; body += `<text x="${cx}" y="${cy}" font-family="${SANS}" font-size="28" font-weight="800" fill="${accent}">${wrap(it.label, 26, cx, 0, 32)}</text>`; if (it.note) body += `<text x="${cx}" y="${cy + 44}" font-family="${SANS}" font-size="21" fill="${MUTED}">${wrap(it.note, 30, cx, 0, 26)}</text>`; });
-  if (spec.xLabel) body += `<text x="${x0 + size / 2}" y="${y0 + size + 46}" text-anchor="middle" font-family="${MONO}" font-size="22" fill="${INK}">${esc(spec.xLabel)} →</text>`;
-  if (spec.yLabel) body += `<text x="${x0 - 40}" y="${y0 + size / 2}" text-anchor="middle" font-family="${MONO}" font-size="22" fill="${INK}" transform="rotate(-90 ${x0 - 40} ${y0 + size / 2})">${esc(spec.yLabel)} →</text>`;
+  const cell = size / 2, gap = 16;
+  // cards (the gap between them forms the 2x2 grid), content vertically centred in each card
+  q.forEach((it, i) => {
+    const col = i % 2, row = Math.floor(i / 2);
+    const cxCell = x0 + col * cell, cyCell = y0 + row * cell;
+    const cw = cell - gap, chh = cell - gap, tx = cxCell + 30;
+    body += `<rect x="${cxCell + gap / 2}" y="${cyCell + gap / 2}" width="${cw}" height="${chh}" rx="14" fill="${tint(accent, 0.05)}"/>`;
+    const labelLines = wrapLines(it.label, 22).length;
+    const noteLines = it.note ? wrapLines(it.note, 28).length : 0;
+    const totalH = labelLines * 34 + (noteLines ? 12 + noteLines * 26 : 0);
+    const startY = cyCell + chh / 2 - totalH / 2 + 26;
+    body += `<text x="${tx}" y="${startY}" font-family="${SANS}" font-size="26" font-weight="800" fill="${accent}">${wrap(it.label, 22, tx, 0, 32)}</text>`;
+    if (it.note) body += `<text x="${tx}" y="${startY + labelLines * 34 + 8}" font-family="${SANS}" font-size="20" fill="${MUTED}">${wrap(it.note, 28, tx, 0, 26)}</text>`;
+  });
+  if (spec.xLabel) body += `<text x="${x0 + size / 2}" y="${y0 + size + 44}" text-anchor="middle" font-family="${MONO}" font-size="21" fill="${MUTED}">${esc(spec.xLabel)} →</text>`;
+  if (spec.yLabel) body += `<text x="${x0 - 32}" y="${y0 + size / 2}" text-anchor="middle" font-family="${MONO}" font-size="21" fill="${MUTED}" transform="rotate(-90 ${x0 - 32} ${y0 + size / 2})">${esc(spec.yLabel)} →</text>`;
   return svg(W, H, body);
 }
 
@@ -116,13 +129,15 @@ export function flow(spec, accent) {
 
 /* ---------- DIAGRAM (core + parts, radial) ---------- */
 export function diagram(spec, accent) {
-  const parts = (spec.parts || []).map(String).slice(0, 6); if (!spec.core || parts.length < 2) return null;
-  const W = 1000, H = 760, cx = W / 2, cy = H / 2 + 20, R = 260, CR = 118;
+  const parts = (spec.parts || []).map((p) => clip(p, 30)).filter(Boolean).slice(0, 6);
+  const core = clip(spec.core, 24);
+  if (!core || parts.length < 2) return null;
+  const W = 1000, H = 760, cx = W / 2, cy = H / 2 + 20, R = 262, CR = 120;
   let body = `<text x="${cx}" y="52" text-anchor="middle" font-family="${DISPLAY}" font-size="40" font-weight="700" fill="${INK}">${esc(spec.title || "")}</text>`;
   const nodes = parts.map((p, i) => { const a = (-90 + (360 / parts.length) * i) * Math.PI / 180; return { p, x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) }; });
   body += nodes.map((n) => `<line x1="${cx}" y1="${cy}" x2="${n.x}" y2="${n.y}" stroke="${HAIR}" stroke-width="2"/>`).join("");
-  nodes.forEach((n) => { body += `<rect x="${n.x - 110}" y="${n.y - 40}" width="220" height="80" rx="12" fill="${PAPER}" stroke="${accent}" stroke-width="2"/><text x="${n.x}" y="${n.y + 6}" text-anchor="middle" font-family="${SANS}" font-size="22" fill="${INK}">${wrap(n.p, 22, n.x, 0, 26)}</text>`; });
-  body += `<circle cx="${cx}" cy="${cy}" r="${CR}" fill="${accent}"/>` + centeredText(spec.core, cx, cy, 12, 24, 28, "#fff");
+  nodes.forEach((n) => { body += `<rect x="${n.x - 112}" y="${n.y - 42}" width="224" height="84" rx="12" fill="${PAPER}" stroke="${accent}" stroke-width="2"/><text x="${n.x}" y="${n.y + 6}" text-anchor="middle" font-family="${SANS}" font-size="21" fill="${INK}">${wrap(n.p, 22, n.x, 0, 25)}</text>`; });
+  body += `<circle cx="${cx}" cy="${cy}" r="${CR}" fill="${accent}"/>` + centeredText(core, cx, cy, 11, core.length > 15 ? 21 : 25, 27, "#fff");
   return svg(W, H, body);
 }
 
