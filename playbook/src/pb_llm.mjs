@@ -150,7 +150,38 @@ async function reserve(cost, floorRank) {
 }
 function markCooldown(s, ms) { s.cooldownUntil = Date.now() + ms; }
 function parseRetryMs(body) { const m = /try again in ([\d.]+)\s*s/i.exec(body || ""); return m ? Math.ceil(parseFloat(m[1]) * 1000) + 500 : null; }
-function parseJSON(txt) { try { return JSON.parse(txt); } catch { const m = (txt || "").match(/\{[\s\S]*\}/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } } }
+// Reasoning models (qwen3.x) emit a <think>…</think> block and sometimes ```json fences around the
+// answer; strip both before parsing so their reasoning text can't defeat extraction.
+function stripThink(txt) {
+  return (txt || "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")   // closed think block
+    .replace(/<think>[\s\S]*$/i, "")             // unclosed think that ran to the end (truncated)
+    .replace(/```(?:json)?/gi, "")
+    .trim();
+}
+// Find the FIRST balanced {…} or […] — greedy first-{ to last-} breaks when a <think> block or prose
+// contains stray braces. Tracks string context so braces inside "…" strings don't miscount.
+function extractBalanced(s) {
+  const start = s.search(/[{[]/);
+  if (start < 0) return null;
+  const open = s[start], close = open === "{" ? "}" : "]";
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === open) depth++;
+    else if (c === close && --depth === 0) return s.slice(start, i + 1);
+  }
+  return null; // unbalanced → response was truncated
+}
+function parseJSON(txt) {
+  const s = stripThink(txt);
+  try { return JSON.parse(s); } catch {}
+  const b = extractBalanced(s);
+  if (b) { try { return JSON.parse(b); } catch {} }
+  return null;
+}
 
 async function call(system, user, opts = {}) {
   if (!KEYS.length) { console.log("  ! No GROQ_API_KEY set — caller must fall back"); return null; }
@@ -169,12 +200,19 @@ async function call(system, user, opts = {}) {
     const cap = Math.max(256, Math.min(maxT, budget - inputEst - 200));
     const useJsonMode = wantJson && supportsJsonMode(slot.model.id);
     const isGptOss = /gpt-oss/i.test(slot.model.id);
+    const isQwen = /qwen/i.test(slot.model.id);
     try {
       const payload = { model: slot.model.id, temperature, max_tokens: cap, messages: [{ role: "system", content: system }, { role: "user", content: user }] };
       if (useJsonMode) payload.response_format = { type: "json_object" };
-      // Keep reasoning light on gpt-oss so the token budget goes to the ANSWER, not the thinking.
+      // Keep the token budget on the ANSWER, not hidden thinking. gpt-oss: light effort. qwen3.x is a
+      // reasoning model that would otherwise spend the whole budget on a <think> block — turn it OFF
+      // ("none") and ask Groq to keep any residual reasoning out of content. If a model rejects the
+      // params it 400s with /reasoning/ and the handler drops them (parseJSON still strips <think>).
       const effort = opts.reasoning || REASONING;
-      if (isGptOss && effort && !noReasoning) payload.reasoning_effort = effort;
+      if (!noReasoning) {
+        if (isGptOss && effort) payload.reasoning_effort = effort;
+        else if (isQwen) { payload.reasoning_effort = "none"; payload.reasoning_format = "hidden"; }
+      }
       const res = await fetch(API, { method: "POST", headers: { Authorization: `Bearer ${slot.key}`, "Content-Type": "application/json" }, body: JSON.stringify(payload) });
 
       if (res.status === 404) { const b = await res.text().catch(() => ""); console.log(`  ! 404 ${slot.model.id} — disabling this model (${b.slice(0, 80)})`); killModel(slot.model.id); continue; }
@@ -197,6 +235,19 @@ async function call(system, user, opts = {}) {
         await sleep(400 * attempt);
         continue;
       }
+      if (wantJson) {
+        // Validate here so a bad/truncated JSON body rotates to another slot and grows the budget,
+        // instead of bubbling up as a hard null that kills the whole phase.
+        const parsed = parseJSON(content);
+        if (!parsed) {
+          const bumped = Math.min(Math.floor(maxT * 1.7), 6000);
+          if (bumped > maxT) { console.log(`  ! unparseable JSON on ${slot.model.id} — raising output ${maxT}→${bumped} + retry`); maxT = bumped; }
+          else console.log(`  ! unparseable JSON on ${slot.model.id} — rotating + retry`);
+          await sleep(400 * attempt);
+          continue;
+        }
+        return { content, parsed, model: slot.model.id, keyIdx: slot.keyIdx };
+      }
       return { content, model: slot.model.id, keyIdx: slot.keyIdx };
     } catch (e) {
       console.log(`  ! LLM attempt ${attempt}/6 on ${slot.model.id}: ${e.message}`);
@@ -210,7 +261,8 @@ async function call(system, user, opts = {}) {
 export async function llmJSON(system, user, opts = {}) {
   const r = await call(system, user, { ...opts, json: true });
   if (!r) return null;
-  const parsed = parseJSON(r.content);
+  // call() already validated when json:true; fall back to a parse for safety.
+  const parsed = r.parsed ?? parseJSON(r.content);
   if (!parsed) { console.log(`  ! ${r.model} returned unparseable JSON`); return null; }
   return parsed;
 }
