@@ -232,7 +232,7 @@ async function main() {
     topic = n.extract;
     newsUrl = n.url || "";
     grounding = `\nNEWS ITEM (base the post ONLY on this real headline — do NOT invent figures, quotes, or details not in it):\n- ${n.extract}${n.url ? `\n  Source: ${n.url}` : ""}`;
-    modeRule = `\nThis is a BREAKING-NEWS reaction post: give a sharp, founder-relevant TAKE on the news above — what it means for builders/founders — not a rehash of the headline. kicker like "JUST IN" or "STARTUP NEWS".`;
+    modeRule = `\nThis is a BREAKING-NEWS reaction post — but make it LIKABLE and SHAREABLE, the kind of news-take founders screenshot and send to each other. Do NOT rehash the headline: pull out the lesson, the surprising angle, or what it really means for builders, and land it so it resonates emotionally (a "this changes things / here's what nobody's saying" energy). kicker like "JUST IN" or "STARTUP NEWS".`;
     console.log(`  news: "${topic.slice(0, 70)}"`);
   } else if (MODE === "lesson" && cfg.niche === "finance") {
     // Equitier LESSON = a shareable market-psychology insight (names a real trap), NOT dry mechanics.
