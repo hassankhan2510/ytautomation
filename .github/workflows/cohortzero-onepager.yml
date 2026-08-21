@@ -116,7 +116,10 @@ jobs:
           META_PAGE_TOKEN_COHORTZERO: ${{ secrets.META_PAGE_TOKEN_COHORTZERO }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/meta_upload.mjs --channel=cohortzero --video=out/cohortzero_onepager.mp4 --script=jobs/cohortzero_onepager.json
-      - name: Cross-post to LinkedIn via Buffer (lesson + quote only; no-op without token)
+      - name: Render the 4:5 LinkedIn card image (still) — lesson + quote only
+        if: ${{ github.event.inputs.publish != 'test' && steps.mode.outputs.mode != 'news' }}
+        run: npx remotion still OnePagerLI out/card_li.png --props=out/onepager_props.json --frame=120
+      - name: Cross-post to LinkedIn via Buffer (image + caption; lesson + quote only; no-op without token)
         if: ${{ github.event.inputs.publish != 'test' && steps.mode.outputs.mode != 'news' }}
         env:
           BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
@@ -124,7 +127,8 @@ jobs:
           BUFFER_DRAFT: ${{ vars.BUFFER_DRAFT }}
           BUFFER_MODE: ${{ vars.BUFFER_MODE }}
           BUFFER_SCHEDULING: ${{ vars.BUFFER_SCHEDULING }}
-        run: node scripts/buffer_post.mjs --channel=cohortzero --props=out/onepager_props.json --script=jobs/cohortzero_onepager.json
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/buffer_post.mjs --channel=cohortzero --props=out/onepager_props.json --script=jobs/cohortzero_onepager.json --image=out/card_li.png
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
         with:

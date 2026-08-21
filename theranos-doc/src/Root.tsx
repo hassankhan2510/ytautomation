@@ -88,6 +88,27 @@ export const RemotionRoot: React.FC = () => {
           cta: "follow →",
         }}
       />
+      {/* Same OnePager card at 4:5 (1080x1350) — the LinkedIn-friendly aspect. Rendered as a still
+          (`remotion still OnePagerLI`) and attached to the Buffer/LinkedIn post. */}
+      <Composition
+        id="OnePagerLI"
+        component={OnePager}
+        durationInFrames={240}
+        fps={30}
+        width={1080}
+        height={1350}
+        defaultProps={{
+          brand: "COHORT ZERO",
+          name: "Cohort Zero",
+          at: "@cohortzero",
+          accent: "#e11d48",
+          kicker: "FOUNDER PLAYBOOK",
+          headline: "The one slide VCs actually read first.",
+          subline: "It isn't your team, your market, or your traction. It's this.",
+          footer: "COHORT ZERO",
+          cta: "follow →",
+        }}
+      />
       {/* YouTube thumbnail — 1280x720, rendered as a single still. */}
       <Composition id="Thumbnail" component={Thumbnail} durationInFrames={1} fps={fps} width={1280} height={720} />
     </>

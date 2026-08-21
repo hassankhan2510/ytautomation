@@ -4,9 +4,9 @@
  * Review and NO token juggling on LinkedIn's side. Gated on BUFFER_ACCESS_TOKEN; if unset it no-ops
  * (non-fatal) — same safe pattern as the Meta/LinkedIn uploaders.
  *
- * Buffer's public API can't upload media yet, so this posts TEXT — which is LinkedIn's strongest format
- * anyway (hook + whitespace + a question drives reach, comments, reposts). The card image still goes to
- * Instagram; LinkedIn gets the written version.
+ * Text is the caption; the card IMAGE (via --image) is hosted on a public GitHub Release and attached
+ * through Buffer's asset-URL model (Buffer can't take a raw upload — it pulls media from a URL). PDFs
+ * aren't supported by the API, so LinkedIn carousels stay a manual/dashboard job.
  *
  *   node scripts/buffer_post.mjs --channel=equitier  --props=out/onepager_props.json --script=jobs/equitier_onepager.json
  *   node scripts/buffer_post.mjs --channel=syndar    --script=jobs/syndar.json      # from a video job's meta
@@ -21,6 +21,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { hostFile } from "./lib_ghhost.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, "..");
@@ -32,6 +33,7 @@ const LIST = process.argv.includes("--list");
 const CHANNEL = (arg("channel", "") || "").toLowerCase();
 const PROPS = arg("props", "");
 const SCRIPT = arg("script", "");
+const IMAGE = arg("image", ""); // local PNG/JPG of the card; hosted publicly + attached to the post
 const TOKEN = process.env.BUFFER_ACCESS_TOKEN || "";
 
 // Which LinkedIn page a channel maps to (match on the Buffer channel's display name / handle).
@@ -131,7 +133,20 @@ async function main() {
   if (!schedulingType || !mode) skip(`could not resolve enums (ShareMode=${modes}, SchedulingType=${scheds})`);
   console.log(`  mode=${mode} schedulingType=${schedulingType}`);
 
-  const input = { channelId, text, assets: [], needsApproval: false, saveToDraft: process.env.BUFFER_DRAFT === "1", mode, schedulingType };
+  // Attach the card image if one was rendered: Buffer pulls media from a public URL, so host it first.
+  let assets = [];
+  if (IMAGE) {
+    const p = path.resolve(ROOT, IMAGE);
+    if (fs.existsSync(p)) {
+      try {
+        const { url } = await hostFile(p, `${CHANNEL}_li`, (p.split(".").pop() || "png").toLowerCase());
+        assets = [{ image: { url, metadata: { altText: tidy(props?.headline || meta?.title || brand).slice(0, 300) } } }];
+        console.log(`  image hosted + attached: ${url}`);
+      } catch (e) { console.log(`  ! image host failed (${e.message}) — posting text-only`); }
+    } else { console.log(`  ! image ${IMAGE} not found — posting text-only`); }
+  }
+
+  const input = { channelId, text, assets, needsApproval: false, saveToDraft: process.env.BUFFER_DRAFT === "1", mode, schedulingType };
   if (/at.?time|custom|scheduled/i.test(mode)) input.dueAt = new Date(Date.now() + 120000).toISOString();
 
   try {
