@@ -8,5 +8,15 @@
     "bullTarget": 69954,
     "bearTarget": 68658,
     "driver": null
+  },
+  {
+    "date": "2026-08-21",
+    "hero": 74622,
+    "side": "hold-above",
+    "price": 74938,
+    "structure": "bullish",
+    "bullTarget": 74959,
+    "bearTarget": 74255,
+    "driver": null
   }
 ]
