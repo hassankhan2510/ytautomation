@@ -19,7 +19,15 @@ if (!ID) { console.error("Set PB_ID."); process.exit(1); }
 
 // Strip inline "(E3)" / "(E3, E7)" citation tags — the ids live in the JSON, they must not show in prose.
 const clean = (s) => escapeHtml(String(s == null ? "" : s).replace(/\s*\((?:E\d+)(?:\s*,\s*E\d+)*\)/g, "").replace(/\s{2,}/g, " ").trim());
-const shortLabel = (s, words = 2) => String(s || "").split(/[:—-]/)[0].trim().split(/\s+/).slice(0, words).join(" ");
+const hostOf = (u) => { try { return new URL(u).host.replace(/^www\./, ""); } catch { return "source"; } };
+// Short node label that never ends on a dangling stop-word ("Mapping the", "Inference as", "The Physics of").
+const STOP = /^(the|a|an|of|to|as|and|or|for|in|on|with|your|why|how|is|are|from)$/i;
+function shortLabel(s, words = 3) {
+  const all = String(s || "").split(/[:—-]/)[0].trim().split(/\s+/).filter(Boolean);
+  let out = all.slice(0, words);
+  while (out.length > 1 && STOP.test(out[out.length - 1])) out.pop();
+  return out.join(" ");
+}
 
 function figureBlock(spine, section) {
   const g = spine.graphics?.[section.id];
@@ -83,8 +91,10 @@ function coverPage(spine) {
 function contentsPage(spine) {
   let rows = "";
   spine.outline.chapters.forEach((c, i) => {
-    rows += `<div class="toc-ch"><span class="toc-n">${String(i + 1).padStart(2, "0")}</span><span class="toc-t">${clean(c.title)}</span></div>`;
-    for (const s of c.sections) rows += `<div class="toc-sec">${clean(s.title)}</div>`;
+    // keep each chapter's heading with its sections so a page break never orphans the heading
+    let group = `<div class="toc-ch"><span class="toc-n">${String(i + 1).padStart(2, "0")}</span><span class="toc-t">${clean(c.title)}</span></div>`;
+    for (const s of c.sections) group += `<div class="toc-sec">${clean(s.title)}</div>`;
+    rows += `<div class="toc-group">${group}</div>`;
   });
   return `<section class="sheet toc"><h2 class="page-h">Contents</h2><div class="toc-list">${rows}</div></section>`;
 }
@@ -97,8 +107,12 @@ function conceptPage(spine, accent) {
 }
 
 function sourcesPage(spine) {
-  const rows = (spine.evidence || []).map((e) => `<li><span class="src-id">${e.id}</span> ${clean(e.claim)} <a href="${escapeHtml(e.url)}">${escapeHtml(e.source || "source")}</a></li>`).join("\n");
-  return `<section class="sheet sources"><h2 class="page-h">Evidence &amp; Sources</h2><p class="src-note">Every hard claim in this playbook traces to one of these sources.</p><ol class="src-list">${rows}</ol></section>`;
+  const rows = (spine.evidence || []).map((e) => {
+    const cite = [e.authors, e.year ? `(${e.year})` : ""].filter(Boolean).join(" ");
+    const attrib = [cite, e.source].filter(Boolean).join(", ");
+    return `<li><span class="src-id">${e.id}</span> ${clean(e.claim)}${attrib ? ` <span class="src-cite">— ${escapeHtml(attrib)}.</span>` : ""} <a href="${escapeHtml(e.url)}">${escapeHtml(hostOf(e.url))}</a></li>`;
+  }).join("\n");
+  return `<section class="sheet sources"><h2 class="page-h">Evidence &amp; Sources</h2><p class="src-note">Every factual claim in this playbook is grounded in a real, published source. Each is listed below with a link.</p><ol class="src-list">${rows}</ol></section>`;
 }
 
 function css(accent) {
@@ -121,10 +135,11 @@ function css(accent) {
   .cover-thesis{font-family:'Playfair Display';font-style:italic;font-size:15pt;line-height:1.45;max-width:52ch;border-left:3px solid var(--accent);padding-left:18px}
   .cover-aud{display:block;margin-top:18px;font-family:'IBM Plex Mono',monospace;font-size:9.5pt;color:var(--muted);letter-spacing:1px}
   .page-h{font-size:30pt;font-weight:700;margin-bottom:20px;border-bottom:2px solid var(--ink);padding-bottom:10px}
-  .toc-ch{display:flex;gap:14px;align-items:baseline;margin-top:18px}
-  .toc-n{font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:700;font-size:13pt}
-  .toc-t{font-family:'Playfair Display';font-weight:700;font-size:16pt}
-  .toc-sec{margin-left:40px;color:var(--muted);font-size:11pt;margin-top:6px}
+  .toc-group{break-inside:avoid;page-break-inside:avoid}
+  .toc-ch{display:flex;gap:14px;align-items:baseline;margin-top:13px}
+  .toc-n{font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:700;font-size:12.5pt}
+  .toc-t{font-family:'Playfair Display';font-weight:700;font-size:15pt}
+  .toc-sec{margin-left:40px;color:var(--muted);font-size:10.5pt;margin-top:4px}
   .concept-wrap{margin-top:16px}
   /* divider — bold editorial, big accent numeral (no full-bleed needed) */
   .divider{justify-content:center}
@@ -152,7 +167,8 @@ function css(accent) {
   .src-list{padding-left:0;list-style:none}
   .src-list li{font-size:10pt;line-height:1.5;margin-bottom:9px;color:#333;padding-left:44px;position:relative;break-inside:avoid}
   .src-id{position:absolute;left:0;font-family:'IBM Plex Mono',monospace;color:var(--accent);font-weight:700}
-  .src-list a{color:var(--accent);text-decoration:none}
+  .src-cite{color:var(--muted);font-style:italic}
+  .src-list a{color:var(--accent);text-decoration:none;word-break:break-word}
   `;
 }
 

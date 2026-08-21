@@ -1,78 +1,91 @@
 /**
- * PHASE 1 — RESEARCH (no hallucination).
+ * PHASE 1 — RESEARCH (comprehension-first, zero-hallucination).
  *
- * 0) PLAN — turn the raw brief into a clean book TITLE + targeted SEARCH QUERIES + WIKI TOPICS, so the
- *    fetchers pull ON-TOPIC sources (feeding the whole brief to arXiv matched physics papers before).
- * 1) FETCH — real source text from arXiv (per query) + Wikipedia (per topic).
- * 2) EXTRACT — the LLM only pulls claims FROM the fetched text (never invents). Each claim keeps its URL.
- * 3) THESIS — derive the book's central thesis from the strongest evidence (aligned to the brief's intent).
+ * The books are sold, so EVERY fact must trace to a real fetched source. The phase now thinks before it
+ * searches:
+ *   0) COMPREHEND — an AI call reads the brief and truly understands the topic: what it means, the core
+ *      question, its DOMAINS (social science / economics / philosophy / psychology / tech…), the precise
+ *      KEY CONCEPTS to research, and the SEMINAL WORKS/thinkers the book must be built on. It is told which
+ *      real sources it can reach, so the plan is grounded in the actual toolbox.
+ *   1) ROUTE + FETCH — domain-routed federated search across many free, no-key feeds (OpenAlex, Crossref,
+ *      Semantic Scholar, arXiv[routed categories], Europe PMC, Stanford Encyclopedia of Philosophy,
+ *      Wikipedia, World Bank, CoinGecko, Yahoo). Everything under Promise.allSettled — a dead feed can't
+ *      break the run.
+ *   2) EXTRACT — claims are pulled STRICTLY from fetched text (never invented); each keeps its URL + source.
+ *   3) RELEVANCE GATE — an AI pass drops any claim not actually about the topic (kills off-topic filler).
+ *   4) THESIS — derived from the strongest, on-topic, cited evidence.
  *
  *   PB_TOPIC="<a topic OR a full brief>" node src/pb_research.mjs
  */
 import { llmJSON, setBudgetFile } from "./pb_llm.mjs";
 import { newSpine, gateResearch, report } from "./pb_schema.mjs";
-import { ensureRun, saveSpine, loadSpine, runPaths, fetchText, stripHtml, slug, log, arg } from "./pb_util.mjs";
+import { ensureRun, saveSpine, loadSpine, runPaths, slug, log, arg } from "./pb_util.mjs";
+import { SOURCE_CATALOG, sourcesForDomains, arxivCatsForDomains, runSource } from "./pb_sources.mjs";
 import fs from "node:fs";
 
 const BRIEF = arg("topic", process.env.PB_TOPIC || "");
 const AUDIENCE = arg("audience", process.env.PB_AUDIENCE || "ambitious professionals and founders");
-const MIN_EVIDENCE = Number(arg("min", process.env.PB_MIN_EVIDENCE || 16));
+const MIN_EVIDENCE = Number(arg("min", process.env.PB_MIN_EVIDENCE || 20));
 if (!BRIEF) { console.error("Set PB_TOPIC (a topic or a full brief)."); process.exit(1); }
 
-/* ---------- 0) planner ---------- */
-function heuristicPlan(brief) {
+const DOMAINS = ["social-science", "economics", "finance", "markets", "crypto", "network-science", "psychology", "philosophy", "history", "technology", "science", "general"];
+
+/* ---------- 0) COMPREHEND ---------- */
+function heuristicComprehension(brief) {
   const titleM = brief.match(/titled\s+["“]([^"”]{6,90})["”]/i) || brief.match(/["“]([^"”]{10,90})["”]/);
-  const quoted = [...brief.matchAll(/['‘]([^'’]{3,42})['’]/g)].map((m) => m[1]);
   const title = (titleM && titleM[1]) || brief.split(/[.:\n]/)[0].slice(0, 70).trim();
-  const queries = (quoted.length ? quoted : title.split(/\s+/).filter((w) => w.length > 4)).slice(0, 5);
-  return { title, subtitle: "", queries: queries.length ? queries : [title], wikiTopics: queries.slice(0, 3) };
+  const quoted = [...brief.matchAll(/['‘]([^'’]{3,42})['’]/g)].map((m) => m[1]);
+  const concepts = (quoted.length ? quoted : title.split(/\s+/).filter((w) => w.length > 4)).slice(0, 8);
+  return { title, subtitle: "", interpretation: title, domains: ["general", "social-science"], keyConcepts: concepts, seminalWorks: [], questions: [], dataNeeds: [] };
 }
-async function planTopic(brief) {
-  const sys = `You turn a book brief into a research plan. Return ONLY JSON:
-{"title":"the book's real title (short, magazine-grade)","subtitle":"<=12 words","queries":["4-6 precise search queries for academic + reference sources — the CONCEPTS to research, not the meta-instruction"],"wikiTopics":["2-4 Wikipedia article titles that ground the concepts"]}.
-Extract the true subject; ignore meta-words like "write a book"/"research"/"use Google".`;
-  const r = await llmJSON(sys, brief.slice(0, 2000), { tier: "mid", maxTokens: 500, temperature: 0.3 });
-  if (!r || !Array.isArray(r.queries) || !r.queries.length) return heuristicPlan(brief);
+async function comprehend(brief) {
+  const sys = `You are a domain-expert research lead planning a rigorous, SELLABLE non-fiction book. First truly
+UNDERSTAND the topic — its real meaning and the core question it must answer — then plan grounded research.
+You may ONLY use these real sources (route the topic to the right ones):
+${SOURCE_CATALOG}
+
+Return ONLY JSON:
+{
+ "title": "the book's real title (short, magazine-grade)",
+ "subtitle": "<=12 words",
+ "interpretation": "3-5 sentences: what this topic ACTUALLY means, the central question, why it matters — the deep reading, not a restatement",
+ "domains": ["1-3 from: ${DOMAINS.join(", ")}"],
+ "keyConcepts": ["8-14 PRECISE, searchable concepts/terms an expert would research (not vague words)"],
+ "seminalWorks": ["6-12 named seminal papers/books/thinkers on this exact topic — 'Author idea' or exact title — that the book must be built on"],
+ "questions": ["4-6 concrete questions the book answers"],
+ "dataNeeds": ["2-5 kinds of real statistics/data that would strengthen the argument"]
+}
+Ignore meta-instructions in the brief ("write a book", "research X", "use Google") — extract the true subject.`;
+  const r = await llmJSON(sys, brief.slice(0, 2400), { tier: "high", maxTokens: 1200, temperature: 0.35, reasoning: "medium" });
+  if (!r || !r.title) return heuristicComprehension(brief);
+  const arr = (x, n) => (Array.isArray(x) ? x.filter(Boolean).map(String) : []).slice(0, n);
+  const domains = arr(r.domains, 3).filter((d) => DOMAINS.includes(d));
   return {
-    title: r.title || heuristicPlan(brief).title,
-    subtitle: r.subtitle || "",
-    queries: r.queries.slice(0, 6),
-    wikiTopics: (Array.isArray(r.wikiTopics) && r.wikiTopics.length ? r.wikiTopics : r.queries).slice(0, 4),
+    title: r.title, subtitle: r.subtitle || "",
+    interpretation: r.interpretation || r.title,
+    domains: domains.length ? domains : ["general", "social-science"],
+    keyConcepts: arr(r.keyConcepts, 14), seminalWorks: arr(r.seminalWorks, 12),
+    questions: arr(r.questions, 6), dataNeeds: arr(r.dataNeeds, 5),
   };
 }
 
-/* ---------- 1) real source collectors ---------- */
-async function arxiv(query, n = 10) {
-  const q = encodeURIComponent(query.replace(/[^\w\s]/g, " ").trim());
-  const url = `http://export.arxiv.org/api/query?search_query=all:${q}&sortBy=relevance&max_results=${n}`;
-  const xml = await fetchText(url, { ms: 25000 }).catch(() => "");
-  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
-  const g = (e, tag) => (e.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`)) || [])[1] || "";
-  return entries.map((e) => ({ kind: "paper", title: stripHtml(g(e, "title")), url: (g(e, "id") || "").trim().replace("http:", "https:"), text: stripHtml(g(e, "summary")), source: "arXiv" })).filter((s) => s.text.length > 120);
-}
-async function wikipedia(title) {
-  const out = [];
-  try {
-    const api = `https://en.wikipedia.org/w/api.php?action=query&prop=extracts&explaintext=1&exsectionformat=plain&format=json&redirects=1&titles=${encodeURIComponent(title)}`;
-    const j = JSON.parse(await fetchText(api, { ms: 20000 }));
-    const pages = j.query?.pages || {};
-    for (const k of Object.keys(pages)) { const t = stripHtml(pages[k].extract || ""); if (t.length > 400) out.push({ kind: "web", title: pages[k].title, url: `https://en.wikipedia.org/wiki/${encodeURIComponent(pages[k].title)}`, text: t.slice(0, 6000), source: "Wikipedia" }); }
-  } catch { /* optional */ }
-  return out;
-}
-
 /* ---------- 2) grounded extraction ---------- */
-async function extract(doc, want = 4) {
-  const sys = `You extract factual claims STRICTLY from the provided source text for a rigorous non-fiction book.
-Return ONLY JSON: {"claims":[{"claim":"one precise factual sentence from the text","detail":"short elaboration from the text","numeric":{"value":"e.g. 79%","unit":"context"}|null}]}.
-Use ONLY facts present in the text; no outside knowledge; no speculation. If none, return {"claims":[]}. Prefer concrete, quantitative claims.`;
+async function extract(doc, topic, want = 4) {
+  const sys = `You extract factual claims STRICTLY from the provided source text, for a rigorous non-fiction book on
+"${topic}". Return ONLY JSON:
+{"claims":[{"claim":"one precise factual sentence taken from the text","detail":"short elaboration from the text","numeric":{"value":"e.g. 79%","unit":"context"}|null,"relevance":0-3}]}
+- Use ONLY facts present in the text; no outside knowledge; no speculation. If none, return {"claims":[]}.
+- Prefer concrete, QUANTITATIVE claims (numbers, rates, dates, magnitudes).
+- "relevance": how directly this claim bears on "${topic}" (3 = central, 0 = unrelated). Be honest.`;
   const usr = `SOURCE: ${doc.title} (${doc.source})\nTEXT:\n${doc.text.slice(0, 2600)}\n\nExtract up to ${want} claims.`;
-  const r = await llmJSON(sys, usr, { tier: "fast", maxTokens: 900, temperature: 0.2 });
+  const r = await llmJSON(sys, usr, { tier: "mid", maxTokens: 900, temperature: 0.2 });
   const claims = (r && Array.isArray(r.claims)) ? r.claims : [];
   return claims.filter((c) => c && c.claim && c.claim.length > 12).map((c) => ({
     claim: c.claim.trim(), detail: (c.detail || "").trim(),
     numeric: c.numeric && c.numeric.value ? { value: String(c.numeric.value), unit: String(c.numeric.unit || "") } : null,
+    relevance: Number.isFinite(c.relevance) ? Math.max(0, Math.min(3, c.relevance)) : 2,
     url: doc.url, source: doc.source, kind: doc.kind,
+    year: doc.meta?.year || null, authors: doc.meta?.authors || "", citations: doc.meta?.citations ?? null,
   }));
 }
 function dedupe(items) {
@@ -81,52 +94,91 @@ function dedupe(items) {
   return out;
 }
 
-/* ---------- 3) thesis ---------- */
-async function deriveThesis(title, brief, audience, evidence) {
-  const top = evidence.slice(0, 18).map((e, i) => `${i + 1}. ${e.claim}${e.numeric ? ` (${e.numeric.value})` : ""}`).join("\n");
+/* ---------- 3) relevance gate ---------- */
+async function relevanceGate(topic, interpretation, evidence) {
+  if (evidence.length <= MIN_EVIDENCE) return evidence; // nothing to spare
+  const list = evidence.map((e, i) => `${i}. ${e.claim}${e.numeric ? ` [${e.numeric.value}]` : ""}`).join("\n");
+  const sys = `You are the fact editor for a book on "${topic}". Given numbered candidate claims, return the indices
+that are genuinely ON-TOPIC and useful for THIS book — drop anything off-topic, generic, or about an unrelated
+study. Return ONLY JSON: {"keep":[indices]}. Keep the strongest, most relevant, most concrete claims.`;
+  const usr = `BOOK MEANING: ${interpretation}\n\nCANDIDATE CLAIMS:\n${list}`;
+  const r = await llmJSON(sys, usr, { tier: "high", maxTokens: 700, temperature: 0.1, reasoning: "low" });
+  const keep = (r && Array.isArray(r.keep)) ? r.keep.map(Number).filter((n) => n >= 0 && n < evidence.length) : null;
+  if (!keep || keep.length < MIN_EVIDENCE) return evidence; // gate failed/too aggressive — keep all, don't brick
+  const kept = keep.map((i) => evidence[i]);
+  log(`  relevance gate: kept ${kept.length}/${evidence.length}`);
+  return kept;
+}
+
+/* ---------- 4) thesis ---------- */
+async function deriveThesis(title, brief, audience, interpretation, evidence) {
+  const top = evidence.slice(0, 20).map((e, i) => `${i + 1}. ${e.claim}${e.numeric ? ` (${e.numeric.value})` : ""}`).join("\n");
   const sys = `You are a top-0.01% author. State the book's CENTRAL THESIS: a sharp, specific, non-obvious argument the
-whole book proves — grounded in the evidence, aligned to the brief's intent. Return ONLY JSON:
-{"thesis":"1 tight paragraph (2-3 sentences)","subtitle":"a magazine-grade subtitle (<=12 words)"}. No hype words. Be concrete.`;
-  const usr = `TITLE: ${title}\nBRIEF: ${brief.slice(0, 900)}\nAUDIENCE: ${audience}\nEVIDENCE:\n${top}`;
-  return (await llmJSON(sys, usr, { tier: "high", maxTokens: 500, temperature: 0.5 })) || {};
+whole book proves — grounded in the evidence and true to the topic's real meaning. Return ONLY JSON:
+{"thesis":"1 tight paragraph (2-3 sentences)","subtitle":"a magazine-grade subtitle (<=12 words)"}. No hype words. Concrete.`;
+  const usr = `TITLE: ${title}\nTOPIC MEANING: ${interpretation}\nBRIEF: ${brief.slice(0, 700)}\nAUDIENCE: ${audience}\nEVIDENCE:\n${top}`;
+  return (await llmJSON(sys, usr, { tier: "high", maxTokens: 500, temperature: 0.5, reasoning: "low" })) || {};
+}
+
+/* rank: on-topic first, then numeric, then well-cited, then papers over web */
+function rankEvidence(evidence) {
+  const score = (e) => (e.relevance ?? 2) * 100 + (e.numeric ? 40 : 0) + Math.min(30, (e.citations || 0) / 50) + (e.kind === "paper" ? 5 : e.kind === "data" ? 8 : 0);
+  return [...evidence].sort((a, b) => score(b) - score(a));
 }
 
 async function main() {
-  // budget file needs the run dir, but the id comes from the planned title — use a temp budget path first.
   setBudgetFile("");
   log(`RESEARCH  brief="${BRIEF.slice(0, 80)}${BRIEF.length > 80 ? "…" : ""}"`);
 
-  log("  planning title + search queries…");
-  const plan = await planTopic(BRIEF);
+  log("  comprehending the topic…");
+  const plan = await comprehend(BRIEF);
   const ID = slug(arg("id", process.env.PB_ID || plan.title));
   const p = ensureRun(ID);
   setBudgetFile(p.budget);
   log(`  title: "${plan.title}"  id=${ID}`);
-  log(`  queries: ${plan.queries.join(" | ")}`);
+  log(`  domains: ${plan.domains.join(", ")}`);
+  log(`  concepts: ${plan.keyConcepts.slice(0, 8).join(" | ")}`);
+  if (plan.seminalWorks.length) log(`  canon: ${plan.seminalWorks.slice(0, 6).join(" | ")}`);
 
   if (fs.existsSync(p.spine) && !arg("force", false)) { const s = loadSpine(ID); if (s.stages?.research) { log("  research already done (use --force) — skipping"); return; } }
 
-  log("  fetching real sources (arXiv + Wikipedia)…");
-  const docLists = await Promise.all([
-    ...plan.queries.map((q) => arxiv(q, 8).catch(() => [])),
-    ...plan.wikiTopics.map((t) => wikipedia(t).catch(() => [])),
-  ]);
-  // interleave + dedupe by url so no single query dominates
+  // queries: concepts + seminal works (retrieving the canon by name grounds the real literature)
+  const queries = [...plan.keyConcepts, ...plan.seminalWorks].slice(0, 12);
+  const concepts = [...plan.keyConcepts, ...plan.dataNeeds];
+  const chosen = sourcesForDomains(plan.domains);
+  const arxivCats = arxivCatsForDomains(plan.domains);
+  log(`  sources: ${chosen.join(", ")}${arxivCats.length ? `  (arXiv cats: ${arxivCats.join(", ")})` : ""}`);
+
+  log("  fetching real sources (federated)…");
+  const results = await Promise.allSettled(chosen.map((name) => runSource(name, { queries, concepts, arxivCats })));
   const seenUrl = new Set(); const docs = [];
-  for (const list of docLists) for (const d of list) { if (seenUrl.has(d.url)) continue; seenUrl.add(d.url); docs.push(d); }
+  results.forEach((r, i) => {
+    const list = r.status === "fulfilled" ? r.value : [];
+    log(`    ${chosen[i].padEnd(15)} ${list.length} docs`);
+    for (const d of list) { if (!d.url || seenUrl.has(d.url)) continue; seenUrl.add(d.url); docs.push(d); }
+  });
   log(`  ${docs.length} unique source docs`);
   if (!docs.length) { console.error("No sources fetched — check the topic / network."); process.exit(1); }
 
   log("  extracting grounded claims…");
   let evidence = [];
-  for (const doc of docs) { evidence.push(...await extract(doc).catch(() => [])); if (evidence.length >= MIN_EVIDENCE * 2) break; }
-  evidence = dedupe(evidence).slice(0, Math.max(MIN_EVIDENCE * 2, 40));
-  evidence.forEach((e, i) => (e.id = `E${i + 1}`));
-  log(`  ${evidence.length} grounded evidence items`);
+  for (const doc of docs) {
+    evidence.push(...await extract(doc, plan.title).catch(() => []));
+    if (evidence.length >= MIN_EVIDENCE * 3) break;
+  }
+  evidence = dedupe(evidence);
+  log(`  ${evidence.length} grounded claims before gate`);
 
-  const { thesis, subtitle } = await deriveThesis(plan.title, BRIEF, AUDIENCE, evidence);
+  evidence = await relevanceGate(plan.title, plan.interpretation, evidence).catch(() => evidence);
+  evidence = rankEvidence(evidence).slice(0, Math.max(MIN_EVIDENCE * 2, 44));
+  evidence.forEach((e, i) => (e.id = `E${i + 1}`));
+  const numCount = evidence.filter((e) => e.numeric).length;
+  log(`  ${evidence.length} evidence items (${numCount} with numbers) from ${new Set(evidence.map((e) => e.source)).size} distinct sources`);
+
+  const { thesis, subtitle } = await deriveThesis(plan.title, BRIEF, AUDIENCE, plan.interpretation, evidence);
   const spine = newSpine({ id: ID, topic: plan.title, subtitle: subtitle || plan.subtitle || "", audience: AUDIENCE, targetPages: Number(process.env.PB_PAGES || 60) });
   spine.meta.brief = BRIEF;
+  spine.meta.comprehension = plan;      // keep the topic understanding for later phases
   spine.thesis = thesis || "";
   spine.evidence = evidence;
   spine.stages.research = true;

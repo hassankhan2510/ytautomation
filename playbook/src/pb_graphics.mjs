@@ -45,7 +45,15 @@ function evBlock(section, emap) {
 async function buildSpec(section, kind, emap) {
   const sys = `You produce the DATA SPEC for one figure in a premium book. Return ONLY JSON matching this schema for
 kind "${kind}": ${SCHEMA[kind] || SCHEMA.diagram}.
-RULES: be specific to the section. LABELS MUST BE SHORT — a "core"/"center" is at most 3 words, each node/part/step/quadrant label is at most 4 words (a "note" may add a short phrase). NEVER put a sentence inside a node, hub, or cell — these are diagram labels, not prose. ${NUMERIC.has(kind) ? "Use ONLY numbers that appear in the evidence. If the evidence has no usable numbers, return {\"data\":[]} (or empty) so a non-numeric figure is used instead." : "Do not invent statistics."} No commentary.`;
+RULES:
+- Be SPECIFIC to this section's real content. Every label must be a REAL, concrete concept, entity, mechanism,
+  or step from the section/evidence — never a placeholder like "Key idea", "Concept", "Point", "Idea", or a
+  single vague word. If you cannot produce specific, meaningful labels, return {} so a cleaner figure is used.
+- LABELS MUST BE SHORT: a "core"/"center" is at most 3 words; each node/part/step/quadrant label at most 4 words.
+  NEVER put a sentence inside a node, hub, or cell — and never a trailing colon. These are labels, not prose.
+- For "diagram"/"conceptmap": give at least 3 distinct, specific nodes and a specific core (not the section title reworded).
+- ${NUMERIC.has(kind) ? "Use ONLY numbers that appear in the evidence. If the evidence has no usable numbers, return {} so a non-numeric figure is used instead." : "Do not invent statistics."}
+No commentary.`;
   const usr = `SECTION: ${section.title}\nPOINT: ${section.thesis}\nFIGURE INTENT: ${section.visual?.dataHint || ""}\nEVIDENCE:\n${evBlock(section, emap)}`;
   return await llmJSON(sys, usr, { tier: "mid", maxTokens: 900, temperature: 0.3 });
 }
@@ -56,12 +64,11 @@ function render(kind, spec, accent) {
   try { return fn(spec, accent); } catch { return null; }
 }
 
-// Never leave a section without a figure: fall back to the section's pull-quote, else a concept diagram.
+// Never leave a section without a figure, and NEVER fabricate a word-salad diagram: fall back to a clean
+// typographic pull-quote drawn from the section's own writing (its pull-quote, thesis, or title).
 function fallbackSvg(section, accent) {
-  const pq = section.content?.pullQuote || section.thesis;
-  if (pq) return quotePrim({ text: pq, author: "", role: "" }, accent);
-  const words = String(section.title).split(/\s+/).filter((w) => w.length > 3).slice(0, 4);
-  return diagramPrim({ title: section.title, core: "Idea", parts: words.length >= 2 ? words : ["A", "B"] }, accent);
+  const pq = section.content?.pullQuote || section.thesis || section.title;
+  return quotePrim({ text: pq, author: "", role: "" }, accent);
 }
 
 async function aiImage(section, dir, accent) {
@@ -107,8 +114,8 @@ async function main() {
     const spec = await buildSpec(section, kind, emap).catch(() => null);
     let out = spec ? render(kind, spec, accent) : null;
 
-    // numeric figure with no real numbers -> demote to a structural figure
-    if (!out && NUMERIC.has(kind)) { out = render("diagram", { title: section.visual.title || section.title, core: "Key idea", parts: section.title.split(/\s+/).filter((w) => w.length > 3).slice(0, 4) }, accent); kind = "diagram"; }
+    // A figure that can't be built from real content (no numbers for a chart, too-generic labels for a
+    // diagram) becomes a clean pull-quote — never a fabricated "Key idea" word-salad.
     if (!out) { out = fallbackSvg(section, accent); kind = "quote"; fell++; }
     else made++;
 

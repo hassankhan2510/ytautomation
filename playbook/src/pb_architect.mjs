@@ -33,8 +33,8 @@ Exactly ${nChapters} chapters. No generic titles ("Introduction","Conclusion" ar
 
 async function sectionsFor(spine, chapter, nSections) {
   const sys = `You design the SECTIONS of one chapter of a top-1% book. For EACH section return: a specific title,
-a one-sentence thesis (the point it proves), the evidence ids it will cite (from the ledger), and —
-GRAPHIC-FIRST — the single best visual that proves the point.
+a one-sentence thesis (the point it proves), the evidence ids it will cite (from the ledger), and the visual
+(if any) that would genuinely strengthen the point.
 Return ONLY JSON: {"sections":[{
   "title": "...",
   "thesis": "one sentence",
@@ -43,9 +43,15 @@ Return ONLY JSON: {"sections":[{
              "title": "figure title",
              "dataHint": "what the visual should show, in plain words (the graphics stage builds it from evidence)"}
 }]}.
-RULES: exactly ${nSections} sections. VARY the visual kinds across sections (not all charts). Use "chart",
-"bigstat","statgrid","table" only when there is a real NUMBER in the cited evidence; otherwise use "diagram",
-"flow","timeline","matrix","conceptmap","compare" or "quote". Only cite evidence ids that exist.`;
+RULES:
+- exactly ${nSections} sections. Only cite evidence ids that exist in the ledger.
+- FIGURES MUST EARN THEIR PLACE. Give a figure ONLY when it adds real information; otherwise set "kind":"none"
+  (prose-only). Aim for roughly HALF the sections with a figure — a book of decorative diagrams looks cheap.
+- Use "chart","bigstat","statgrid","table" ONLY when a real NUMBER exists in the cited evidence.
+- Use "diagram"/"conceptmap" ONLY for a genuine multi-part structure with specific, nameable nodes — never as
+  decoration. Prefer "flow" (a real process), "timeline" (real dated events), "matrix" (a real 2x2 trade-off),
+  "compare" (two real alternatives), or "quote" when they fit better.
+- VARY the kinds across the chapter; never repeat the same kind back-to-back.`;
   const usr = `BOOK THESIS: ${spine.thesis}\nCHAPTER: ${chapter.title}\nCHAPTER PURPOSE: ${chapter.summary}\nEVIDENCE LEDGER:\n${ledgerText(spine.evidence)}`;
   const r = await llmJSON(sys, usr, { tier: "high", maxTokens: 1800, temperature: 0.5, reasoning: "medium" });
   return (r && Array.isArray(r.sections)) ? r.sections : [];
@@ -76,7 +82,7 @@ async function main() {
     for (const s of secsRaw) {
       if (!s.title || !s.thesis) continue;
       sN++;
-      const kind = VISUAL_KINDS.includes(s.visual?.kind) ? s.visual.kind : "diagram";
+      const kind = VISUAL_KINDS.includes(s.visual?.kind) ? s.visual.kind : "none";
       const eids = (s.evidenceIds || []).filter((id) => evIds.has(id));
       sections.push({
         id: `S${sN}`, title: String(s.title).trim(), thesis: String(s.thesis).trim(),

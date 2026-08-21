@@ -30,7 +30,8 @@ async function writeSection(spine, chapter, section, prev, next, emap) {
 Write ONE section of a premium playbook. Return ONLY JSON:
 {"paragraphs":[{"text":"a tight paragraph","sourceIds":["E3"]}],"pullQuote":"one quotable sentence (<=18 words)"}.
 RULES:
-- 2-4 paragraphs, ~60-110 words each. Concrete, specific, zero filler, no hype words, no clichés.
+- 4-6 paragraphs, ~90-140 words each — real depth and argument, not a summary. Concrete, specific, zero filler,
+  no hype words, no clichés. Develop the idea: state it, show the mechanism, ground it in the evidence, draw the implication.
 - Any sentence stating a FACT or NUMBER must be supported by the cited evidence; put those evidence ids in
   that paragraph's sourceIds. NEVER invent a fact, statistic, date, or name not in the evidence.
 - A purely analytical/transitional paragraph may have "sourceIds":[] — but then it must contain no new facts.
@@ -45,9 +46,9 @@ PREVIOUS SECTION: ${prev ? prev.title + " — " + prev.thesis : "(this is the fi
 NEXT SECTION: ${next ? next.title + " — " + next.thesis : "(this is the last section)"}
 EVIDENCE YOU MAY CITE:
 ${evidenceBlock(section, emap)}`;
-  // 1800 + light reasoning gives a reasoning model room for both its thinking AND the 2-4 paragraphs
-  // of JSON — the fix for the "empty completion" failures on longer sections.
-  return await llmJSON(sys, usr, { tier: "high", maxTokens: 1800, temperature: 0.62, reasoning: "low" });
+  // 2600 + light reasoning gives room for both the model's thinking AND 4-6 fuller paragraphs of JSON
+  // (pb_llm auto-raises the ceiling further if a section still comes back empty).
+  return await llmJSON(sys, usr, { tier: "high", maxTokens: 2600, temperature: 0.62, reasoning: "low" });
 }
 
 async function main() {

@@ -127,11 +127,21 @@ export function flow(spec, accent) {
   return svg(W, H, body);
 }
 
+/* Reject the generic placeholder labels that make a diagram look machine-generated ("Key idea", a bare
+   "Note:", a colon-terminated fragment, or a single throwaway word). Returning too few good parts makes
+   diagram() bail to a cleaner fallback figure. */
+const GENERIC_LABEL = /^(key idea|idea|core|concept|note|point|overview|summary|topic|main point|n\/a|tbd|item|thing)$|:\s*$/i;
+function cleanParts(parts) {
+  return (parts || []).map((p) => String(p || "").replace(/^note\s*:\s*/i, "").replace(/:\s*$/, "").trim())
+    .filter((p) => p && p.length >= 3 && !GENERIC_LABEL.test(p) && p.split(/\s+/).length <= 6)
+    .filter((p, i, a) => a.findIndex((x) => x.toLowerCase() === p.toLowerCase()) === i);
+}
+
 /* ---------- DIAGRAM (core + parts, radial) ---------- */
 export function diagram(spec, accent) {
-  const parts = (spec.parts || []).map((p) => clip(p, 30)).filter(Boolean).slice(0, 6);
+  const parts = cleanParts(spec.parts).map((p) => clip(p, 30)).slice(0, 6);
   const core = clip(spec.core, 24);
-  if (!core || parts.length < 2) return null;
+  if (!core || GENERIC_LABEL.test(core) || parts.length < 3) return null; // too weak -> caller uses a fallback
   const W = 1000, H = 760, cx = W / 2, cy = H / 2 + 20, R = 262, CR = 120;
   let body = `<text x="${cx}" y="52" text-anchor="middle" font-family="${DISPLAY}" font-size="40" font-weight="700" fill="${INK}">${esc(spec.title || "")}</text>`;
   const nodes = parts.map((p, i) => { const a = (-90 + (360 / parts.length) * i) * Math.PI / 180; return { p, x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) }; });
