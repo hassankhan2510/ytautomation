@@ -15,7 +15,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { research } from "./lib_research.mjs";
-import { recentTitles, appendHistory, isDuplicate } from "./lib_history.mjs";
+import { recentTitles, appendHistory, isDuplicate, normKey } from "./lib_history.mjs";
+import { news } from "./lib_live.mjs";
 import { groqJSON } from "./lib_groq.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -27,6 +28,42 @@ const OUT = path.join(ROOT, "out");
 const DRY = process.argv.includes("--dry");
 const CHANNEL = (process.env.CHANNEL || "cohortzero").toLowerCase();
 const TOPIC = process.env.TOPIC || "";
+// MODE=lesson -> evergreen founder/VC lesson (scout/topic). MODE=news -> react to TODAY's real startup
+// news (RSS), with a founder-relevant take. Two daily runs use the two modes for 2 posts/day.
+const MODE = (process.env.ONEPAGER_MODE || "lesson").toLowerCase();
+
+// Strip markdown the model sometimes emits (**bold**, *i*, `code`, # heads) — the card is styled, so
+// raw markdown must never render as literal characters (we saw "**VCs skip fluff**" leak through).
+const clean = (s) => String(s == null ? "" : s)
+  .replace(/[*`~]/g, "")
+  .replace(/^\s*#+\s*/, "")
+  .replace(/^\s*[-•]\s*/, "")
+  .replace(/\s+/g, " ")
+  .trim();
+
+// Pull today's freshest, non-duplicate startup/VC/founder headline from Google News RSS across several
+// queries (acts as a multi-feed aggregator). Returns { title, extract, url } or null.
+async function pickNews() {
+  const queries = [
+    "startup funding round", "venture capital", "Y Combinator", "startup launch",
+    "startup Pakistan", "startup acquisition", "seed round raises", "accelerator applications",
+  ];
+  const seen = new Set();
+  const items = [];
+  for (const q of queries) {
+    let hits = [];
+    try { hits = await news(q, 5); } catch { hits = []; }
+    for (const n of hits) {
+      const key = normKey(n.extract || n.title);
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      items.push(n);
+    }
+  }
+  // Drop anything already posted recently (dedup on the headline text).
+  const fresh = items.filter((n) => !isDuplicate(CHANNEL, { topic: n.extract, title: n.extract }, { days: 21, threshold: 0.55 }));
+  return fresh[0] || items[0] || null;
+}
 
 function loadConfig() {
   const cfg = JSON.parse(fs.readFileSync(path.join(REPO, "channels", "config.json"), "utf-8"));
@@ -60,6 +97,7 @@ function drySample() {
     statLabel: "average time a VC spends on a first deck",
     cardCta: "DM to pitch",
     title: "How VCs actually read your pitch deck",
+    imagePrompt: "modern venture-capital boardroom at dusk, glass walls, city skyline behind, warm cinematic lighting, shallow depth of field, no people, no text",
     captionLines: [
       "Most decks die on slide one.",
       "VCs give you ~3 minutes. If the problem isn't undeniable up front, the numbers never get read. Lead with the pain, not the pitch.",
@@ -76,16 +114,33 @@ async function main() {
   fs.mkdirSync(JOBS, { recursive: true });
   fs.mkdirSync(OUT, { recursive: true });
 
-  const topic = TOPIC || "";
-  // Grounding (best-effort; Cohort Zero is a soft-ground channel — we proceed even if thin).
-  let g = [];
-  if (cfg.ground && topic && !DRY) {
-    try { g = (await research(topic, { niche: cfg.niche })).items || []; }
-    catch (e) { console.log(`  ! research failed (${e.message})`); }
+  let topic = TOPIC || "";
+  let grounding = "";
+  let modeRule = "";
+  let newsUrl = "";
+
+  if (MODE === "news") {
+    // NEWS post: react to a real, fresh startup/VC headline with a founder-relevant take.
+    const n = DRY
+      ? { extract: "Google opens its first Pakistan office in Lahore (Reuters)", url: "https://example.com" }
+      : await pickNews();
+    if (!n) { console.error("  ! no fresh startup news found right now — skipping this run."); process.exit(1); }
+    topic = n.extract;
+    newsUrl = n.url || "";
+    grounding = `\nNEWS ITEM (base the post ONLY on this real headline — do NOT invent figures, quotes, or details not in it):\n- ${n.extract}${n.url ? `\n  Source: ${n.url}` : ""}`;
+    modeRule = `\nThis is a BREAKING-NEWS reaction post: give a sharp, founder-relevant TAKE on the news above — what it means for builders/founders — not a rehash of the headline. kicker like "JUST IN" or "STARTUP NEWS".`;
+    console.log(`  news: "${topic.slice(0, 70)}"`);
+  } else {
+    // LESSON post: evergreen founder/VC lesson. Grounding best-effort (soft-ground channel).
+    let g = [];
+    if (cfg.ground && topic && !DRY) {
+      try { g = (await research(topic, { niche: cfg.niche })).items || []; }
+      catch (e) { console.log(`  ! research failed (${e.message})`); }
+    }
+    grounding = g.length
+      ? "\nGROUNDING (base facts ONLY on this; do not invent specifics):\n" + g.map((x) => `- ${x.title ? x.title + ": " : ""}${x.extract}`).join("\n").slice(0, 2200)
+      : "";
   }
-  const grounding = g.length
-    ? "\nGROUNDING (base facts ONLY on this; do not invent specifics):\n" + g.map((x) => `- ${x.title ? x.title + ": " : ""}${x.extract}`).join("\n").slice(0, 2200)
-    : "";
 
   const avoid = recentTitles(CHANNEL, 45).slice(-20);
   const avoidRule = avoid.length ? `\nFRESHNESS: do NOT repeat or reword any of these recent posts:\n${JSON.stringify(avoid)}` : "";
@@ -96,7 +151,14 @@ async function main() {
     `going zero to one, together). It is ONE idea that stops the scroll and teaches something real in ` +
     `one screen, and it must make founders want to FOLLOW, SAVE, SHARE and DM. Return ONLY JSON: ` +
     `{"kicker": string, "headline": string, "subline": string, "stat"?: string, "statLabel"?: string, ` +
-    `"cardCta": string, "title": string, "captionLines": string[4-6], "hashtags": string[6-10]}. ` +
+    `"cardCta": string, "title": string, "captionLines": string[4-6], "imagePrompt": string, ` +
+    `"hashtags": string[6-10]}. ` +
+    `FORMATTING: plain text only — NO markdown (**, *, _, #, backticks), NO emojis in kicker/headline/` +
+    `subline. ` +
+    `imagePrompt = a short prompt for a RELEVANT, realistic, cinematic BACKGROUND photo for this exact ` +
+    `topic (e.g. a modern VC boardroom, a startup office, a founder at a laptop, a city skyline, a ` +
+    `specific setting the topic implies). Dark/moody, premium, shallow depth of field, no text, no ` +
+    `readable logos, no close-up faces. NOT abstract sci-fi. ` +
     `RULES: headline <= 90 chars, one bold, specific, curiosity-driving idea (front-load the hook). ` +
     `subline <= 150 chars, one concrete supporting sentence with a real specific. kicker = 1-3 word mono ` +
     `label. stat = a SHORT real figure from the grounding if one fits ("3 min", "90%"), else omit stat ` +
@@ -109,7 +171,7 @@ async function main() {
     `founder sessions — and the LAST line a genuine question that invites replies. Warm, sharp, ` +
     `peer-to-peer; never corporate or salesy. hashtags = 6-10 founder/startup/VC + ` +
     `community tags (mix broad + niche; include a couple Pakistan / emerging-market ones when relevant).` +
-    `${steer}${avoidRule}`;
+    `${steer}${modeRule}${avoidRule}`;
   const usr = `TOPIC: ${topic || "(choose one sharp, specific founder/VC lesson in this niche)"}${grounding}\nWrite the card now.`;
 
   let m;
@@ -133,21 +195,19 @@ async function main() {
 
   const accent = cfg.accentColor || "#e11d48";
   const name = process.env.ONEPAGER_NAME || cfg.brand?.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) || "Cohort Zero";
-  const at = process.env.ONEPAGER_AT || (cfg.links?.instagram ? "@" + cfg.links.instagram.replace(/\/+$/, "").split("/").pop() : "@cohortzero");
+  const at = process.env.ONEPAGER_AT || (cfg.links?.instagram ? "@" + cfg.links.instagram.replace(/\/+$/, "").split("/").pop() : "@cohort_zero");
   // Default to the committed Cohort Zero logo as the avatar (contain-fit on a dark disc, not cropped).
   const avatar = process.env.ONEPAGER_AVATAR || (CHANNEL === "cohortzero" ? "cohortzero-logo.png" : "");
   const avatarFit = avatar && /logo|mark|icon/i.test(avatar) ? "contain" : "cover";
 
-  // Abstract AI background (best-effort, off with ONEPAGER_BG=0). Dark/abstract on purpose — a
-  // founders/network/sci-fi TEXTURE, never a literal scene that could look like AI slop.
+  // RELEVANT AI background (best-effort, off with ONEPAGER_BG=0): a realistic scene for THIS topic
+  // (a VC office, a founder's desk, a skyline) — dark & premium so text reads. Model-chosen prompt.
   let bg = "";
   if (!DRY && process.env.ONEPAGER_BG !== "0") {
-    const bgPrompt =
-      "abstract dark futuristic network of glowing connected nodes and thin light trails, deep navy-black " +
-      "background with a subtle crimson glow, cinematic depth of field, floating particles, premium minimal " +
-      "technology, elegant, no text, no words, no logos, no people";
-    const ok = await fetchBg(bgPrompt, path.join(ROOT, "public", "onepager_bg.jpg"));
-    if (ok) { bg = "onepager_bg.jpg"; console.log("  bg: abstract AI background generated (Pollinations)"); }
+    const bgPrompt = clean(m.imagePrompt) ||
+      "modern startup office at dusk, glass walls, city skyline behind, warm cinematic lighting, shallow depth of field, no people, no text, no logos";
+    const ok = await fetchBg(`${bgPrompt}, dark moody premium background, cinematic, no text, no watermark`, path.join(ROOT, "public", "onepager_bg.jpg"));
+    if (ok) { bg = "onepager_bg.jpg"; console.log(`  bg: relevant AI background generated ("${bgPrompt.slice(0, 60)}")`); }
     else console.log("  ! bg image unavailable — rendering gradient-only");
   }
 
@@ -156,12 +216,12 @@ async function main() {
     name, at, accent,
     ...(avatar ? { avatar, avatarFit } : {}),
     ...(bg ? { bg } : {}),
-    kicker: String(m.kicker || cfg.tagline || "").slice(0, 32),
-    headline: String(m.headline || "").slice(0, 120),
-    subline: String(m.subline || "").slice(0, 180),
-    ...(m.stat ? { stat: String(m.stat).slice(0, 12), statLabel: String(m.statLabel || "").slice(0, 80) } : {}),
+    kicker: clean(m.kicker || cfg.tagline || "").slice(0, 32),
+    headline: clean(m.headline).slice(0, 120),
+    subline: clean(m.subline).slice(0, 180),
+    ...(m.stat ? { stat: clean(m.stat).slice(0, 12), statLabel: clean(m.statLabel).slice(0, 80) } : {}),
     footer: (cfg.brand || CHANNEL).toUpperCase(),
-    cta: String(m.cardCta || "follow →").slice(0, 22),
+    cta: clean(m.cardCta || "follow").slice(0, 22),
     ...(process.env.ONEPAGER_MUSIC ? { music: process.env.ONEPAGER_MUSIC } : {}),
   };
   fs.writeFileSync(path.join(OUT, "onepager_props.json"), JSON.stringify(props, null, 2));
@@ -173,9 +233,9 @@ async function main() {
       title: m.title || m.headline,
       // The IG-native community caption IS the description; meta_upload appends hashtags + (only if it
       // doesn't already end with a question) a generic prompt — ours ends with a question, so ours wins.
-      description: (Array.isArray(m.captionLines) && m.captionLines.length
-        ? m.captionLines.map((s) => String(s).trim()).filter(Boolean).join("\n\n")
-        : (m.caption || m.subline || "")),
+      description: ((Array.isArray(m.captionLines) && m.captionLines.length
+        ? m.captionLines.map((s) => clean(s)).filter(Boolean).join("\n\n")
+        : clean(m.caption || m.subline || "")) + (newsUrl ? `\n\nSource: ${newsUrl}` : "")),
       hashtags: hashtags.length ? hashtags : ["startup", "founders", "cohortzero", "buildinpublic"],
       channel: CHANNEL, niche: cfg.niche, brand: cfg.brand, platform: "reel",
       links: cfg.links || null,
@@ -185,6 +245,7 @@ async function main() {
   const jobPath = path.join(JOBS, `${CHANNEL}_onepager.json`);
   fs.writeFileSync(jobPath, JSON.stringify(job, null, 2));
 
+  // Record for dedup. In news mode also record the source headline so the same story can't re-post.
   if (!DRY) appendHistory(CHANNEL, { topic: topic || m.title || m.headline, title: m.headline });
 
   console.log(`  + out/onepager_props.json  ("${props.headline.slice(0, 60)}")`);

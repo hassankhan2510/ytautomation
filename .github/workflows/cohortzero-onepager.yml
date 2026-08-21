@@ -1,16 +1,25 @@
-name: "Cohort Zero — Daily One-Page Reel → Instagram"
+name: "Cohort Zero — Daily One-Page Reels → Instagram"
 
-# One single animated card per day in the LinkedIn-personal CREATOR style (byline + one sharp founder
-# lesson), posted to Cohort Zero's Instagram. No footage, no voice — a clean, premium text reel.
-# Posts only if the Meta secrets for Cohort Zero are set (META_*_COHORTZERO); otherwise it just renders
-# the MP4 and hands it back as a downloadable artifact.
+# TWO single-card reels a day in the LinkedIn-personal CREATOR style (byline + one sharp idea + a
+# relevant AI background), posted to Cohort Zero's Instagram feed AND Story:
+#   morning  = LESSON  (an evergreen founder/VC lesson)
+#   evening  = NEWS    (a founder-relevant take on TODAY's real startup news, RSS-picked, de-duped)
+# Posts only if the Meta secrets for Cohort Zero are set (META_*_COHORTZERO); otherwise it renders the
+# MP4 and hands it back as a downloadable artifact.
 on:
   schedule:
-    - cron: "0 10 * * *" # ~ daily mid-morning
+    - cron: "0 10 * * *" # morning — LESSON
+    - cron: "0 15 * * *" # evening — NEWS
   workflow_dispatch:
     inputs:
+      mode:
+        description: "lesson = evergreen founder lesson · news = react to today's startup news"
+        type: choice
+        options: [lesson, news]
+        default: lesson
+        required: false
       topic:
-        description: "Optional topic (leave blank to auto-pick a trending founder/VC lesson)"
+        description: "Optional topic for LESSON mode (blank = auto-pick)"
         required: false
         type: string
       publish:
@@ -43,8 +52,19 @@ jobs:
             libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
             libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji
       - run: npm ci
-      - name: Pick a trending founder/VC topic (scout)
+      - name: Decide mode (morning=lesson, evening=news; or manual input)
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "0 15 * * *" ]; then MODE=news; else MODE=lesson; fi
+          else
+            MODE="${{ github.event.inputs.mode }}"; MODE="${MODE:-lesson}"
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Mode: $MODE"
+      - name: Pick a trending founder/VC topic (scout — LESSON mode only)
         id: scout
+        if: steps.mode.outputs.mode == 'lesson'
         run: |
           TOPIC="${{ github.event.inputs.topic }}"
           if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=cohortzero --one)"; fi
@@ -53,6 +73,7 @@ jobs:
       - name: Write the card (Groq, grounded, de-duped)
         env:
           CHANNEL: cohortzero
+          ONEPAGER_MODE: ${{ steps.mode.outputs.mode }}
           TOPIC: ${{ steps.scout.outputs.topic }}
           ONEPAGER_AVATAR: ${{ vars.ONEPAGER_AVATAR_COHORTZERO }}
           ONEPAGER_NAME: ${{ vars.ONEPAGER_NAME_COHORTZERO }}
@@ -84,6 +105,7 @@ jobs:
         if: ${{ github.event.inputs.publish != 'test' }}
         env:
           META_TARGETS: "ig"
+          META_STORY: "1"
           META_PAGE_ID_COHORTZERO: ${{ vars.META_PAGE_ID_COHORTZERO || secrets.META_PAGE_ID_COHORTZERO }}
           META_IG_USER_ID_COHORTZERO: ${{ vars.META_IG_USER_ID_COHORTZERO || secrets.META_IG_USER_ID_COHORTZERO }}
           META_PAGE_TOKEN_COHORTZERO: ${{ secrets.META_PAGE_TOKEN_COHORTZERO }}
