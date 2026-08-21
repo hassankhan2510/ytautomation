@@ -70,14 +70,6 @@ jobs:
           git commit -m "chore(history): syndar daily topic [skip ci]" || { echo "no history change"; exit 0; }
           git pull --rebase --autostash || true
           git push || echo "push skipped"
-      - name: Cross-post this week's topic to LinkedIn via Buffer (no-op without token)
-        env:
-          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
-          BUFFER_CHANNEL_ID_SYNDAR: ${{ vars.BUFFER_CHANNEL_ID_SYNDAR }}
-          BUFFER_DRAFT: ${{ vars.BUFFER_DRAFT }}
-          BUFFER_MODE: ${{ vars.BUFFER_MODE }}
-          BUFFER_SCHEDULING: ${{ vars.BUFFER_SCHEDULING }}
-        run: node scripts/buffer_post.mjs --channel=syndar --script=jobs/syndar.json
       - name: Render (your cloned voice) + upload to YouTube (private) + LinkedIn (if enabled)
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
@@ -96,6 +88,15 @@ jobs:
           LI_REFRESH_TOKEN: ${{ secrets.LI_REFRESH_TOKEN }}
           LI_ORG_URN_SYNDAR: ${{ secrets.LI_ORG_URN_SYNDAR }}
         run: npm run batch -- --only=syndar
+      - name: Cross-post this week's carousel to LinkedIn via Buffer (multi-image; no-op without token)
+        env:
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          BUFFER_CHANNEL_ID_SYNDAR: ${{ vars.BUFFER_CHANNEL_ID_SYNDAR }}
+          BUFFER_DRAFT: ${{ vars.BUFFER_DRAFT }}
+          BUFFER_MODE: ${{ vars.BUFFER_MODE }}
+          BUFFER_SCHEDULING: ${{ vars.BUFFER_SCHEDULING }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/buffer_post.mjs --channel=syndar --script=jobs/syndar.json --imageglob=out/syndar_slide_*.jpg
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
         with:

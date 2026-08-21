@@ -33,7 +33,9 @@ const LIST = process.argv.includes("--list");
 const CHANNEL = (arg("channel", "") || "").toLowerCase();
 const PROPS = arg("props", "");
 const SCRIPT = arg("script", "");
-const IMAGE = arg("image", ""); // local PNG/JPG of the card; hosted publicly + attached to the post
+const IMAGE = arg("image", "");         // one local PNG/JPG (single-image post)
+const IMAGES = arg("images", "");       // comma-separated list (multi-image gallery)
+const IMAGEGLOB = arg("imageglob", ""); // e.g. out/syndar_slide_*.jpg -> a carousel gallery (up to 20)
 const TOKEN = process.env.BUFFER_ACCESS_TOKEN || "";
 
 // Which LinkedIn page a channel maps to (match on the Buffer channel's display name / handle).
@@ -41,6 +43,25 @@ const BRAND_MATCH = { cohortzero: /cohort/i, equitier: /equitier/i, syndar: /syn
 
 function readJSON(p) { try { return JSON.parse(fs.readFileSync(path.resolve(ROOT, p), "utf-8")); } catch { return null; } }
 function skip(msg) { console.log(`buffer post skipped: ${msg}`); process.exit(0); } // never fail the pipeline
+
+// Resolve the images to attach: --image (one), --images=a,b,c, and/or --imageglob=dir/prefix*.jpg.
+// LinkedIn galleries take up to 20; existing files only, numeric-sorted, de-duped.
+function resolveImages() {
+  const list = [];
+  if (IMAGE) list.push(IMAGE);
+  if (IMAGES) list.push(...IMAGES.split(",").map((s) => s.trim()).filter(Boolean));
+  if (IMAGEGLOB) {
+    const dir = path.dirname(IMAGEGLOB);
+    const rx = new RegExp("^" + path.basename(IMAGEGLOB).replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*") + "$", "i");
+    try {
+      fs.readdirSync(path.resolve(ROOT, dir))
+        .filter((f) => rx.test(f))
+        .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
+        .forEach((f) => list.push(path.join(dir, f)));
+    } catch { /* dir missing → no gallery */ }
+  }
+  return [...new Set(list)].filter((p) => fs.existsSync(path.resolve(ROOT, p))).slice(0, 20);
+}
 
 async function gql(query, variables) {
   const r = await fetch(API, {
@@ -133,18 +154,19 @@ async function main() {
   if (!schedulingType || !mode) skip(`could not resolve enums (ShareMode=${modes}, SchedulingType=${scheds})`);
   console.log(`  mode=${mode} schedulingType=${schedulingType}`);
 
-  // Attach the card image if one was rendered: Buffer pulls media from a public URL, so host it first.
+  // Attach image(s): Buffer pulls media from a public URL, so host each first. One image = single
+  // post; several = a LinkedIn gallery/carousel (the no-PDF workaround).
   let assets = [];
-  if (IMAGE) {
-    const p = path.resolve(ROOT, IMAGE);
-    if (fs.existsSync(p)) {
-      try {
-        const { url } = await hostFile(p, `${CHANNEL}_li`, (p.split(".").pop() || "png").toLowerCase());
-        assets = [{ image: { url, metadata: { altText: tidy(props?.headline || meta?.title || brand).slice(0, 300) } } }];
-        console.log(`  image hosted + attached: ${url}`);
-      } catch (e) { console.log(`  ! image host failed (${e.message}) — posting text-only`); }
-    } else { console.log(`  ! image ${IMAGE} not found — posting text-only`); }
+  const altText = tidy(props?.headline || meta?.title || brand).slice(0, 300) || brand;
+  const imgs = resolveImages();
+  for (const rel of imgs) {
+    try {
+      const { url } = await hostFile(path.resolve(ROOT, rel), `${CHANNEL}_li`, (rel.split(".").pop() || "png").toLowerCase());
+      assets.push({ image: { url, metadata: { altText } } });
+    } catch (e) { console.log(`  ! image host failed for ${rel} (${e.message})`); }
   }
+  if (imgs.length) console.log(`  attached ${assets.length}/${imgs.length} image(s)${assets.length > 1 ? " as a gallery" : ""}`);
+  else console.log("  (text-only post — no images given)");
 
   const input = { channelId, text, assets, needsApproval: false, saveToDraft: process.env.BUFFER_DRAFT === "1", mode, schedulingType };
   if (/at.?time|custom|scheduled/i.test(mode)) input.dueAt = new Date(Date.now() + 120000).toISOString();

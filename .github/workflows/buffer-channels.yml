@@ -1,0 +1,23 @@
+name: "Buffer — List Channels (debug)"
+
+# Manual only. Prints your Buffer-connected channels (service, id, display name) in the run log so you
+# can confirm the auto-matching, or copy an id into BUFFER_CHANNEL_ID_<CHANNEL> if a name doesn't match.
+# Reads the token from the repo secret — nothing is posted.
+on:
+  workflow_dispatch:
+
+jobs:
+  list:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: theranos-doc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: List Buffer channels
+        env:
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+        run: node scripts/buffer_post.mjs --list
