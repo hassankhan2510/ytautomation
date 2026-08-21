@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { research } from "./lib_research.mjs";
 import { liveContext } from "./lib_live.mjs";
-import { recentTitles, appendHistory } from "./lib_history.mjs";
+import { recentTitles, appendHistory, isDuplicate, sig, jaccard } from "./lib_history.mjs";
 import { groqJSON } from "./lib_groq.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -286,6 +286,29 @@ async function polish(meta, lines, cfg) {
   }
 }
 
+// HARD DEDUP GATE: before a job is written, make sure its title isn't a repeat of a recent post
+// (persisted history) OR of another title produced in THIS run (multi-topic batches). If it collides,
+// spend one cheap Groq call to re-angle the title. Cheap because it only fires on an actual collision.
+async function ensureFreshTitle(meta, cfg, seenThisRun) {
+  if (DRY || !meta.title) { if (meta.title) seenThisRun.push(meta.title); return; }
+  const past = isDuplicate(CHANNEL, { topic: meta.topic, title: meta.title }, { days: 45, threshold: 0.6 });
+  const ts = sig(meta.title);
+  const intra = seenThisRun.find((t) => jaccard(sig(t), ts) >= 0.7);
+  if (!past && !intra) { seenThisRun.push(meta.title); return; }
+  const clashedWith = past ? past.title : intra;
+  console.log(`  ! duplicate title "${meta.title.slice(0, 50)}" ~ "${String(clashedWith).slice(0, 50)}" — re-angling`);
+  try {
+    const sys = `You rewrite a video TITLE to a genuinely DIFFERENT angle on the same topic. Return ONLY JSON {"title": string}. Keyword-first, specific, high-CTR, <=70 chars. Not a reworded copy — a new angle.`;
+    const avoid = [clashedWith, ...seenThisRun].filter(Boolean);
+    const usr = `NICHE: ${cfg.niche}\nTOPIC: ${meta.topic}\nThis title is too similar to ones already used — avoid these entirely:\n${JSON.stringify(avoid.slice(-12))}\nGive one fresh title now.`;
+    const r = await callGroq(sys, usr);
+    if (r && typeof r.title === "string" && r.title.trim()) meta.title = r.title.trim().replace(/^["']|["']$/g, "").slice(0, 100);
+  } catch (e) {
+    console.log(`  ! re-angle skipped (${e.message})`);
+  }
+  seenThisRun.push(meta.title);
+}
+
 function giveEachLineAsset(lines, prefix) {
   const used = {};
   lines.forEach((l) => {
@@ -383,7 +406,9 @@ async function main() {
   const researchFile = "research.md";
 
   // Don't rewrite yesterday's video: feed the writer the recently-used titles to steer away from.
-  const avoidTitles = recentTitles(CHANNEL, 21);
+  const avoidTitles = recentTitles(CHANNEL, 45);
+  // Titles produced in THIS run, so a multi-topic batch can't emit two near-identical titles either.
+  const seenThisRun = [];
   const avoidRule = avoidTitles.length
     ? `\nFRESHNESS: these titles were used recently on this channel — pick a genuinely DIFFERENT angle and do NOT reuse or lightly reword any of them:\n${JSON.stringify(avoidTitles.slice(-20))}`
     : "";
@@ -476,6 +501,7 @@ async function main() {
         const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || topic, true, researchFile);
         if (shl.length >= 3) {
           await polish(meta, shl, cfg);
+          await ensureFreshTitle(meta, cfg, seenThisRun);
           writeJob(`${prefix}_short_${i + 1}`, meta, shl);
           if (!primaryTitle) primaryTitle = meta.title;
           written++;
@@ -522,6 +548,7 @@ async function main() {
       if (!tilShort) console.log(`  long: ${longLines.length} scenes (aim ~${neededLong} for ~${minutes} min)`);
       if (writeLong && longLines.length) {
         await polish(longMeta, longLines, cfg);
+        await ensureFreshTitle(longMeta, cfg, seenThisRun);
         writeJob(prefix, longMeta, longLines);
         primaryTitle = longMeta.title;
         written++;
@@ -547,6 +574,7 @@ async function main() {
           const meta = finalizeMeta({ ...sh, lines: shl }, cfg, sh.title || topic, true, researchFile);
           if (shl.length >= 3) {
             await polish(meta, shl, cfg);
+            await ensureFreshTitle(meta, cfg, seenThisRun);
             writeJob(`${prefix}_short_${i + 1}`, meta, shl);
             if (!primaryTitle) primaryTitle = meta.title;
             written++;

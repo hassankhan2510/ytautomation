@@ -10,7 +10,7 @@
  *   node scripts/scout.mjs --channel=equitier --one      # print ONE topic (for the daily auto-run)
  */
 
-import { recentTopicKeys, normKey } from "./lib_history.mjs";
+import { recentTopicKeys, recentSigs, normKey, sig, jaccard } from "./lib_history.mjs";
 
 const arg = (k, d) => {
   const a = process.argv.find((x) => x.startsWith(`--${k}=`));
@@ -187,8 +187,13 @@ async function main() {
     // illusion — the candidate list is re-fetched live every day, so its length/order shift and the
     // modulo could re-land on the same phrase. Instead we drop anything recently posted (persisted
     // in channels/history/<channel>.json) and take the strongest remaining topic.
-    const recent = recentTopicKeys(CHANNEL, 14);
-    const fresh = cand.filter((q) => !recent.has(normKey(q)));
+    const recent = recentTopicKeys(CHANNEL, 30);
+    const recentS = recentSigs(CHANNEL, 30);
+    const fresh = cand.filter((q) => {
+      if (recent.has(normKey(q))) return false;              // exact topic-family match
+      const qs = sig(q);
+      return !recentS.some(({ s }) => jaccard(qs, s) >= 0.6); // near-dupe of a recent topic/title
+    });
     const pool = fresh.length ? fresh : cand; // if the whole pool is exhausted, fall back to all
     // Among the top of the fresh, ranked list, rotate by day so two runs on the same day differ too.
     const top = pool.slice(0, Math.max(1, Math.min(10, pool.length)));
