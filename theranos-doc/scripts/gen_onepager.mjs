@@ -34,6 +34,23 @@ function loadConfig() {
   return cfg[CHANNEL];
 }
 
+// Fetch an abstract background image from Pollinations (free, keyless, flux). Best-effort: on any
+// failure we simply render without a bg (the gradient-only look). Saved into public/ for staticFile.
+async function fetchBg(prompt, dest, ms = 60000) {
+  const seed = Date.now() % 100000;
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?model=flux&nologo=true&width=1080&height=1920&seed=${seed}`;
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: ctrl.signal });
+    if (!r.ok) return false;
+    const buf = Buffer.from(await r.arrayBuffer());
+    if (buf.length < 3000) return false; // too small = an error placeholder, not a real image
+    fs.writeFileSync(dest, buf);
+    return true;
+  } catch { return false; } finally { clearTimeout(t); }
+}
+
 function drySample() {
   return {
     kicker: "FOUNDER PLAYBOOK",
@@ -41,9 +58,11 @@ function drySample() {
     subline: "The first slide they scan is the problem statement. If it isn't obvious there, they stop.",
     stat: "3 min",
     statLabel: "average time a VC spends on a first deck",
+    cardCta: "DM to pitch",
     title: "How VCs actually read your pitch deck",
-    description: "The truth about how investors skim a deck — and the one slide that decides everything.",
-    hashtags: ["startup", "founders", "venturecapital", "pitchdeck", "fundraising"],
+    caption:
+      "Most decks die on slide one.\n\nVCs give you ~3 minutes. If the problem isn't undeniable up front, the numbers never get read. Lead with the pain, not the pitch.\n\nWe're building Cohort Zero — founders going zero to one, together. Follow for the daily playbook, save this and send it to a founder who needs it.\n\nBuilding something? DM us to pitch or join our next founder session. What's the one slide you always struggle with?",
+    hashtags: ["startup", "founders", "venturecapital", "pitchdeck", "fundraising", "cohortzero", "buildinpublic"],
   };
 }
 
@@ -68,16 +87,23 @@ async function main() {
   const steer = cfg.steer ? `\nEDITORIAL DIRECTION (follow exactly): ${cfg.steer}` : "";
 
   const sys =
-    `You write ONE single-card Instagram Reel for a founder/startup education brand. It is ONE idea, ` +
-    `designed to stop the scroll and teach something real in one screen. Return ONLY JSON: ` +
+    `You write ONE single-card Instagram Reel for "Cohort Zero" — a founder COMMUNITY brand (founders ` +
+    `going zero to one, together). It is ONE idea that stops the scroll and teaches something real in ` +
+    `one screen, and it must make founders want to FOLLOW, SAVE, SHARE and DM. Return ONLY JSON: ` +
     `{"kicker": string, "headline": string, "subline": string, "stat"?: string, "statLabel"?: string, ` +
-    `"title": string, "description": string, "hashtags": string[5-8]}. ` +
+    `"cardCta": string, "title": string, "caption": string, "hashtags": string[6-10]}. ` +
     `RULES: headline <= 90 chars, one bold, specific, curiosity-driving idea (front-load the hook). ` +
-    `subline <= 150 chars, one concrete supporting sentence with a real specific. kicker = 1-3 word ` +
-    `mono label. stat = a SHORT real figure from the grounding if one fits ("3 min", "90%"), else omit ` +
-    `stat AND statLabel. ANTI-HALLUCINATION: every number/name must come from the grounding; if none ` +
-    `supports a figure, omit the stat rather than invent one. title/description/hashtags = the IG ` +
-    `caption kit.${steer}${avoidRule}`;
+    `subline <= 150 chars, one concrete supporting sentence with a real specific. kicker = 1-3 word mono ` +
+    `label. stat = a SHORT real figure from the grounding if one fits ("3 min", "90%"), else omit stat ` +
+    `AND statLabel. cardCta = <= 18 chars on-card nudge ("follow @cohortzero", "save this", "DM to pitch"). ` +
+    `ANTI-HALLUCINATION: every number/name must come from the grounding; if none supports a figure, omit ` +
+    `the stat rather than invent one. caption = an Instagram-native caption of 3-6 SHORT lines: a punchy ` +
+    `hook line, then the insight in 2-3 lines with a real specific, then a COMMUNITY call to action — ` +
+    `invite founders to follow for the daily playbook, save + send it to a founder who needs it, and DM ` +
+    `to pitch a startup or join our founder sessions — and END with a genuine question that invites ` +
+    `replies. Warm, sharp, peer-to-peer; never corporate or salesy. hashtags = 6-10 founder/startup/VC + ` +
+    `community tags (mix broad + niche; include a couple Pakistan / emerging-market ones when relevant).` +
+    `${steer}${avoidRule}`;
   const usr = `TOPIC: ${topic || "(choose one sharp, specific founder/VC lesson in this niche)"}${grounding}\nWrite the card now.`;
 
   let m;
@@ -100,18 +126,35 @@ async function main() {
   const accent = cfg.accentColor || "#e11d48";
   const name = process.env.ONEPAGER_NAME || cfg.brand?.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) || "Cohort Zero";
   const at = process.env.ONEPAGER_AT || (cfg.links?.instagram ? "@" + cfg.links.instagram.replace(/\/+$/, "").split("/").pop() : "@cohortzero");
-  const avatar = process.env.ONEPAGER_AVATAR || "";
+  // Default to the committed Cohort Zero logo as the avatar (contain-fit on a dark disc, not cropped).
+  const avatar = process.env.ONEPAGER_AVATAR || (CHANNEL === "cohortzero" ? "cohortzero-logo.png" : "");
+  const avatarFit = avatar && /logo|mark|icon/i.test(avatar) ? "contain" : "cover";
+
+  // Abstract AI background (best-effort, off with ONEPAGER_BG=0). Dark/abstract on purpose — a
+  // founders/network/sci-fi TEXTURE, never a literal scene that could look like AI slop.
+  let bg = "";
+  if (!DRY && process.env.ONEPAGER_BG !== "0") {
+    const bgPrompt =
+      "abstract dark futuristic network of glowing connected nodes and thin light trails, deep navy-black " +
+      "background with a subtle crimson glow, cinematic depth of field, floating particles, premium minimal " +
+      "technology, elegant, no text, no words, no logos, no people";
+    const ok = await fetchBg(bgPrompt, path.join(ROOT, "public", "onepager_bg.jpg"));
+    if (ok) { bg = "onepager_bg.jpg"; console.log("  bg: abstract AI background generated (Pollinations)"); }
+    else console.log("  ! bg image unavailable — rendering gradient-only");
+  }
 
   const props = {
     brand: cfg.brand || CHANNEL.toUpperCase(),
     name, at, accent,
-    ...(avatar ? { avatar } : {}),
+    ...(avatar ? { avatar, avatarFit } : {}),
+    ...(bg ? { bg } : {}),
     kicker: String(m.kicker || cfg.tagline || "").slice(0, 32),
     headline: String(m.headline || "").slice(0, 120),
     subline: String(m.subline || "").slice(0, 180),
     ...(m.stat ? { stat: String(m.stat).slice(0, 12), statLabel: String(m.statLabel || "").slice(0, 80) } : {}),
     footer: (cfg.brand || CHANNEL).toUpperCase(),
-    cta: "follow →",
+    cta: String(m.cardCta || "follow →").slice(0, 22),
+    ...(process.env.ONEPAGER_MUSIC ? { music: process.env.ONEPAGER_MUSIC } : {}),
   };
   fs.writeFileSync(path.join(OUT, "onepager_props.json"), JSON.stringify(props, null, 2));
 
@@ -120,9 +163,12 @@ async function main() {
   const job = {
     meta: {
       title: m.title || m.headline,
-      description: m.description || m.subline || "",
-      hashtags: hashtags.length ? hashtags : ["startup", "founders", "business"],
+      // The IG-native community caption IS the description; meta_upload appends hashtags + (only if it
+      // doesn't already end with a question) a generic prompt — ours ends with a question, so ours wins.
+      description: m.caption || m.subline || "",
+      hashtags: hashtags.length ? hashtags : ["startup", "founders", "cohortzero", "buildinpublic"],
       channel: CHANNEL, niche: cfg.niche, brand: cfg.brand, platform: "reel",
+      links: cfg.links || null,
       disclaimer: cfg.disclaimer || "",
     },
   };

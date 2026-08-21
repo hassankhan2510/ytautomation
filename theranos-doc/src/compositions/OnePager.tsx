@@ -24,8 +24,10 @@ export type OnePagerProps = {
   name?: string; // byline display name ("Hassan Khan")
   at?: string; // byline handle ("@cohortzero")
   handle?: string;
-  avatar?: string; // filename in public/ for the real photo; falls back to a monogram
+  avatar?: string; // filename in public/ for the real photo/logo; falls back to a monogram
+  avatarFit?: "cover" | "contain"; // "contain" for a logo mark, "cover" for a photo
   accent?: string;
+  bg?: string; // optional abstract background image filename in public/ (subtle, behind everything)
   kicker?: string; // small mono label above the headline
   headline?: string; // the one big idea
   subline?: string; // one supporting sentence
@@ -47,7 +49,12 @@ const Avatar: React.FC<{ p: OnePagerProps; size: number }> = ({ p, size }) => {
   const accent = p.accent || "#e11d48";
   const initials = (p.name || p.brand || "CZ").split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
   if (p.avatar) {
-    return <Img src={staticFile(p.avatar)} style={{ width: size, height: size, borderRadius: "50%", objectFit: "cover", border: `2px solid ${accent}55`, flexShrink: 0 }} />;
+    const contain = p.avatarFit === "contain"; // a logo mark: pad it on a dark disc instead of cropping
+    return (
+      <div style={{ width: size, height: size, borderRadius: "50%", overflow: "hidden", border: `2px solid ${accent}55`, background: contain ? "#0e1116" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+        <Img src={staticFile(p.avatar)} style={{ width: contain ? "76%" : "100%", height: contain ? "76%" : "100%", objectFit: contain ? "contain" : "cover" }} />
+      </div>
+    );
   }
   return (
     <div style={{ width: size, height: size, borderRadius: "50%", background: `linear-gradient(135deg, ${accent}, #1b2536)`, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: DISPLAY, fontWeight: 800, fontSize: size * 0.38, color: "#fff", border: "2px solid rgba(255,255,255,0.15)", flexShrink: 0 }}>
@@ -78,9 +85,18 @@ export const OnePager: React.FC<OnePagerProps> = (props) => {
 
   return (
     <AbsoluteFill style={{ backgroundColor: "#07090c", fontFamily: DISPLAY, opacity: outFade }}>
-      {/* CREATOR base: near-black with a whisper of the accent hue + a soft accent glow. */}
-      <AbsoluteFill style={{ background: `radial-gradient(120% 80% at 50% 0%, ${accent}18, rgba(0,0,0,0) 55%), linear-gradient(160deg, #0a0d12, #07090c 60%, #05070a)`, transform: `scale(${drift})` }} />
+      {/* Optional AI background — abstract, dark, drifting: a texture that says "founders / network /
+          sci-fi" without being a literal (hallucinatable) scene. Sits under a wash so text stays crisp. */}
+      {p.bg ? (
+        <AbsoluteFill style={{ transform: `scale(${drift})` }}>
+          <Img src={staticFile(p.bg)} style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.55 }} />
+        </AbsoluteFill>
+      ) : null}
+      {/* CREATOR wash: near-black with a whisper of the accent hue. Alpha when a bg image is present so
+          it peeks through; fully opaque otherwise (unchanged premium look). */}
+      <AbsoluteFill style={{ background: `radial-gradient(120% 80% at 50% 0%, ${accent}22, rgba(0,0,0,0) 55%), linear-gradient(160deg, rgba(10,13,18,${p.bg ? 0.72 : 1}), rgba(7,9,12,${p.bg ? 0.84 : 1}) 60%, rgba(5,7,10,${p.bg ? 0.92 : 1}))`, transform: p.bg ? undefined : `scale(${drift})` }} />
       <AbsoluteFill style={{ background: `radial-gradient(60% 40% at 50% 42%, ${accent}12, rgba(0,0,0,0) 70%)` }} />
+      {p.bg ? <AbsoluteFill style={{ background: "linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.18) 42%, rgba(0,0,0,0) 66%)" }} /> : null}
 
       <AbsoluteFill style={{ padding: pad, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
         {/* BYLINE — the persistent creator identity. */}
