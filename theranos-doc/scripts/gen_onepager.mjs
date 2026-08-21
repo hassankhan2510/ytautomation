@@ -127,6 +127,45 @@ async function fetchBg(prompt, dest, ms = 60000) {
   } catch { return false; } finally { clearTimeout(t); }
 }
 
+// Pick a background music track by ROTATION over public/music/ (never fixed). Only uses files YOU put
+// there — nothing is fetched or chosen automatically — so your "no haram" line stays yours to control.
+// ONEPAGER_MUSIC pins a single track; empty folder => silent.
+function pickMusic() {
+  if (process.env.ONEPAGER_MUSIC) return process.env.ONEPAGER_MUSIC;
+  try {
+    const tracks = fs.readdirSync(path.join(ROOT, "public", "music")).filter((f) => /\.(mp3|m4a|wav|ogg|aac)$/i.test(f));
+    if (!tracks.length) return "";
+    // Vary by day + a random offset so the day's two posts don't land on the same track.
+    const idx = (Math.floor(Date.now() / 86400000) + Math.floor(Math.random() * tracks.length)) % tracks.length;
+    return tracks[idx];
+  } catch { return ""; }
+}
+
+// Human descriptor + community CTA per channel, so the generator works for ANY channel (not just
+// Cohort Zero) — the prompt was previously hardcoded to Cohort Zero.
+const NICHE_DESC = { finance: "money & investing", business: "founder & startup", deeptech: "deep-tech / physical-AI", facts: "science & tech" };
+const COMMUNITY = {
+  cohortzero: "a community of founders going zero to one — invite founders to follow for the daily playbook, save + send it to a founder who needs it, and DM to pitch a startup or join a founder session",
+  equitier: "an honest money & investing community — invite people to follow for daily wealth clarity, save + send it to someone who needs to hear it, and share it",
+};
+// QUOTE-mode angles: rotated per run so the shareable wisdom posts stay fresh (dedup catches repeats).
+const QUOTE_THEMES = {
+  finance: [
+    "owning your time is the real wealth flex, not things", "your net worth is what you keep, not what you buy",
+    "invisible wealth beats visible status symbols", "escaping lifestyle inflation", "patience and compounding",
+    "financial peace over financial flexing", "assets that pay you vs liabilities that drain you",
+    "stop buying things to impress people you don't like", "a calendar full of blank spaces is freedom",
+    "boring consistency beats get-rich-quick",
+  ],
+  business: [
+    "paying customers over vanity metrics", "execution beats planning", "failure is data, not the opposite of success",
+    "selling over playing business", "solving a real problem over looking like a founder",
+    "speed of iteration over perfection", "cash flow over hype", "distribution over product",
+    "focus over hustle theater", "start before you feel ready",
+  ],
+  default: ["discipline over motivation", "consistency compounds", "focus beats intensity", "who you become over what you get"],
+};
+
 function drySample() {
   return {
     kicker: "FOUNDER PLAYBOOK",
@@ -153,12 +192,22 @@ async function main() {
   fs.mkdirSync(JOBS, { recursive: true });
   fs.mkdirSync(OUT, { recursive: true });
 
+  const nicheDesc = NICHE_DESC[cfg.niche] || cfg.niche;
+  const community = COMMUNITY[CHANNEL] || `follow ${cfg.brand} for more, save it, and send it to a friend`;
+
   let topic = TOPIC || "";
   let grounding = "";
   let modeRule = "";
   let newsUrl = "";
 
-  if (MODE === "news") {
+  if (MODE === "quote") {
+    // QUOTE / WISDOM post: one original, highly shareable truth people repost + send to a friend.
+    const pool = QUOTE_THEMES[cfg.niche] || QUOTE_THEMES.default;
+    const theme = pool[Math.floor(Math.random() * pool.length)];
+    topic = theme;
+    modeRule = `\nThis is a QUOTE / WISDOM reel — the ENTIRE post is ONE original, highly shareable ${nicheDesc} truth that people REPOST and send to a friend. Angle for THIS one: "${theme}". Write 2-4 short, punchy, quotable sentences — plain, emotional, memorable; NO jargon, NO statistics, NO fake attributions. Put the sharpest 1-2 sentences in "headline" and the rest of the quote in "subline". kicker = a 1-2 word label (e.g. WEALTH, MINDSET, TRUTH, MONEY). Do NOT include stat/statLabel. Classy and universally relatable — never crude, never get-rich-quick hype.`;
+    console.log(`  quote angle: ${theme}`);
+  } else if (MODE === "news") {
     // NEWS post: react to a real, fresh startup/VC headline with a founder-relevant take.
     const n = DRY
       ? { extract: "Google opens its first Pakistan office in Lahore (Reuters)", url: "https://example.com" }
@@ -186,32 +235,28 @@ async function main() {
   const steer = cfg.steer ? `\nEDITORIAL DIRECTION (follow exactly): ${cfg.steer}` : "";
 
   const sys =
-    `You write ONE single-card Instagram Reel for "Cohort Zero" — a founder COMMUNITY brand (founders ` +
-    `going zero to one, together). It is ONE idea that stops the scroll and teaches something real in ` +
-    `one screen, and it must make founders want to FOLLOW, SAVE, SHARE and DM. Return ONLY JSON: ` +
-    `{"kicker": string, "headline": string, "subline": string, "stat"?: string, "statLabel"?: string, ` +
-    `"cardCta": string, "title": string, "captionLines": string[4-6], "imagePrompt": string, ` +
-    `"hashtags": string[6-10]}. ` +
-    `FORMATTING: plain text only — NO markdown (**, *, _, #, backticks), NO emojis in kicker/headline/` +
-    `subline. ` +
+    `You write ONE single-card Instagram Reel for "${cfg.brand}" — a ${nicheDesc} brand. It is ONE idea ` +
+    `that stops the scroll in one screen and makes people want to FOLLOW, SAVE and SHARE. Return ONLY ` +
+    `JSON: {"kicker": string, "headline": string, "subline": string, "stat"?: string, ` +
+    `"statLabel"?: string, "cardCta": string, "title": string, "captionLines": string[4-6], ` +
+    `"imagePrompt": string, "hashtags": string[6-10]}. ` +
+    `FORMATTING: plain text only — NO markdown (**, *, _, #, backticks), NO emojis in kicker/headline/subline. ` +
     `imagePrompt = a short prompt for a RELEVANT, realistic, cinematic BACKGROUND photo for this exact ` +
-    `topic (e.g. a modern VC boardroom, a startup office, a founder at a laptop, a city skyline, a ` +
-    `specific setting the topic implies). Dark/moody, premium, shallow depth of field, no text, no ` +
-    `readable logos, no close-up faces. NOT abstract sci-fi. ` +
-    `RULES: headline <= 90 chars, one bold, specific, curiosity-driving idea (front-load the hook). ` +
-    `subline <= 150 chars, one concrete supporting sentence with a real specific. kicker = 1-3 word mono ` +
-    `label. stat = a SHORT real figure from the grounding if one fits ("3 min", "90%"), else omit stat ` +
-    `AND statLabel. cardCta = <= 18 chars on-card nudge ("follow @cohortzero", "save this", "DM to pitch"). ` +
-    `ANTI-HALLUCINATION: every number/name must come from the grounding; if none supports a figure, omit ` +
-    `the stat rather than invent one. captionLines = an Instagram caption as an ARRAY of 4-6 SHORT ` +
-    `standalone lines (NO newline characters inside any line): line 1 a punchy hook, next 1-2 lines the ` +
-    `insight with a real specific, then a COMMUNITY call to action — invite founders to follow for the ` +
-    `daily playbook, save + send it to a founder who needs it, and DM to pitch a startup or join our ` +
-    `founder sessions — and the LAST line a genuine question that invites replies. Warm, sharp, ` +
-    `peer-to-peer; never corporate or salesy. hashtags = 6-10 founder/startup/VC + ` +
-    `community tags (mix broad + niche; include a couple Pakistan / emerging-market ones when relevant).` +
+    `topic (a fitting real setting the topic implies — office, city skyline, a desk, money/time imagery). ` +
+    `Dark/moody, premium, shallow depth of field, no text, no readable logos, no close-up faces. NOT ` +
+    `abstract sci-fi. ` +
+    `RULES: headline <= 100 chars, the sharpest hook, front-loaded. subline <= 220 chars. kicker = 1-3 ` +
+    `word mono label. stat = a SHORT real figure from the grounding if one truly fits, else omit stat ` +
+    `AND statLabel. cardCta = <= 18 chars on-card nudge ("follow", "save this", "send this"). ` +
+    `ANTI-HALLUCINATION: any number/name must come from the grounding; if none supports a figure, omit the ` +
+    `stat rather than invent one — and never fabricate a quote or an attribution. captionLines = an ` +
+    `Instagram caption as an ARRAY of 4-6 SHORT standalone lines (NO newline characters inside any line): ` +
+    `a punchy hook, the point in 1-2 lines, then a call to action for ${community}, and the LAST line a ` +
+    `genuine question that invites replies. Warm, sharp, human; never corporate or salesy. hashtags = ` +
+    `6-10 clean, relevant tags (mix broad + niche; a couple Pakistan/emerging-market ones when relevant); ` +
+    `never vulgar or spammy.` +
     `${steer}${modeRule}${avoidRule}`;
-  const usr = `TOPIC: ${topic || "(choose one sharp, specific founder/VC lesson in this niche)"}${grounding}\nWrite the card now.`;
+  const usr = `TOPIC / ANGLE: ${topic || "(choose one sharp, specific angle in this niche)"}${grounding}\nWrite the card now.`;
 
   let m;
   if (DRY) m = drySample();
@@ -235,8 +280,9 @@ async function main() {
   const accent = cfg.accentColor || "#e11d48";
   const name = process.env.ONEPAGER_NAME || cfg.brand?.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) || "Cohort Zero";
   const at = process.env.ONEPAGER_AT || (cfg.links?.instagram ? "@" + cfg.links.instagram.replace(/\/+$/, "").split("/").pop() : "@cohort_zero");
-  // Default to the committed Cohort Zero logo as the avatar (contain-fit on a dark disc, not cropped).
-  const avatar = process.env.ONEPAGER_AVATAR || (CHANNEL === "cohortzero" ? "cohortzero-logo.png" : "");
+  // Default to the committed channel logo as the avatar (contain-fit on a dark disc, not cropped).
+  const logoFile = path.join(ROOT, "public", `${CHANNEL}-logo.png`);
+  const avatar = process.env.ONEPAGER_AVATAR || (fs.existsSync(logoFile) ? `${CHANNEL}-logo.png` : "");
   const avatarFit = avatar && /logo|mark|icon/i.test(avatar) ? "contain" : "cover";
 
   // RELEVANT AI background (best-effort, off with ONEPAGER_BG=0): a realistic scene for THIS topic
@@ -250,18 +296,24 @@ async function main() {
     else console.log("  ! bg image unavailable — rendering gradient-only");
   }
 
+  // MUSIC: rotate over the tracks YOU place in public/music/ (curate them yourself — nothing is added
+  // or fetched automatically, so your line is respected). ONEPAGER_MUSIC pins one; otherwise a track is
+  // picked by rotation so it's never fixed. Silent if the folder has no audio.
+  const music = pickMusic();
+  if (music) console.log(`  music: ${music}`); else console.log("  music: none (add tracks to public/music/ to enable)");
+
   const props = {
     brand: cfg.brand || CHANNEL.toUpperCase(),
     name, at, accent,
     ...(avatar ? { avatar, avatarFit } : {}),
     ...(bg ? { bg } : {}),
     kicker: clean(m.kicker || cfg.tagline || "").slice(0, 32),
-    headline: clean(m.headline).slice(0, 120),
-    subline: clean(m.subline).slice(0, 180),
+    headline: clean(m.headline).slice(0, 150),
+    subline: clean(m.subline).slice(0, 260),
     ...(m.stat ? { stat: clean(m.stat).slice(0, 12), statLabel: clean(m.statLabel).slice(0, 80) } : {}),
     footer: (cfg.brand || CHANNEL).toUpperCase(),
     cta: clean(m.cardCta || "follow").slice(0, 22),
-    ...(process.env.ONEPAGER_MUSIC ? { music: process.env.ONEPAGER_MUSIC } : {}),
+    ...(music ? { music } : {}),
   };
   fs.writeFileSync(path.join(OUT, "onepager_props.json"), JSON.stringify(props, null, 2));
 

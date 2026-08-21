@@ -8,14 +8,15 @@ name: "Cohort Zero — Daily One-Page Reels → Instagram"
 # MP4 and hands it back as a downloadable artifact.
 on:
   schedule:
-    - cron: "0 10 * * *" # morning — LESSON
-    - cron: "0 15 * * *" # evening — NEWS
+    - cron: "0 10 * * *"  # morning — LESSON
+    - cron: "0 15 * * *"  # afternoon — NEWS
+    - cron: "40 18 * * *" # evening — QUOTE (shareable wisdom for the feed)
   workflow_dispatch:
     inputs:
       mode:
-        description: "lesson = evergreen founder lesson · news = react to today's startup news"
+        description: "lesson = evergreen founder lesson · news = today's startup news · quote = shareable wisdom"
         type: choice
-        options: [lesson, news]
+        options: [lesson, news, quote]
         default: lesson
         required: false
       topic:
@@ -56,7 +57,11 @@ jobs:
         id: mode
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ github.event.schedule }}" = "0 15 * * *" ]; then MODE=news; else MODE=lesson; fi
+            case "${{ github.event.schedule }}" in
+              "0 15 * * *")  MODE=news ;;
+              "40 18 * * *") MODE=quote ;;
+              *)             MODE=lesson ;;
+            esac
           else
             MODE="${{ github.event.inputs.mode }}"; MODE="${MODE:-lesson}"
           fi
