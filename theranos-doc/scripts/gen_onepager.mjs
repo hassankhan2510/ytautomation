@@ -1,0 +1,139 @@
+/**
+ * ONE-PAGE REEL WRITER — content for the single animated card (OnePager composition), in the
+ * LinkedIn-personal CREATOR style, for Cohort Zero's daily Instagram Reel.
+ *
+ * Picks/receives a founder-education topic, grounds it (best-effort), de-dupes against history, and
+ * asks Groq for ONE sharp idea: kicker + headline + one supporting line + an optional stat. Writes:
+ *   out/onepager_props.json         -> inputProps for `remotion render OnePager --props=...`
+ *   jobs/<channel>_onepager.json    -> a meta block for meta_upload.mjs (caption/hashtags)
+ *
+ *   CHANNEL=cohortzero TOPIC="how VCs read a deck" GROQ_API_KEY=xxx node scripts/gen_onepager.mjs
+ *   node scripts/gen_onepager.mjs --dry     # no API — canned sample, tests the plumbing
+ */
+
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { research } from "./lib_research.mjs";
+import { recentTitles, appendHistory, isDuplicate } from "./lib_history.mjs";
+import { groqJSON } from "./lib_groq.mjs";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const ROOT = path.resolve(__dirname, "..");
+const REPO = path.resolve(ROOT, "..");
+const JOBS = path.join(ROOT, "jobs");
+const OUT = path.join(ROOT, "out");
+
+const DRY = process.argv.includes("--dry");
+const CHANNEL = (process.env.CHANNEL || "cohortzero").toLowerCase();
+const TOPIC = process.env.TOPIC || "";
+
+function loadConfig() {
+  const cfg = JSON.parse(fs.readFileSync(path.join(REPO, "channels", "config.json"), "utf-8"));
+  if (!cfg[CHANNEL]) { console.error(`Unknown channel "${CHANNEL}"`); process.exit(1); }
+  return cfg[CHANNEL];
+}
+
+function drySample() {
+  return {
+    kicker: "FOUNDER PLAYBOOK",
+    headline: "VCs decide in 3 minutes — and it's not on your numbers.",
+    subline: "The first slide they scan is the problem statement. If it isn't obvious there, they stop.",
+    stat: "3 min",
+    statLabel: "average time a VC spends on a first deck",
+    title: "How VCs actually read your pitch deck",
+    description: "The truth about how investors skim a deck — and the one slide that decides everything.",
+    hashtags: ["startup", "founders", "venturecapital", "pitchdeck", "fundraising"],
+  };
+}
+
+async function main() {
+  const cfg = loadConfig();
+  fs.mkdirSync(JOBS, { recursive: true });
+  fs.mkdirSync(OUT, { recursive: true });
+
+  const topic = TOPIC || "";
+  // Grounding (best-effort; Cohort Zero is a soft-ground channel — we proceed even if thin).
+  let g = [];
+  if (cfg.ground && topic && !DRY) {
+    try { g = (await research(topic, { niche: cfg.niche })).items || []; }
+    catch (e) { console.log(`  ! research failed (${e.message})`); }
+  }
+  const grounding = g.length
+    ? "\nGROUNDING (base facts ONLY on this; do not invent specifics):\n" + g.map((x) => `- ${x.title ? x.title + ": " : ""}${x.extract}`).join("\n").slice(0, 2200)
+    : "";
+
+  const avoid = recentTitles(CHANNEL, 45).slice(-20);
+  const avoidRule = avoid.length ? `\nFRESHNESS: do NOT repeat or reword any of these recent posts:\n${JSON.stringify(avoid)}` : "";
+  const steer = cfg.steer ? `\nEDITORIAL DIRECTION (follow exactly): ${cfg.steer}` : "";
+
+  const sys =
+    `You write ONE single-card Instagram Reel for a founder/startup education brand. It is ONE idea, ` +
+    `designed to stop the scroll and teach something real in one screen. Return ONLY JSON: ` +
+    `{"kicker": string, "headline": string, "subline": string, "stat"?: string, "statLabel"?: string, ` +
+    `"title": string, "description": string, "hashtags": string[5-8]}. ` +
+    `RULES: headline <= 90 chars, one bold, specific, curiosity-driving idea (front-load the hook). ` +
+    `subline <= 150 chars, one concrete supporting sentence with a real specific. kicker = 1-3 word ` +
+    `mono label. stat = a SHORT real figure from the grounding if one fits ("3 min", "90%"), else omit ` +
+    `stat AND statLabel. ANTI-HALLUCINATION: every number/name must come from the grounding; if none ` +
+    `supports a figure, omit the stat rather than invent one. title/description/hashtags = the IG ` +
+    `caption kit.${steer}${avoidRule}`;
+  const usr = `TOPIC: ${topic || "(choose one sharp, specific founder/VC lesson in this niche)"}${grounding}\nWrite the card now.`;
+
+  let m;
+  if (DRY) m = drySample();
+  else {
+    m = await groqJSON(sys, usr, { maxTokens: 900, temperature: 0.6 });
+    if (!m || !m.headline) { console.error("  ! Groq returned no usable card — re-run."); process.exit(1); }
+  }
+
+  // De-dup: if this headline repeats a recent post, ask once for a different angle.
+  if (!DRY) {
+    const dup = isDuplicate(CHANNEL, { topic: topic || m.title, title: m.headline }, { days: 45, threshold: 0.6 });
+    if (dup) {
+      console.log(`  ! duplicate of "${String(dup.title).slice(0, 50)}" — re-angling`);
+      const r = await groqJSON(sys, `${usr}\nThe angle "${m.headline}" is too similar to a past post — pick a genuinely DIFFERENT angle.`, { maxTokens: 900, temperature: 0.7 });
+      if (r && r.headline) m = r;
+    }
+  }
+
+  const accent = cfg.accentColor || "#e11d48";
+  const name = process.env.ONEPAGER_NAME || cfg.brand?.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) || "Cohort Zero";
+  const at = process.env.ONEPAGER_AT || (cfg.links?.instagram ? "@" + cfg.links.instagram.replace(/\/+$/, "").split("/").pop() : "@cohortzero");
+  const avatar = process.env.ONEPAGER_AVATAR || "";
+
+  const props = {
+    brand: cfg.brand || CHANNEL.toUpperCase(),
+    name, at, accent,
+    ...(avatar ? { avatar } : {}),
+    kicker: String(m.kicker || cfg.tagline || "").slice(0, 32),
+    headline: String(m.headline || "").slice(0, 120),
+    subline: String(m.subline || "").slice(0, 180),
+    ...(m.stat ? { stat: String(m.stat).slice(0, 12), statLabel: String(m.statLabel || "").slice(0, 80) } : {}),
+    footer: (cfg.brand || CHANNEL).toUpperCase(),
+    cta: "follow →",
+  };
+  fs.writeFileSync(path.join(OUT, "onepager_props.json"), JSON.stringify(props, null, 2));
+
+  // Caption kit for meta_upload.mjs (reads .meta).
+  const hashtags = (Array.isArray(m.hashtags) ? m.hashtags : []).map((h) => String(h).replace(/^#/, "")).filter(Boolean).slice(0, 8);
+  const job = {
+    meta: {
+      title: m.title || m.headline,
+      description: m.description || m.subline || "",
+      hashtags: hashtags.length ? hashtags : ["startup", "founders", "business"],
+      channel: CHANNEL, niche: cfg.niche, brand: cfg.brand, platform: "reel",
+      disclaimer: cfg.disclaimer || "",
+    },
+  };
+  const jobPath = path.join(JOBS, `${CHANNEL}_onepager.json`);
+  fs.writeFileSync(jobPath, JSON.stringify(job, null, 2));
+
+  if (!DRY) appendHistory(CHANNEL, { topic: topic || m.title || m.headline, title: m.headline });
+
+  console.log(`  + out/onepager_props.json  ("${props.headline.slice(0, 60)}")`);
+  console.log(`  + ${path.relative(ROOT, jobPath)}`);
+  console.log(`\nRender:  npx remotion render OnePager out/${CHANNEL}_onepager.mp4 --props=out/onepager_props.json`);
+}
+
+main().catch((e) => { console.error("gen_onepager failed:", e.message); process.exit(1); });

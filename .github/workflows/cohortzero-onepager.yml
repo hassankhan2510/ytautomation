@@ -1,0 +1,94 @@
+name: "Cohort Zero — Daily One-Page Reel → Instagram"
+
+# One single animated card per day in the LinkedIn-personal CREATOR style (byline + one sharp founder
+# lesson), posted to Cohort Zero's Instagram. No footage, no voice — a clean, premium text reel.
+# Posts only if the Meta secrets for Cohort Zero are set (META_*_COHORTZERO); otherwise it just renders
+# the MP4 and hands it back as a downloadable artifact.
+on:
+  schedule:
+    - cron: "0 10 * * *" # ~ daily mid-morning
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Optional topic (leave blank to auto-pick a trending founder/VC lesson)"
+        required: false
+        type: string
+      publish:
+        description: "publish = post to Instagram · test = render only (download the artifact)"
+        type: choice
+        options: [publish, test]
+        default: publish
+        required: false
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: theranos-doc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: theranos-doc/package-lock.json
+      - name: Install headless-Chrome libraries (for the Remotion render)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji
+      - run: npm ci
+      - name: Pick a trending founder/VC topic (scout)
+        id: scout
+        run: |
+          TOPIC="${{ github.event.inputs.topic }}"
+          if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=cohortzero --one)"; fi
+          echo "Chosen topic: $TOPIC"
+          echo "topic=$TOPIC" >> "$GITHUB_OUTPUT"
+      - name: Write the card (Groq, grounded, de-duped)
+        env:
+          CHANNEL: cohortzero
+          TOPIC: ${{ steps.scout.outputs.topic }}
+          ONEPAGER_AVATAR: ${{ vars.ONEPAGER_AVATAR_COHORTZERO }}
+          ONEPAGER_NAME: ${{ vars.ONEPAGER_NAME_COHORTZERO }}
+          ONEPAGER_AT: ${{ vars.ONEPAGER_AT_COHORTZERO }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
+        run: node scripts/gen_onepager.mjs
+      - name: Persist topic history (so tomorrow won't repeat)
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add channels/history/*.json 2>/dev/null || true
+          git commit -m "chore(history): cohortzero one-pager topic [skip ci]" || { echo "no history change"; exit 0; }
+          git pull --rebase --autostash || true
+          git push || echo "push skipped"
+      - name: Render the reel (OnePager, 9:16)
+        run: npx remotion render OnePager out/cohortzero_onepager.mp4 --props=out/onepager_props.json --concurrency=2
+      - name: Post to Instagram (no-op unless Meta secrets are set / test run)
+        if: ${{ github.event.inputs.publish != 'test' }}
+        env:
+          META_TARGETS: "ig"
+          META_PAGE_ID_COHORTZERO: ${{ vars.META_PAGE_ID_COHORTZERO || secrets.META_PAGE_ID_COHORTZERO }}
+          META_IG_USER_ID_COHORTZERO: ${{ vars.META_IG_USER_ID_COHORTZERO || secrets.META_IG_USER_ID_COHORTZERO }}
+          META_PAGE_TOKEN_COHORTZERO: ${{ secrets.META_PAGE_TOKEN_COHORTZERO }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/meta_upload.mjs --channel=cohortzero --video=out/cohortzero_onepager.mp4 --script=jobs/cohortzero_onepager.json
+      - name: Deliver as downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cohortzero-onepager-run${{ github.run_number }}
+          path: |
+            theranos-doc/out/cohortzero_onepager.mp4
+            theranos-doc/out/onepager_props.json
+          retention-days: 30
+          if-no-files-found: warn

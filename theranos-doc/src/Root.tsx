@@ -3,6 +3,7 @@ import { Composition } from "remotion";
 import { DocVideo } from "./compositions/DocVideo";
 import { Carousel } from "./compositions/Carousel";
 import { LiCarousel } from "./compositions/LiCarousel";
+import { OnePager } from "./compositions/OnePager";
 import { Thumbnail } from "./compositions/Thumbnail";
 import timeline from "./data/timeline.json";
 import carousel from "./data/carousel.json";
@@ -65,6 +66,27 @@ export const RemotionRoot: React.FC = () => {
         fps={fps}
         width={1080}
         height={1350}
+      />
+      {/* One-page vertical REEL (9:16) — a single animated LinkedIn-creator-style card. Content is
+          passed via --props (see gen_onepager.mjs); ~8s at 30fps. */}
+      <Composition
+        id="OnePager"
+        component={OnePager}
+        durationInFrames={240}
+        fps={30}
+        width={1080}
+        height={1920}
+        defaultProps={{
+          brand: "COHORT ZERO",
+          name: "Cohort Zero",
+          at: "@cohortzero",
+          accent: "#e11d48",
+          kicker: "FOUNDER PLAYBOOK",
+          headline: "The one slide VCs actually read first.",
+          subline: "It isn't your team, your market, or your traction. It's this.",
+          footer: "COHORT ZERO",
+          cta: "follow →",
+        }}
       />
       {/* YouTube thumbnail — 1280x720, rendered as a single still. */}
       <Composition id="Thumbnail" component={Thumbnail} durationInFrames={1} fps={fps} width={1280} height={720} />
