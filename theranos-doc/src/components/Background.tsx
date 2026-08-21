@@ -61,7 +61,7 @@ const KenBurns: React.FC<{ src: string; durationInFrames: number; seed: number }
   );
 };
 
-const BASE_OPACITY = 0.5; // backgrounds sit under the captions
+const BASE_OPACITY = 0.72; // footage reads bright/premium; a bottom scrim (below) keeps captions legible
 const FADE_IN = 9; // scene fade-in frames
 const OVERLAP = 12; // frames each scene lingers into the next -> cross-dissolve
 
@@ -86,7 +86,7 @@ const FadeLayer: React.FC<{ dur: number; overlap: number; children: React.ReactN
  */
 export const Background: React.FC<{ segments: BgSegment[] }> = ({ segments }) => {
   return (
-    <AbsoluteFill style={{ backgroundColor: "#0a0a0a" }}>
+    <AbsoluteFill style={{ backgroundColor: "#0b0d12" }}>
       {segments.map((seg, i) => {
         const src = staticFile(`assets/${seg.asset}`);
         const overlap = i === segments.length - 1 ? 0 : OVERLAP; // don't extend past the end
@@ -109,6 +109,15 @@ export const Background: React.FC<{ segments: BgSegment[] }> = ({ segments }) =>
           </Sequence>
         );
       })}
+      {/* Caption-zone scrim: darkens only the bottom third so lower-thirds/center captions stay
+          legible while the footage itself reads bright and premium (no full-frame muddy tint). */}
+      <AbsoluteFill
+        style={{
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.22) 30%, rgba(0,0,0,0) 52%)",
+          pointerEvents: "none",
+        }}
+      />
     </AbsoluteFill>
   );
 };

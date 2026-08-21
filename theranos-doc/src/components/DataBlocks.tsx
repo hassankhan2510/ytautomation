@@ -21,9 +21,10 @@ function useFade() {
   return frame > durationInFrames - 12 ? outO : inO;
 }
 
-/** A soft dark scrim so text-heavy blocks read over any background. */
+/** A soft dark scrim so text-heavy blocks read over any background. Lightened from 0.55 so the
+    footage behind charts/stats stays visible and premium, while text still reads. */
 const Scrim: React.FC = () => (
-  <AbsoluteFill style={{ backgroundColor: "rgba(0,0,0,0.55)" }} />
+  <AbsoluteFill style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.30), rgba(0,0,0,0.46))" }} />
 );
 
 const sans = 'system-ui, "Segoe UI", Roboto, sans-serif';
@@ -353,7 +354,7 @@ export const Collage: React.FC<{
           );
         })}
       </div>
-      <AbsoluteFill style={{ boxShadow: `inset 0 0 300px rgba(0,0,0,0.7)`, border: `4px solid ${accent}`, pointerEvents: "none" }} />
+      <AbsoluteFill style={{ boxShadow: `inset 0 0 220px rgba(0,0,0,0.42)`, border: `4px solid ${accent}`, pointerEvents: "none" }} />
     </AbsoluteFill>
   );
 };
