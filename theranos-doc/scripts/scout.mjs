@@ -27,31 +27,37 @@ const CHANNELS = {
     // for evergreen how-to topics.
     // Shorts win on curiosity + wealth psychology, not daily price recaps (commodity → buried).
     // Seed high-engagement money/investing angles. Riba/interest stays blocked below (user's line).
+    // Favour "how X actually works" TECHNICAL breakdowns of a specific instrument/asset — the steer
+    // turns these into top-0.01% desk-analyst explainers, not generic "get rich" content.
     seeds: [
-      "how to build wealth", "how the rich get richer", "money mistakes keeping you poor",
-      "how to invest for beginners", "passive income ideas that work", "how money actually works",
-      "stock market for beginners", "how to start investing with little money",
-      "biggest investing mistakes", "warren buffett investing advice",
-      "how inflation is stealing your money", "why the middle class stays poor",
-      "financial freedom explained", "how to get rich slowly", "index funds explained",
-      "how billionaires invest their money", "money habits of the rich",
-      "gold vs bitcoin", "is bitcoin still worth it", "stock market crash coming",
-      "how to make your money work for you", "wealth building for beginners",
+      "how the stock market actually works", "how forex trading actually works", "eur usd explained",
+      "how etfs actually work", "etf vs index fund", "how index funds actually work",
+      "how reits work", "how real estate builds wealth", "how dividends actually work",
+      "how options trading works", "how a stock is valued", "how gold is priced",
+      "what moves the stock market", "how nvidia makes money", "how tesla makes money",
+      "how bitcoin actually works", "how forex pairs move", "how earnings move a stock",
+      "how the fed moves markets", "how to read a stock chart", "what is market cap really",
+      "how billionaires invest their money", "stock market crash explained",
     ],
     // Equitier is general-audience finance BUT must avoid interest/riba topics (user's line).
     block: /interest|mortgage|\bloans?\b|credit\s?card|\bapr\b|high[-\s]?yield|savings account|\bbonds?\b|refinanc|heloc|credit score|\bdebt\b|bnpl|buy now pay later|riba|payday/i,
-    boost: /stock|\bmarket|nasdaq|s&p|dow\b|gold|silver|bitcoin|btc|ethereum|\beth\b|crypto|solana|\bxrp\b|\bprice\b|surge|crash|rally|nvidia|tesla|apple|amazon|meta|invest|econom|money|wealth|\brich|income|inflation|financ|billionaire|passive|budget|retire/i,
+    boost: /stock|\bmarket|nasdaq|s&p|dow\b|gold|silver|bitcoin|btc|ethereum|\beth\b|crypto|solana|\bxrp\b|forex|\betf\b|reit|dividend|option|valuation|earning|\bfed\b|\bprice\b|chart|market cap|surge|crash|rally|nvidia|tesla|apple|amazon|meta|invest|econom|money|wealth|\brich|income|inflation|financ|billionaire|passive|budget|retire/i,
   },
   cohortzero: {
+    // Founder/VC EDUCATION — tactical mechanics a student or early founder actually needs. The steer
+    // pushes for real numbers/examples and Y-Combinator-beating clarity, not motivation.
     seeds: [
-      "how to start a business", "why startups fail", "startup mistakes", "business ideas 2026",
-      "how founders raise money", "how to scale a startup", "profitable business models",
-      "billion dollar company story", "biggest startup failures", "how companies grow",
-      "business strategy explained", "entrepreneur mistakes", "how to get customers",
-      "product market fit", "how startups make money", "famous founder stories",
+      "how vcs read a pitch deck", "what vcs look for in a startup", "how startup fundraising works",
+      "how cap tables work", "what is a term sheet", "startup equity explained",
+      "how founders split equity", "how to pitch to investors", "seed round explained",
+      "startup valuation explained", "how yc chooses startups", "product market fit explained",
+      "saas metrics explained", "how to build a pitch deck", "how startups make money",
+      "why startups fail", "how convertible notes work", "how down rounds work",
+      "pakistani startup success story", "how to raise a seed round in pakistan",
+      "biggest startup failures", "famous founder stories",
     ],
     block: /nsfw|onlyfans|gambling|casino/i,
-    boost: /startup|business|founder|company|entrepreneur|venture|scal|revenue|customer|product|market|billion|acqui|ipo|fund|pitch|strategy/i,
+    boost: /startup|business|founder|company|entrepreneur|venture|\bvc\b|\byc\b|scal|revenue|customer|product|market fit|billion|acqui|ipo|fund|pitch|deck|term sheet|cap table|equity|dilution|valuation|seed|saas|strategy|pakistan/i,
   },
   // Pakistan-focused Cohort Zero (for TikTok): founder / entrepreneurship lust the local audience is
   // searching daily. Same brand + accent, different topic pool + language flavour.
@@ -73,18 +79,20 @@ const CHANNELS = {
     // Shorts win on CURIOSITY, not "news today" (that's commodity content that gets buried). Seed
     // high-intrigue AI/robotics/tech angles that hook and travel, plus Syndar's own perception/
     // autonomy niche ("how machines see", "why cameras fail") — its actual differentiator.
+    // PHYSICAL AI / robotics — favour "how does X actually work" mechanism explainers on the most
+    // advanced 2026-2027 systems, which the editorial steer turns into deep technical breakdowns.
     seeds: [
-      "how ai actually works", "what ai can really do now", "ai you won't believe exists",
-      "this ai is insane", "scariest ai moment", "ai did something no one expected",
-      "most advanced robot in the world", "robot doing human jobs", "humanoid robot in real life",
-      "how self driving cars see the road", "why cameras fail at night", "ai vs human",
-      "craziest ai tools right now", "ai breakthrough explained", "new robot unveiled",
-      "tesla optimus robot", "figure humanoid robot", "boston dynamics robot",
-      "how does chatgpt actually work", "will ai take your job", "ai facts nobody talks about",
-      "future technology that already exists", "insane new technology",
+      "how humanoid robots actually work", "how tesla optimus works", "how figure 02 robot works",
+      "how robots learn to walk", "how humanoid robots balance", "how robot hands grip objects",
+      "embodied ai explained", "physical ai explained", "vision language action model explained",
+      "how robots see in 3d", "how self driving cars see the road", "lidar vs camera self driving",
+      "sim to real robotics explained", "reinforcement learning robots", "world models ai explained",
+      "how boston dynamics atlas works", "how robot actuators work", "dexterous robot hand",
+      "most advanced humanoid robot 2026", "how does chatgpt actually work", "how ai agents work",
+      "why robots struggle to walk", "how drones navigate without gps",
     ],
     block: /nsfw|gambling|casino|toy review/i,
-    boost: /\bai\b|openai|chatgpt|gemini|claude|grok|deepseek|llm|robot|humanoid|optimus|figure|boston dynamics|breakthrough|explained|autonom|waymo|self[-\s]?driving|agent|neural|deepmind|nvidia|\btech|technolog|future|sensor|automat/i,
+    boost: /\bai\b|openai|chatgpt|gemini|claude|grok|deepseek|llm|robot|humanoid|optimus|figure|atlas|boston dynamics|embodied|locomotion|actuator|dexterous|grasp|lidar|perception|world model|\bvla\b|physical ai|breakthrough|explained|autonom|waymo|self[-\s]?driving|drone|agent|neural|deepmind|nvidia|\btech|technolog|future|sensor|automat/i,
   },
 };
 

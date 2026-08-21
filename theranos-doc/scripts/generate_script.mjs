@@ -101,8 +101,13 @@ RULES:
   better to be vaguer than to be confidently wrong.
 - STRUCTURE: hook -> quick context -> escalating points/story with tension -> the payoff/insight ->
   a short, natural CTA. For long-form, build in mini-cliffhangers so retention doesn't sag mid-video.
-- TITLE must be rank-fast: keyword + curiosity + specificity, ideally with a number or a bold promise.
-  titleOptions = genuinely different angles, not reworded copies.
+- TITLE must win the BROWSE / SUGGESTED feed, not just search: it competes against every other
+  thumbnail on the home page, so it needs an instant curiosity gap or emotional pull that makes a
+  stranger click. Front-load the most interesting word (don't bury the hook), stay ~40-60 characters,
+  and combine ONE searchable keyword + specificity (a number, name, or concrete outcome) + an open
+  loop the video actually closes. Provocative but never a lie the body can't deliver. Avoid tired
+  formulas ("You won't believe", "SHOCKING", ALL-CAPS). titleOptions = genuinely different angles
+  (one curiosity-led, one number/result-led, one contrarian), not reworded copies.
 - DESCRIPTION = a real SEO YouTube description, 150-250 words in 2-3 short paragraphs. The FIRST
   sentence is a keyword-rich hook (it shows in search results), then naturally weave in the main
   keyword + related search terms a viewer would type, and end with a question or CTA. Plain text, no
@@ -264,7 +269,8 @@ async function polish(meta, lines, cfg) {
   const sys =
     `You are a YouTube/Shorts packaging editor. You must NOT change the video body. Return ONLY JSON ` +
     `{"title": string, "hook": string}. The title must ACCURATELY reflect the body below (no promise ` +
-    `the body doesn't deliver), be keyword-first, specific, and create curiosity — no generic clickbait. ` +
+    `the body doesn't deliver), win the BROWSE/SUGGESTED feed with an instant curiosity gap, front-load ` +
+    `the most interesting word, stay ~40-60 chars, mix one keyword + specificity — no generic clickbait. ` +
     `The hook is a rewrite of line 1: the single most scroll-stopping opening that still matches the ` +
     `body's first idea — concrete (a number/name/tension), no "in this video", no "have you ever".`;
   const usr =
@@ -413,12 +419,17 @@ async function main() {
     ? `\nFRESHNESS: these titles were used recently on this channel — pick a genuinely DIFFERENT angle and do NOT reuse or lightly reword any of them:\n${JSON.stringify(avoidTitles.slice(-20))}`
     : "";
 
+  // EDITORIAL DIRECTION: the channel's specific angle + depth (config `steer`) — this is what keeps
+  // each channel on its lane (Syndar = deep physical-AI mechanism, Equitier = technical finance
+  // breakdown, Cohort Zero = tactical founder/VC education) instead of drifting into generic slop.
+  const steerRule = cfg.steer ? `\nEDITORIAL DIRECTION (follow exactly): ${cfg.steer}` : "";
+
   // IG_TONE=1 (set by the Instagram/Facebook workflow) shifts the writing to a native Reels voice.
   const igTone = process.env.IG_TONE === "1"
     ? `\nPLATFORM TONE (Instagram/Facebook Reels): write in a casual, scroll-stopping, IG-native voice — punchy short sentences, conversational, speak directly to "you", land the hook in the first 2 seconds, high energy, no corporate stiffness.`
     : "";
 
-  const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}${avoidRule}${igTone}`;
+  const system = `You are an expert scriptwriter for a faceless, high-retention ${cfg.niche} video channel. You write factual, non-clickbait, production-grade scripts. ${RULES}${langRule(cfg.language)}${steerRule}${avoidRule}${igTone}`;
 
   console.log(`Channel ${CHANNEL} | mode ${MODE} | ${topics.length} topic(s) queued`);
   console.log(`Groq: key ${GROQ_API_KEY ? "SET" : "MISSING"} | model ${GROQ_MODEL}`);
@@ -485,7 +496,7 @@ async function main() {
     if (shortsOnly) {
       // SHORTS-ONLY: write standalone reels DIRECTLY from the topic — no long video first.
       const n = cfg.makeShorts || 3;
-      const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}${avoidRule}${igTone}`;
+      const nativeSystem = `You are an expert scriptwriter for faceless, high-retention ${cfg.niche} vertical reels (YouTube Shorts / Instagram Reels). Each reel is a standalone, valuable ${cfg.niche} short that HOOKS hard in the very first line and pays it off by the last. ${RULES}${langRule(cfg.language)}${steerRule}${avoidRule}${igTone}`;
       const nativePrompt = `NICHE STYLE GUIDE:\n${nichePack}\n${groundingText(g)}${dataRule}\nTOPIC: ${topic || "(you choose a strong, specific topic in this niche)"}\nWrite ${n} DIFFERENT standalone reels on this topic — each a distinct angle/hook, not variations of the same one.\nReturn JSON: { "shorts": [ { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "lines": [6-9 punchy lines in the shape above] } x${n} ] }`;
       let shortsModel;
       try {
@@ -560,7 +571,7 @@ async function main() {
         // ZERO shorts. One short per call keeps each response small and reliable; a failure on one
         // short no longer loses the rest.
         const pts = (longModel.lines || []).map((l) => l.text || l.caption).filter(Boolean).slice(0, 40);
-        const shortsSystem = `You write ONE punchy vertical reel (YouTube Short / Reel) from a longer ${cfg.niche} video. Pick a self-contained, hook-worthy angle and write it as a standalone short. ${RULES}${langRule(cfg.language)}${avoidRule}`;
+        const shortsSystem = `You write ONE punchy vertical reel (YouTube Short / Reel) from a longer ${cfg.niche} video. Pick a self-contained, hook-worthy angle and write it as a standalone short. ${RULES}${langRule(cfg.language)}${steerRule}${avoidRule}`;
         for (let i = 0; i < cfg.makeShorts; i++) {
           const shortsPrompt = `The long video covers these points:\n${JSON.stringify(pts)}\nWrite reel ${i + 1} of ${cfg.makeShorts} — pick a DISTINCT angle/moment (different from the other reels). Return ONE JSON object: { "title": string, "titleOptions": string[3], "hashtags": string[5], "description": string, "tags": string[3], "thumb": {"line1","line2","sub"}, "lines": [6-9 punchy lines in the shape above] }`;
           let sh;
