@@ -41,28 +41,67 @@ const clean = (s) => String(s == null ? "" : s)
   .replace(/\s+/g, " ")
   .trim();
 
-// Pull today's freshest, non-duplicate startup/VC/founder headline from Google News RSS across several
-// queries (acts as a multi-feed aggregator). Returns { title, extract, url } or null.
+// News sources for the daily NEWS post. Google News queries (global + Pakistan) PLUS direct publisher
+// RSS feeds (global startup + Pakistan/MENA tech). Extend at runtime with ONEPAGER_FEEDS="url,url".
+const NEWS_QUERIES = [
+  "startup funding round", "venture capital", "Y Combinator", "startup launch", "startup acquisition",
+  "seed round raises", "accelerator applications",
+  "Pakistan startup", "Pakistan fintech funding", "Karachi startup", "Lahore startup founder",
+  "Pakistan tech startup raises", "Pakistan venture capital",
+];
+const NEWS_FEEDS = [
+  "https://techcrunch.com/category/startups/feed/",   // global startups
+  "https://www.menabytes.com/feed/",                  // MENA + Pakistan startups
+  "https://www.techjuice.pk/feed/",                   // Pakistan tech/startups
+  "https://propakistani.pk/feed/",                    // Pakistan tech (filtered to startup items)
+  "https://startuppakistan.com.pk/feed/",             // Pakistan startup ecosystem
+  ...(process.env.ONEPAGER_FEEDS ? process.env.ONEPAGER_FEEDS.split(",").map((s) => s.trim()).filter(Boolean) : []),
+];
+// Keep only genuinely startup/VC/funding headlines (esp. from the broad Pakistan tech feeds).
+const THEME = /startup|founder|fund(ing|ed|s|raise)?|raise[sd]?|seed|series\s+[a-e]\b|venture|\bvc\b|accelerat|incubat|valuation|acqui|\bipo\b|fintech|saas|angel|unicorn|pre-seed|round/i;
+const PK = /pakistan|karachi|lahore|islamabad|pakistani/i;
+
+async function fetchText(url, ms = 9000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try { const r = await fetch(url, { signal: ctrl.signal, headers: { "User-Agent": "Mozilla/5.0" } }); return r.ok ? await r.text() : null; }
+  catch { return null; } finally { clearTimeout(t); }
+}
+// Parse a generic RSS/Atom feed into { title, extract, url }[].
+async function fetchFeed(url, max = 8) {
+  const xml = await fetchText(url);
+  if (!xml) return [];
+  const un = (s) => String(s || "").replace(/<!\[CDATA\[|\]\]>/g, "").replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&#0?39;/g, "'").replace(/&quot;/g, '"').replace(/\s+/g, " ").trim();
+  return [...xml.matchAll(/<(?:item|entry)\b[\s\S]*?<\/(?:item|entry)>/g)].slice(0, max).map((m) => {
+    const b = m[0];
+    const title = un((b.match(/<title[^>]*>([\s\S]*?)<\/title>/) || [])[1]);
+    let link = (b.match(/<link>([\s\S]*?)<\/link>/) || [])[1];
+    if (!link) { const href = b.match(/<link[^>]*href=["']([^"']+)["']/); link = href ? href[1] : ""; }
+    return title ? { title, extract: title, url: un(link) } : null;
+  }).filter(Boolean);
+}
+
+// Pull today's freshest, non-duplicate startup/VC/founder headline across Google News + publisher
+// feeds, with a light Pakistan boost (Cohort Zero's core audience). Returns { title, extract, url }.
 async function pickNews() {
-  const queries = [
-    "startup funding round", "venture capital", "Y Combinator", "startup launch",
-    "startup Pakistan", "startup acquisition", "seed round raises", "accelerator applications",
-  ];
   const seen = new Set();
   const items = [];
-  for (const q of queries) {
-    let hits = [];
-    try { hits = await news(q, 5); } catch { hits = []; }
-    for (const n of hits) {
-      const key = normKey(n.extract || n.title);
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      items.push(n);
-    }
-  }
-  // Drop anything already posted recently (dedup on the headline text).
+  const add = (n) => { const k = normKey(n.extract || n.title); if (!k || seen.has(k)) return; seen.add(k); items.push(n); };
+
+  const [gnews, feeds] = await Promise.all([
+    Promise.all(NEWS_QUERIES.map((q) => news(q, 5).catch(() => []))),
+    Promise.all(NEWS_FEEDS.map((f) => fetchFeed(f).catch(() => []))),
+  ]);
+  for (const list of gnews) for (const n of list) add(n);
+  for (const list of feeds) for (const n of list) if (THEME.test(n.title)) add(n); // filter broad feeds
+  console.log(`  news pool: ${items.length} candidates from ${NEWS_QUERIES.length} queries + ${NEWS_FEEDS.length} feeds`);
+
   const fresh = items.filter((n) => !isDuplicate(CHANNEL, { topic: n.extract, title: n.extract }, { days: 21, threshold: 0.55 }));
-  return fresh[0] || items[0] || null;
+  const pool = fresh.length ? fresh : items;
+  // Prefer clearly on-theme headlines, with a nudge toward Pakistan/emerging-market stories.
+  const score = (n) => (THEME.test(n.extract) ? 2 : 0) + (PK.test(n.extract) ? 1 : 0);
+  pool.sort((a, b) => score(b) - score(a));
+  return pool[0] || null;
 }
 
 function loadConfig() {
