@@ -1,7 +1,8 @@
-name: "Channel — TIL (manual)"
+name: "Channel — TIL (PAUSED — manual only)"
 
 # Groq invents a valuable fact, the machine builds a short, and it lands in out/til/.
-# NOTE: the daily auto-run is currently OFF (see below) — run it manually until TIL is fully set up.
+# NOTE: TIL is PAUSED — no scheduled auto-run (see below). It only runs if you trigger it by hand
+# from the Actions tab. Re-enable the daily cron when you want TIL back.
 on:
   workflow_dispatch:
     inputs:

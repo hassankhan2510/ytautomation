@@ -1,11 +1,11 @@
-name: "Syndar — Daily Short (auto, trend-picked)"
+name: "Syndar — Weekly (auto: 1 long + 2 shorts, Sat)"
 
-# Fully autonomous: the topic scout picks a trending deep-tech / physical-AI topic, the machine builds
-# ONE short in YOUR cloned voice, and uploads it to Syndar as PUBLIC. Blank topic = auto-pick.
-# NOTE: this is SHORTS only. Long-form Syndar (the startup funnel) still uploads Private for review.
+# Fully autonomous: the scout picks a trending deep-tech / physical-AI topic, the machine builds ONE
+# long + TWO shorts in YOUR cloned voice and uploads all as PRIVATE for review. Runs once a week (Sat)
+# = 1 long + 2 shorts/week. Blank topic on manual runs = auto-pick.
 on:
   schedule:
-    - cron: "0 23 * * *" # ~18:00 US-Eastern — tech/dev audience is most active in the evening
+    - cron: "0 23 * * 6" # Saturday ~18:00 US-Eastern — tech/dev audience most active in the evening
   workflow_dispatch:
     inputs:
       topic:
@@ -16,7 +16,7 @@ on:
 jobs:
   make:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     permissions:
       contents: write
     defaults:
@@ -47,12 +47,12 @@ jobs:
           if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=syndar --one)"; fi
           echo "Chosen topic: $TOPIC"
           echo "topic=$TOPIC" >> "$GITHUB_OUTPUT"
-      - name: Write short (Groq)
+      - name: Write long + shorts (Groq)
         env:
           CHANNEL: syndar
           TOPICS: ${{ steps.scout.outputs.topic }}
-          MODE: shorts
-          SHORTS: "1"
+          MODE: long+shorts
+          SHORTS: "2"
           LANGUAGE: English
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
