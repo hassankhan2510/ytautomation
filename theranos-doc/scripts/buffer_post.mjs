@@ -74,11 +74,20 @@ async function gql(query, variables) {
   return j.data;
 }
 
-// All connected channels, flattened across organizations.
+// All connected channels, flattened across organizations. The nested account.organizations.channels
+// path is FORBIDDEN for API tokens, so use the dedicated top-level `channels(input:{organizationId})`
+// query (authorized differently) — one call per organization.
 async function listChannels() {
-  const d = await gql(`query { account { organizations { id channels { id name service displayName } } } }`, {});
+  const d = await gql(`query { account { organizations { id } } }`, {});
   const orgs = d?.account?.organizations || [];
-  return orgs.flatMap((o) => (o.channels || []).map((c) => ({ ...c, organizationId: o.id })));
+  const out = [];
+  for (const o of orgs) {
+    try {
+      const c = await gql(`query($orgId: OrganizationId!){ channels(input: { organizationId: $orgId }) { id name service displayName } }`, { orgId: o.id });
+      for (const ch of c?.channels || []) out.push({ ...ch, organizationId: o.id });
+    } catch (e) { console.log(`  ! channels query failed for org ${o.id}: ${e.message}`); }
+  }
+  return out;
 }
 
 // Introspect an enum's values so we don't hardcode names the docs hide; pick by meaning.
