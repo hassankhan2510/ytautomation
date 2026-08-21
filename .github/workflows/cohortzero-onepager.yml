@@ -72,6 +72,12 @@ jobs:
           git commit -m "chore(history): cohortzero one-pager topic [skip ci]" || { echo "no history change"; exit 0; }
           git pull --rebase --autostash || true
           git push || echo "push skipped"
+      - name: Stub timeline.json so the bundler resolves (it's gitignored; OnePager doesn't use it)
+        run: |
+          if [ ! -f src/data/timeline.json ]; then
+            echo '{"fps":30,"totalDurationInFrames":1,"accentColor":"#e11d48"}' > src/data/timeline.json
+            echo "wrote stub src/data/timeline.json"
+          fi
       - name: Render the reel (OnePager, 9:16)
         run: npx remotion render OnePager out/cohortzero_onepager.mp4 --props=out/onepager_props.json --concurrency=2
       - name: Post to Instagram (no-op unless Meta secrets are set / test run)
