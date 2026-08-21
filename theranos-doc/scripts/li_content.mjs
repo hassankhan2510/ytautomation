@@ -153,9 +153,18 @@ Read the source and extract the substance that lets a reader finish SMARTER (not
  "source": string (who made it — authors, lab, or org — the authority worth naming),
  "cto": string (how a builder/CTO applies this in a real system),
  "ceo": string (the business/strategy bet a CEO should make),
+ "applications": [2-4 concrete, real-world places this could be USED — specific products, industries, or
+    workflows a normal person would recognize (e.g. "customer-support agents that stop looping",
+    "warehouse robots that don't freeze in the dark")],
+ "startupIdea": {"what": string (a concrete product/startup you could BUILD on top of this),
+    "who": string (who'd pay for it), "example": string (a one-line concrete example)},
  "pov": string (a sharp, opinionated one-liner — YOUR bet or reframe, not a summary),
  "hooks": [3 candidate hooks per the rules]}
 Translate every term a non-expert wouldn't know. surprisingFinding must be a genuine result from the text, or null.
+GROUNDING (HARD, non-negotiable): every capability, number, and claim ABOUT THE SUBJECT must be explicitly
+supported by the SOURCE text above. If the source doesn't state it, do NOT assert it — say less rather than
+invent. The "applications" and "startupIdea" are YOUR forward-looking ideas: phrase them as possibilities
+("you could build…", "this could power…"), and NEVER attribute them to the source as things it did or claims.
 ${HOOK_RULES}`;
   return (await callGroq(sys, src, 2000)) || {};
 }
@@ -171,12 +180,16 @@ FOLLOW THIS SPINE — this fixed order is the author's SIGNATURE structure; keep
 3. TRANSLATE — define the key jargon in plain English. Use a "table" (headers ["Term","In plain English"], rows from brief.terms) OR a "stack" (layers name=term, desc=plain).
 4. MECHANISM — how it ACTUALLY works, DRAWN as a diagram: "architecture" (core + parts) or "flow" (steps from brief.how). This is the signature geometry — draw it, never a plain bullet list.
 5. FINDING   — the surprising real result as a "stat": value + label from brief.surprisingFinding, and NAME THE SOURCE in its "sub" (e.g. "— <source>"). Skip only if surprisingFinding is null (then use a "quote" or another mechanism slide).
-6. APPLY     — what a builder/CEO does with this: "checklist" (do/don't) or "compare" or "pillars".
+6. APPLY     — what you could BUILD with this: real-world applications (brief.applications) + one concrete product/startup idea (brief.startupIdea) as "pillars" or "bullets". Frame as IDEAS/possibilities ("you could build…"), never as things the source claims to have done.
 7. thesis    — the POV (brief.pov): your bet or reframe.
 8. cta        — closing follow prompt.
 THREAD brief.runningExample through at least 2 body slides so the deck reads as ONE lesson, not a list.
 Every slide: concrete, specific to THIS subject, jargon already translated, no fluff, no hashtags inside slides.
-"caption" = the LinkedIn post: a scroll-stopping first line (the hook), then the shift + why it matters + a builder note, end with a real question. NO link.
+"caption" = a LinkedIn post ANYONE can read — a CEO, an operator, a student, not just engineers. Start with a
+plain-language, scroll-stopping first line, explain in HUMAN terms what changed and why it matters to them, then a
+concrete "here's what you could build with this" angle (use brief.applications + brief.startupIdea, as ideas), and
+end with a real question. Short sentences, no unexplained jargon, no buzzwords — a smart non-technical reader must
+finish it feeling it applies to THEM. NO link.
 "firstComment" = "Source: <url>".
 ${HOOK_RULES}`;
   const usr = `SUBJECT (${subj.kind}): ${subj.kind === "repo" ? subj.id : subj.title}\nURL: ${subj.url}\nBRIEF:\n${JSON.stringify(brief).slice(0, 3500)}\nCompose the carousel now, following the spine.`;
@@ -196,6 +209,12 @@ RUBRIC — every item must pass:
 5. A single running example carries through at least two slides.
 6. The hook is a concrete, specific claim — no hype ("blew up", "the future of", "game-changer").
 7. No slide is vague or padded; cut any slide that says nothing new.
+8. The deck answers "so what can I build with this?" — at least one slide gives concrete applications AND a
+   product/startup idea, framed as possibility (not as a claim the source makes).
+9. The CAPTION is readable by a non-technical person (plain language, jargon translated, short sentences) and
+   makes them feel it applies to them — not an engineer-only post.
+10. NOTHING about the subject is asserted that isn't supported by the source; applications/ideas are clearly
+    the author's ("you could build…"), never attributed to the source.
 ${SLIDE_MENU}
 Return ONLY the JSON.`;
   const usr = `SUBJECT: ${subj.kind === "repo" ? subj.id : subj.title}\nURL: ${subj.url}\nBRIEF:\n${JSON.stringify(brief).slice(0, 2000)}\nDRAFT:\n${JSON.stringify(draft).slice(0, 4500)}\nReturn the improved carousel.`;

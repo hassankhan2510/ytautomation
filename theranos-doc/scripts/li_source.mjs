@@ -86,7 +86,10 @@ async function enrichRepo(s) {
 const PAPER_BOOST = /\b(llm|language model|gpt|agent|reasoning|transformer|diffusion|multimodal|rag|retrieval|fine[- ]?tun|inference|attention|robot|vision|generat|foundation model|reinforcement|alignment|scaling|world model|neural)\b/i;
 function decodeEntities(s) { return String(s || "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"'); }
 async function fetchPapers() {
-  const url = "https://export.arxiv.org/api/query?search_query=cat:cs.AI+OR+cat:cs.LG+OR+cat:cs.CL&sortBy=submittedDate&sortOrder=descending&max_results=50";
+  // Broadened beyond AI/ML/NLP to also cover vision (cs.CV), robotics (cs.RO), multi-agent (cs.MA) and
+  // statistics/ML (stat.ML) — more frontier variety for the feed, all still real arXiv preprints.
+  const cats = ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "cs.RO", "cs.MA", "stat.ML"];
+  const url = `https://export.arxiv.org/api/query?search_query=${cats.map((c) => `cat:${c}`).join("+OR+")}&sortBy=submittedDate&sortOrder=descending&max_results=60`;
   const xml = await fetchText(url);
   const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
   const out = [];
@@ -106,15 +109,44 @@ async function fetchPapers() {
     .map((x) => x.p);
 }
 
+// Hugging Face DAILY PAPERS — a human-curated feed of the day's most notable AI papers (with real
+// abstracts). A strong second research source beyond raw arXiv. Best-effort, keyless, no auth header.
+async function fetchHFPapers() {
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 15000);
+  try {
+    const r = await fetch("https://huggingface.co/api/daily_papers?limit=40", { signal: ctrl.signal, headers: { "User-Agent": "li-studio" } });
+    if (!r.ok) return [];
+    const arr = await r.json();
+    if (!Array.isArray(arr)) return [];
+    return arr.map((it) => {
+      const p = it.paper || it;
+      const id = p.id || p.arxivId || p.arxiv_id;
+      const title = String(p.title || it.title || "").replace(/\s+/g, " ").trim();
+      if (!id || !title) return null;
+      return {
+        kind: "paper", id: String(id), title,
+        url: `https://arxiv.org/abs/${id}`,
+        abstract: String(p.summary || p.abstract || "").replace(/\s+/g, " ").trim(),
+        authors: (p.authors || []).map((a) => (a && (a.name || a.fullname)) || a).filter((x) => typeof x === "string").slice(0, 6),
+      };
+    }).filter(Boolean);
+  } catch { return []; } finally { clearTimeout(t); }
+}
+
 async function main() {
   fs.mkdirSync(LI_DIR, { recursive: true });
   const hist = loadHistory();
   const seen = new Set(hist.map((h) => String(h.id)));
 
-  const [repos, papers] = await Promise.all([
+  const [repos, arxivPapers, hfPapers] = await Promise.all([
     fetchRepos().catch((e) => { console.log(`  ! github failed (${e.message})`); return []; }),
     fetchPapers().catch((e) => { console.log(`  ! arxiv failed (${e.message})`); return []; }),
+    fetchHFPapers().catch(() => []),
   ]);
+  // Merge paper sources (HF's curated picks first), de-duped by arXiv id.
+  const pseen = new Set();
+  const papers = [...hfPapers, ...arxivPapers].filter((p) => p.id && !pseen.has(p.id) && pseen.add(p.id));
+  console.log(`  papers: ${hfPapers.length} from HF daily + ${arxivPapers.length} from arXiv -> ${papers.length} unique`);
   const freshRepos = repos.filter((r) => !seen.has(r.id));
   const freshPapers = papers.filter((p) => !seen.has(p.id));
   console.log(`  found ${freshRepos.length} fresh repos, ${freshPapers.length} fresh papers (of ${repos.length}/${papers.length})`);
