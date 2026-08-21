@@ -21,7 +21,9 @@ const PDF = path.join(ROOT, "out", "li_carousel.pdf");
 const HISTORY = path.join(REPO, "channels", "li_history.json");
 
 const DRY = process.argv.includes("--dry");
-const VERSION = process.env.LI_VERSION || "202408";
+// LinkedIn-Version (YYYYMM). LinkedIn only keeps versions active ~12 months, so this needs bumping
+// periodically — override with the LI_VERSION env/var if it 426s ("NONEXISTENT_VERSION").
+const VERSION = process.env.LI_VERSION || "202606";
 const API = "https://api.linkedin.com/rest";
 const TOKEN = process.env.LI_ACCESS_TOKEN || "";
 

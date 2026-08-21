@@ -9,7 +9,7 @@
  *
  * Auth (env): either LI_ACCESS_TOKEN, or LI_CLIENT_ID + LI_CLIENT_SECRET + LI_REFRESH_TOKEN.
  * Page URN (env): LI_ORG_URN_<CHANNEL>  e.g. "urn:li:organization:1234567" (or just "1234567").
- * Optional: LI_VERSION (default 202408), LI_LINK_IN_COMMENT=1 (put the video link in the first comment).
+ * Optional: LI_VERSION (default 202606; bump if LinkedIn 426s NONEXISTENT_VERSION), LI_LINK_IN_COMMENT=1 (put the video link in the first comment).
  *
  * NOTE: this publishes PUBLICLY to the Page. It is gated: it no-ops unless the token + org URN are set,
  * and it does nothing on --dry. Run once manually with --dry, then without, to verify before automating.
@@ -33,7 +33,7 @@ const SCRIPT = arg("script", "");
 const VIDEO = arg("video", "");
 const DOCUMENT = arg("document", "");
 const TYPE = arg("type", VIDEO ? "video" : DOCUMENT ? "document" : "video");
-const VERSION = process.env.LI_VERSION || "202408";
+const VERSION = process.env.LI_VERSION || "202606";
 const LINK_IN_COMMENT = process.env.LI_LINK_IN_COMMENT === "1";
 
 const API = "https://api.linkedin.com/rest";
