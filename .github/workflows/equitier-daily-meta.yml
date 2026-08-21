@@ -1,13 +1,14 @@
-name: "Equitier — Daily Market Analysis → Instagram + Facebook"
+name: "Equitier — Weekly Market Analysis → Instagram + Facebook"
 
-# Advanced market-analysis reels, SEPARATE from YouTube. Two runs a day, ~1 hour apart (morning PKT):
-#   Weekdays  : run 1 = GOLD, run 2 = BITCOIN — real candlestick charts + pro-trader analysis.
-#   Weekends  : markets closed → both runs auto-switch to a mature US-stock DEEP-DIVE (dedup'd).
-# Real data + charts only (no stock/AI images). Kokoro voice. Posts to the Equitier FB Page + Instagram.
+# PER-ASSET WEEKLY technical analysis (a full week's plan + levels), SEPARATE from YouTube — one deep,
+# charted piece per asset instead of shallow daily recaps:
+#   Mon = GOLD · Wed = BITCOIN · Fri = US STOCKS / market deep-dive.
+# Real data + candlestick charts only. Kokoro voice. Posts to the Equitier FB Page + Instagram.
 on:
   schedule:
-    - cron: "0 3 * * *" # 08:00 PKT — GOLD (or weekend deep-dive #1)
-    - cron: "0 4 * * *" # 09:00 PKT — BITCOIN (or weekend deep-dive #2)  (~1h gap)
+    - cron: "0 3 * * 1" # Mon 08:00 PKT — GOLD weekly technical plan
+    - cron: "0 3 * * 3" # Wed 08:00 PKT — BITCOIN weekly technical plan
+    - cron: "0 3 * * 5" # Fri 08:00 PKT — US stocks / market weekly deep-dive
   workflow_dispatch:
     inputs:
       asset:
@@ -66,7 +67,12 @@ jobs:
         id: pick
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            if [ "${{ github.event.schedule }}" = "0 3 * * *" ]; then ASSET=gold; else ASSET=btc; fi
+            case "${{ github.event.schedule }}" in
+              "0 3 * * 1") ASSET=gold ;;
+              "0 3 * * 3") ASSET=btc ;;
+              "0 3 * * 5") ASSET=deepdive ;;
+              *)           ASSET=gold ;;
+            esac
           else
             ASSET="${{ github.event.inputs.asset }}"; ASSET="${ASSET:-gold}"
           fi
@@ -90,6 +96,7 @@ jobs:
           CHANNEL: equitier
           ASSET: ${{ steps.pick.outputs.asset }}
           MODE: ${{ steps.pick.outputs.mode }}
+          WEEKLY: "1"
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL }}

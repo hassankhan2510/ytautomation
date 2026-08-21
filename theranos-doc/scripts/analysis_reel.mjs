@@ -50,7 +50,10 @@ const MODE = (process.env.MODE || (isWeekendPKT() ? "deepdive" : "analysis")).to
 function pktWeekday() {
   return new Date(Date.now() + 5 * 3600 * 1000).getUTCDay(); // 0 Sun … 6 Sat
 }
-const FORMAT = (process.env.FORMAT || (pktWeekday() === 1 ? "weekahead" : pktWeekday() === 5 ? "review" : "daytrade")).toLowerCase();
+// WEEKLY=1 (the per-asset weekly cadence) forces the full weekly-PLAN framing regardless of weekday,
+// so a Wednesday BTC run is a week plan + key levels, not an intraday day-trade recap.
+const WEEKLY = process.env.WEEKLY === "1";
+const FORMAT = (process.env.FORMAT || (WEEKLY ? "weekahead" : pktWeekday() === 1 ? "weekahead" : pktWeekday() === 5 ? "review" : "daytrade")).toLowerCase();
 
 const OVER = { sma20: "#38bdf8", sma50: "#f5a623", sma200: "#a78bfa", vwap: "#facc15" };
 // The date the reel is generated — shown on the chart so viewers know the analysis is time-stamped.
@@ -262,7 +265,7 @@ async function marketReel(cfg) {
 
   const formatBrief = {
     daytrade: `FORMAT = DAY TRADE (midweek). A fast, hard intraday read. Open with the accountability callback if present, then the catalyst (the WHY), the intraday and 4-hour structure, the swing read, and finish on the DECISION MAP (the hero level + bull/bear paths).`,
-    weekahead: `FORMAT = WEEK AHEAD (Monday). "Here's what I'm watching this week." Lean on the daily/weekly structure and the ONE hero level that defines the week, plus the macro driver/catalyst to watch. Less intraday noise.`,
+    weekahead: `FORMAT = WEEKLY PLAN. "Here's my full plan and the key levels for the week." Give a complete multi-timeframe TECHNICAL plan: the weekly/daily structure, the ONE hero level that defines the week, the key support/resistance zones to trade around, and the macro driver/catalyst to watch. Bull path and bear path for the week. Minimal intraday noise; do not tie it to a specific weekday.`,
     review: `FORMAT = WEEK IN REVIEW (Friday). "Did my levels hold?" Lead HARD on the accountability callback, recap what the driver did this week, then set the ONE level that matters into next week via the decision map.`,
   }[FORMAT] || "";
 

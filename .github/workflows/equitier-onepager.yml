@@ -1,15 +1,21 @@
-name: "Equitier — Daily Quote Reels → Instagram"
+name: "Equitier — Daily Insight + Quote Reels → Instagram"
 
-# TWO shareable one-page QUOTE reels a day (wealth / money-mindset wisdom people repost and send to a
-# friend), in the creator style with a relevant AI background — posted to Equitier's Instagram feed AND
-# Story. Separate from, and in addition to, the twice-daily analysis reels (equitier-daily-meta).
-# Posts only if META_*_EQUITIER secrets are set; otherwise it renders the MP4 as an artifact.
+# TWO shareable one-page reels a day — a market-PSYCHOLOGY insight (names a trap people recognize in
+# themselves) + a wealth-mindset QUOTE — built to be reposted and sent to a friend, in the creator
+# style with a relevant AI background. Posted to Equitier's Instagram feed AND Story. Separate from the
+# weekly per-asset analysis (equitier-daily-meta). Posts only if META_*_EQUITIER secrets are set.
 on:
   schedule:
-    - cron: "20 6 * * *"  # morning quote
-    - cron: "20 14 * * *" # afternoon quote
+    - cron: "20 6 * * *"  # morning — INSIGHT (market psychology)
+    - cron: "20 14 * * *" # afternoon — QUOTE (wealth mindset)
   workflow_dispatch:
     inputs:
+      mode:
+        description: "lesson = market-psychology insight · quote = wealth-mindset quote"
+        type: choice
+        options: [lesson, quote]
+        default: lesson
+        required: false
       publish:
         description: "publish = post to Instagram · test = render only (download the artifact)"
         type: choice
@@ -40,10 +46,20 @@ jobs:
             libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
             libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji
       - run: npm ci
-      - name: Write the quote card (Groq, de-duped)
+      - name: Decide mode (morning=insight, afternoon=quote; or manual input)
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            if [ "${{ github.event.schedule }}" = "20 14 * * *" ]; then MODE=quote; else MODE=lesson; fi
+          else
+            MODE="${{ github.event.inputs.mode }}"; MODE="${MODE:-lesson}"
+          fi
+          echo "mode=$MODE" >> "$GITHUB_OUTPUT"
+          echo "Mode: $MODE"
+      - name: Write the card (Groq, de-duped)
         env:
           CHANNEL: equitier
-          ONEPAGER_MODE: quote
+          ONEPAGER_MODE: ${{ steps.mode.outputs.mode }}
           ONEPAGER_AVATAR: ${{ vars.ONEPAGER_AVATAR_EQUITIER }}
           ONEPAGER_NAME: ${{ vars.ONEPAGER_NAME_EQUITIER }}
           ONEPAGER_AT: ${{ vars.ONEPAGER_AT_EQUITIER }}

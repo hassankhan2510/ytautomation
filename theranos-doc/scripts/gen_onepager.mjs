@@ -165,6 +165,22 @@ const QUOTE_THEMES = {
   ],
   default: ["discipline over motivation", "consistency compounds", "focus beats intensity", "who you become over what you get"],
 };
+// Equitier "lesson" = shareable MARKET-PSYCHOLOGY insights (name a real trap people recognize in
+// themselves), not dry mechanics — the kind that gets reposted. Rotated per run; dedup stops repeats.
+const FINANCE_INSIGHTS = [
+  "recency bias — assuming yesterday's trend guarantees tomorrow's gains",
+  "perverse incentives — overtrading out of boredom in a flat market",
+  "revenge trading — doubling your size to win back a loss",
+  "the danger of your FIRST big win (luck mistaken for skill)",
+  "time in the market beats timing the market (missing the 10 best days)",
+  "loss aversion — cutting winners early, clinging to losers",
+  "FOMO — the public gets greedy right before the crash",
+  "anchoring to your entry price instead of the current setup",
+  "survivorship bias — you only hear about the winners",
+  "the disposition effect — selling gains, holding losses",
+  "why doing nothing is often the highest-yielding trade",
+  "arrogance gets you liquidated; humility keeps you in the game",
+];
 
 function drySample() {
   return {
@@ -218,8 +234,15 @@ async function main() {
     grounding = `\nNEWS ITEM (base the post ONLY on this real headline — do NOT invent figures, quotes, or details not in it):\n- ${n.extract}${n.url ? `\n  Source: ${n.url}` : ""}`;
     modeRule = `\nThis is a BREAKING-NEWS reaction post: give a sharp, founder-relevant TAKE on the news above — what it means for builders/founders — not a rehash of the headline. kicker like "JUST IN" or "STARTUP NEWS".`;
     console.log(`  news: "${topic.slice(0, 70)}"`);
+  } else if (MODE === "lesson" && cfg.niche === "finance") {
+    // Equitier LESSON = a shareable market-psychology insight (names a real trap), NOT dry mechanics.
+    const pool = FINANCE_INSIGHTS;
+    const theme = pool[Math.floor(Math.random() * pool.length)];
+    topic = theme;
+    modeRule = `\nThis is a shareable MARKET-PSYCHOLOGY INSIGHT reel — the kind people REPOST and send to a friend because it names a trap they recognize in THEMSELVES. Angle: "${theme}". NAME the concept (e.g. recency bias, perverse incentive, revenge trading, disposition effect) and teach it in 3-5 short, punchy, story-like sentences ending on a memorable, counterintuitive truth. headline = the sharp hook; subline = the rest. kicker = 1-2 words (PSYCHOLOGY, BIAS, MINDSET, MONEY). Do NOT invent precise statistics (a single universally-known market truism like "missing the 10 best days can halve your returns" is fine); otherwise stay qualitative. Match THIS voice exactly:\n- "The most dangerous moment isn't your first big loss — it's your first big win. Your brain mistakes luck for skill, you scale up, and the market wipes you out."\n- "Waiting for the perfect time to invest costs more than a crash. Miss just the 10 best days over 20 years and your returns get cut in half. Time in the market beats timing the market."\n- "Market flat? You overtrade out of boredom. Just took a loss? You double down to win it back. Sometimes the highest-yielding trade is sitting on your hands."`;
+    console.log(`  finance insight: ${theme}`);
   } else {
-    // LESSON post: evergreen founder/VC lesson. Grounding best-effort (soft-ground channel).
+    // LESSON post (non-finance, e.g. Cohort Zero): evergreen lesson, best-effort grounding.
     let g = [];
     if (cfg.ground && topic && !DRY) {
       try { g = (await research(topic, { niche: cfg.niche })).items || []; }
@@ -236,7 +259,9 @@ async function main() {
 
   const sys =
     `You write ONE single-card Instagram Reel for "${cfg.brand}" — a ${nicheDesc} brand. It is ONE idea ` +
-    `that stops the scroll in one screen and makes people want to FOLLOW, SAVE and SHARE. Return ONLY ` +
+    `that stops the scroll in one screen and makes people want to FOLLOW, SAVE and SHARE. SHAREABILITY ` +
+    `is the #1 goal: land a counterintuitive truth or name a trap the reader recognizes in THEMSELVES — ` +
+    `the kind of post people screenshot, repost, and send to a friend. Return ONLY ` +
     `JSON: {"kicker": string, "headline": string, "subline": string, "stat"?: string, ` +
     `"statLabel"?: string, "cardCta": string, "title": string, "captionLines": string[4-6], ` +
     `"imagePrompt": string, "hashtags": string[6-10]}. ` +
