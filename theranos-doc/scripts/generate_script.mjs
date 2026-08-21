@@ -93,7 +93,12 @@ RULES:
   of what you just said.
 - SPECIFICITY beats everything: use concrete names, real numbers, dates, places, and examples — never
   vague generalities ("many people", "a lot of money"). Specifics are what separate a real video from
-  generic AI slop. Only use facts supported by the grounding; do not invent statistics.
+  generic AI slop.
+- ANTI-HALLUCINATION (hard rule): every statistic, date, name, and quantity MUST come from the
+  GROUNDING below. If the grounding doesn't support a specific number, speak qualitatively ("roughly",
+  "a large share") instead of inventing a figure — NEVER fabricate a statistic, study, or quote. When a
+  line leans on a specific fact from the grounding, put the source name in its "cite" field. It is far
+  better to be vaguer than to be confidently wrong.
 - STRUCTURE: hook -> quick context -> escalating points/story with tension -> the payoff/insight ->
   a short, natural CTA. For long-form, build in mini-cliffhangers so retention doesn't sag mid-video.
 - TITLE must be rank-fast: keyword + curiosity + specificity, ideally with a number or a bold promise.
@@ -241,7 +246,10 @@ function finalizeMeta(model, cfg, topic, isShort, researchFile) {
     description: model.description || model.title || "",
     tags: tags.length >= 3 ? tags : [cfg.niche, "shorts", "video"],
     researchFile: researchFile || "research.md",
-    requireResearch: false,
+    // Honor the channel's config instead of the old hardcoded `false` that silently disabled the
+    // only anti-hallucination gate. When a channel sets requireResearch:true, validate.mjs enforces
+    // real source URLs in the research file (>=3). TIL (requireResearch not true) stays exempt.
+    requireResearch: cfg.requireResearch === true,
   };
 }
 
@@ -425,6 +433,17 @@ async function main() {
       } catch (e) {
         console.log(`  ! live context skipped (${e.message})`);
       }
+    }
+    // HARD GROUNDING GUARD: for channels that must never guess (config groundHard:true — Syndar's
+    // deeptech claims and Equitier's finance numbers), refuse to write an ungrounded video. Better to
+    // skip a topic than to publish confident hallucination. Soft channels proceed with a warning.
+    const groundUrls = new Set(g.map((x) => x.url).filter(Boolean));
+    if (!DRY && topic && cfg.ground) {
+      if (cfg.groundHard === true && groundUrls.size < 2) {
+        console.error(`  ! GROUNDING TOO THIN for "${topic}" (${groundUrls.size} real source(s)); ${CHANNEL} requires real sources — SKIPPING this topic to avoid hallucination.`);
+        continue;
+      }
+      if (groundUrls.size < 2) console.log(`  ! only ${groundUrls.size} grounded source(s) — proceeding (soft channel), verify facts before publishing.`);
     }
     // When we have real-time figures, force the script to actually ANALYZE them (not stay generic).
     const dataRule = hasLive
