@@ -81,11 +81,15 @@ export async function groqJSON(system, user, opts = {}) {
   for (const model of models) {
     // Compound is an agentic SYSTEM and rejects response_format json_object; rely on the prompt instead.
     const isCompound = /compound/i.test(model);
+    // Compound rejects json_object; and gpt-oss sometimes 400s "json_validate_failed" (its reasoning
+    // truncates the JSON). Start in JSON mode unless compound, and drop to prompt-guided mode on such a
+    // 400 — parseJSON is tolerant, so we still get valid JSON out.
+    let jsonMode = !isCompound;
     for (let attempt = 1; attempt <= 4; attempt++) {
       const keyIdx = await reserve(inputEst + cap);
       try {
         const payload = { model, temperature, max_tokens: cap, messages: [{ role: "system", content: system }, { role: "user", content: user }] };
-        if (!isCompound) payload.response_format = { type: "json_object" };
+        if (jsonMode) payload.response_format = { type: "json_object" };
         const res = await fetch(API, {
           method: "POST",
           headers: { Authorization: `Bearer ${UNIQUE_KEYS[keyIdx]}`, "Content-Type": "application/json" },
@@ -109,6 +113,15 @@ export async function groqJSON(system, user, opts = {}) {
           console.log(`  ! Groq 429 (rate limit) — waiting ${Math.ceil(wait / 1000)}s then retry (${attempt}/4)`);
           await sleep(wait);
           continue;
+        }
+        if (res.status === 400) {
+          const body = await res.text().catch(() => "");
+          if (jsonMode && /json_validate|failed_generation|json|response_format/i.test(body)) {
+            jsonMode = false;
+            console.log(`  ! Groq 400 JSON-mode validation — retrying WITHOUT json_object (prompt-guided) [${model}]`);
+            continue; // same attempt budget; parseJSON will handle the raw output
+          }
+          throw new Error(`Groq 400: ${body.slice(0, 180)}`);
         }
         if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text().catch(() => "")).slice(0, 180)}`);
         const d = await res.json();

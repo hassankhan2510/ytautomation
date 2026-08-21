@@ -60,8 +60,13 @@ function drySample() {
     statLabel: "average time a VC spends on a first deck",
     cardCta: "DM to pitch",
     title: "How VCs actually read your pitch deck",
-    caption:
-      "Most decks die on slide one.\n\nVCs give you ~3 minutes. If the problem isn't undeniable up front, the numbers never get read. Lead with the pain, not the pitch.\n\nWe're building Cohort Zero — founders going zero to one, together. Follow for the daily playbook, save this and send it to a founder who needs it.\n\nBuilding something? DM us to pitch or join our next founder session. What's the one slide you always struggle with?",
+    captionLines: [
+      "Most decks die on slide one.",
+      "VCs give you ~3 minutes. If the problem isn't undeniable up front, the numbers never get read. Lead with the pain, not the pitch.",
+      "We're building Cohort Zero — founders going zero to one, together. Follow for the daily playbook, save this and send it to a founder who needs it.",
+      "Building something? DM us to pitch or join our next founder session.",
+      "What's the one slide you always struggle with?",
+    ],
     hashtags: ["startup", "founders", "venturecapital", "pitchdeck", "fundraising", "cohortzero", "buildinpublic"],
   };
 }
@@ -91,17 +96,18 @@ async function main() {
     `going zero to one, together). It is ONE idea that stops the scroll and teaches something real in ` +
     `one screen, and it must make founders want to FOLLOW, SAVE, SHARE and DM. Return ONLY JSON: ` +
     `{"kicker": string, "headline": string, "subline": string, "stat"?: string, "statLabel"?: string, ` +
-    `"cardCta": string, "title": string, "caption": string, "hashtags": string[6-10]}. ` +
+    `"cardCta": string, "title": string, "captionLines": string[4-6], "hashtags": string[6-10]}. ` +
     `RULES: headline <= 90 chars, one bold, specific, curiosity-driving idea (front-load the hook). ` +
     `subline <= 150 chars, one concrete supporting sentence with a real specific. kicker = 1-3 word mono ` +
     `label. stat = a SHORT real figure from the grounding if one fits ("3 min", "90%"), else omit stat ` +
     `AND statLabel. cardCta = <= 18 chars on-card nudge ("follow @cohortzero", "save this", "DM to pitch"). ` +
     `ANTI-HALLUCINATION: every number/name must come from the grounding; if none supports a figure, omit ` +
-    `the stat rather than invent one. caption = an Instagram-native caption of 3-6 SHORT lines: a punchy ` +
-    `hook line, then the insight in 2-3 lines with a real specific, then a COMMUNITY call to action — ` +
-    `invite founders to follow for the daily playbook, save + send it to a founder who needs it, and DM ` +
-    `to pitch a startup or join our founder sessions — and END with a genuine question that invites ` +
-    `replies. Warm, sharp, peer-to-peer; never corporate or salesy. hashtags = 6-10 founder/startup/VC + ` +
+    `the stat rather than invent one. captionLines = an Instagram caption as an ARRAY of 4-6 SHORT ` +
+    `standalone lines (NO newline characters inside any line): line 1 a punchy hook, next 1-2 lines the ` +
+    `insight with a real specific, then a COMMUNITY call to action — invite founders to follow for the ` +
+    `daily playbook, save + send it to a founder who needs it, and DM to pitch a startup or join our ` +
+    `founder sessions — and the LAST line a genuine question that invites replies. Warm, sharp, ` +
+    `peer-to-peer; never corporate or salesy. hashtags = 6-10 founder/startup/VC + ` +
     `community tags (mix broad + niche; include a couple Pakistan / emerging-market ones when relevant).` +
     `${steer}${avoidRule}`;
   const usr = `TOPIC: ${topic || "(choose one sharp, specific founder/VC lesson in this niche)"}${grounding}\nWrite the card now.`;
@@ -109,7 +115,9 @@ async function main() {
   let m;
   if (DRY) m = drySample();
   else {
-    m = await groqJSON(sys, usr, { maxTokens: 900, temperature: 0.6 });
+    // gpt-oss reasons before answering, so give the JSON room — a tight cap truncates it and Groq's
+    // json_object validator then 400s (json_validate_failed).
+    m = await groqJSON(sys, usr, { maxTokens: 2200, temperature: 0.6 });
     if (!m || !m.headline) { console.error("  ! Groq returned no usable card — re-run."); process.exit(1); }
   }
 
@@ -118,7 +126,7 @@ async function main() {
     const dup = isDuplicate(CHANNEL, { topic: topic || m.title, title: m.headline }, { days: 45, threshold: 0.6 });
     if (dup) {
       console.log(`  ! duplicate of "${String(dup.title).slice(0, 50)}" — re-angling`);
-      const r = await groqJSON(sys, `${usr}\nThe angle "${m.headline}" is too similar to a past post — pick a genuinely DIFFERENT angle.`, { maxTokens: 900, temperature: 0.7 });
+      const r = await groqJSON(sys, `${usr}\nThe angle "${m.headline}" is too similar to a past post — pick a genuinely DIFFERENT angle.`, { maxTokens: 2200, temperature: 0.7 });
       if (r && r.headline) m = r;
     }
   }
@@ -165,7 +173,9 @@ async function main() {
       title: m.title || m.headline,
       // The IG-native community caption IS the description; meta_upload appends hashtags + (only if it
       // doesn't already end with a question) a generic prompt — ours ends with a question, so ours wins.
-      description: m.caption || m.subline || "",
+      description: (Array.isArray(m.captionLines) && m.captionLines.length
+        ? m.captionLines.map((s) => String(s).trim()).filter(Boolean).join("\n\n")
+        : (m.caption || m.subline || "")),
       hashtags: hashtags.length ? hashtags : ["startup", "founders", "cohortzero", "buildinpublic"],
       channel: CHANNEL, niche: cfg.niche, brand: cfg.brand, platform: "reel",
       links: cfg.links || null,
