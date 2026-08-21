@@ -70,6 +70,11 @@ jobs:
           git commit -m "chore(history): syndar daily topic [skip ci]" || { echo "no history change"; exit 0; }
           git pull --rebase --autostash || true
           git push || echo "push skipped"
+      - name: Cross-post this week's topic to LinkedIn via Buffer (no-op without token)
+        env:
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          BUFFER_CHANNEL_ID_SYNDAR: ${{ vars.BUFFER_CHANNEL_ID_SYNDAR }}
+        run: node scripts/buffer_post.mjs --channel=syndar --script=jobs/syndar.json
       - name: Render (your cloned voice) + upload to YouTube (private) + LinkedIn (if enabled)
         env:
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}

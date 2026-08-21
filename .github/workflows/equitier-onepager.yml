@@ -96,6 +96,12 @@ jobs:
           META_PAGE_TOKEN_EQUITIER: ${{ secrets.META_PAGE_TOKEN_EQUITIER }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/meta_upload.mjs --channel=equitier --video=out/equitier_onepager.mp4 --script=jobs/equitier_onepager.json
+      - name: Cross-post to LinkedIn via Buffer (no-op without BUFFER_ACCESS_TOKEN)
+        if: ${{ github.event.inputs.publish != 'test' }}
+        env:
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          BUFFER_CHANNEL_ID_EQUITIER: ${{ vars.BUFFER_CHANNEL_ID_EQUITIER }}
+        run: node scripts/buffer_post.mjs --channel=equitier --props=out/onepager_props.json --script=jobs/equitier_onepager.json
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
         with:
