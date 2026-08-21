@@ -71,6 +71,13 @@ async function fetchRepos() {
     for (const it of await query(days, minStars)) if (!seen.has(it.id)) { seen.add(it.id); pool.push(it); }
     if (pool.length >= 12) break;
   }
+  // Bias toward the PHYSICAL-AI frontier (AI in hardware/robots), merged in — the era's most shareable
+  // "the world is going here" builds. Best-effort; a lower star bar since robotics repos are younger.
+  try {
+    const q = `robotics OR robot OR embodied OR humanoid OR "physical AI" OR teleoperation in:name,description,topics created:>${daysAgoISO(120)} stars:>120`;
+    const d = await fetchJSON(`https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=stars&order=desc&per_page=30`);
+    for (const it of map(d.items || [])) if (!seen.has(it.id)) { seen.add(it.id); pool.push(it); }
+  } catch { /* best-effort */ }
   return pool;
 }
 async function enrichRepo(s) {
@@ -83,26 +90,39 @@ async function enrichRepo(s) {
 
 /* ---------- arXiv recent papers ---------- */
 // Bias toward broadly-interesting frontier topics (not ultra-theoretical), for a general tech audience.
-const PAPER_BOOST = /\b(llm|language model|gpt|agent|reasoning|transformer|diffusion|multimodal|rag|retrieval|fine[- ]?tun|inference|attention|robot|vision|generat|foundation model|reinforcement|alignment|scaling|world model|neural)\b/i;
+// Bias toward broadly-interesting frontier topics — including the PHYSICAL / EMBODIED / APPLIED-AI
+// stack (AI moving into hardware & the real world), which is where the post-LLM era is heading.
+const PAPER_BOOST = /\b(llm|language model|gpt|agent|reasoning|transformer|diffusion|multimodal|rag|retrieval|fine[- ]?tun|inference|attention|robot(ic|s)?|humanoid|embodied|manipulation|locomotion|actuator|sensor|perception|sim[- ]?to[- ]?real|teleoperation|tactile|proprioception|dexterous|grasp|drone|slam|autonom(y|ous)|vision|generat|foundation model|reinforcement|alignment|scaling|world model|neuromorphic|on[- ]?device|edge inference|accelerator|\bvla\b|physical (ai|intelligence)|neural)\b/i;
 function decodeEntities(s) { return String(s || "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&#39;/g, "'").replace(/&quot;/g, '"'); }
-async function fetchPapers() {
-  // Broadened beyond AI/ML/NLP to also cover vision (cs.CV), robotics (cs.RO), multi-agent (cs.MA) and
-  // statistics/ML (stat.ML) — more frontier variety for the feed, all still real arXiv preprints.
-  const cats = ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "cs.RO", "cs.MA", "stat.ML"];
-  const url = `https://export.arxiv.org/api/query?search_query=${cats.map((c) => `cat:${c}`).join("+OR+")}&sortBy=submittedDate&sortOrder=descending&max_results=60`;
-  const xml = await fetchText(url);
-  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => m[1]);
-  const out = [];
-  for (const e of entries) {
+function parseArxiv(xml) {
+  return [...String(xml).matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map((m) => {
+    const e = m[1];
     const g = (tag) => (e.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`)) || [])[1];
     const title = decodeEntities((g("title") || "").replace(/\s+/g, " ").trim());
     const idUrl = (g("id") || "").trim();
+    if (!title || !idUrl) return null;
     const summary = decodeEntities((g("summary") || "").replace(/\s+/g, " ").trim());
-    const authors = [...e.matchAll(/<name>(.*?)<\/name>/g)].map((m) => m[1]).slice(0, 6);
-    if (!title || !idUrl) continue;
-    out.push({ kind: "paper", id: idUrl.split("/abs/").pop(), title, url: idUrl.replace("http:", "https:"), abstract: summary, authors });
-  }
-  // Rank: broad-interest boost first, then keep a readable title length.
+    const authors = [...e.matchAll(/<name>(.*?)<\/name>/g)].map((a) => a[1]).slice(0, 6);
+    return { kind: "paper", id: idUrl.split("/abs/").pop(), title, url: idUrl.replace("http:", "https:"), abstract: summary, authors };
+  }).filter(Boolean);
+}
+async function fetchPapers() {
+  // Two real-arXiv pulls: (1) a broad frontier CATEGORY feed that now includes the PHYSICAL-AI stack —
+  // robotics (cs.RO), systems & control (eess.SY), AI hardware (cs.AR), neuromorphic/neural (cs.NE),
+  // plus vision/NLP/ML; and (2) a dedicated embodied/physical-AI KEYWORD feed, so "AI moving into
+  // hardware and the real world" is covered even when a paper sits outside those categories.
+  const cats = ["cs.AI", "cs.LG", "cs.CL", "cs.CV", "cs.RO", "cs.MA", "stat.ML", "eess.SY", "cs.AR", "cs.NE"];
+  const catUrl = `https://export.arxiv.org/api/query?search_query=${cats.map((c) => `cat:${c}`).join("+OR+")}&sortBy=submittedDate&sortOrder=descending&max_results=60`;
+  const kw = ['"embodied AI"', "humanoid", '"vision-language-action"', "manipulation", '"sim-to-real"', "locomotion", "teleoperation", '"physical intelligence"', "neuromorphic", '"on-device"'];
+  const kwUrl = `https://export.arxiv.org/api/query?search_query=${kw.map((k) => `all:${encodeURIComponent(k)}`).join("+OR+")}&sortBy=submittedDate&sortOrder=descending&max_results=40`;
+
+  const [catXml, kwXml] = await Promise.all([fetchText(catUrl), fetchText(kwUrl).catch(() => "")]);
+  // The keyword feed is date-sorted so it drags in off-topic matches — keep only genuine frontier/
+  // physical-AI papers from it. The category feed is already on-topic.
+  const kwPapers = parseArxiv(kwXml).filter((p) => PAPER_BOOST.test(`${p.title} ${p.abstract}`));
+  const seen = new Set();
+  const out = [...kwPapers, ...parseArxiv(catXml)].filter((p) => p.id && !seen.has(p.id) && seen.add(p.id));
+  // Rank: physical/frontier boost first, then keep a readable title length.
   return out
     .map((p) => ({ p, s: (PAPER_BOOST.test(`${p.title} ${p.abstract}`) ? 2 : 0) + (p.title.split(" ").length <= 16 ? 1 : 0) }))
     .sort((a, b) => b.s - a.s)
