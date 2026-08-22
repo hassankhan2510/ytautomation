@@ -181,8 +181,15 @@ async function main() {
   if (/at.?time|custom|scheduled/i.test(mode)) input.dueAt = new Date(Date.now() + 120000).toISOString();
 
   try {
-    const d = await gql(`mutation($input: CreatePostInput!){ createPost(input: $input){ post { id } } }`, { input });
-    console.log(`  ✓ Buffer post created (id ${d?.createPost?.post?.id || "?"}) for ${CHANNEL}`);
+    // createPost returns the PostActionPayload UNION — select the post via an inline fragment on the
+    // success member (PostActionSuccess); __typename tells us if it came back as a non-success variant.
+    const d = await gql(
+      `mutation($input: CreatePostInput!){ createPost(input: $input){ __typename ... on PostActionSuccess { post { id } } } }`,
+      { input },
+    );
+    const r = d?.createPost;
+    if (r?.post?.id) console.log(`  ✓ Buffer post created (id ${r.post.id}) for ${CHANNEL}`);
+    else console.log(`  ! Buffer createPost returned ${r?.__typename || "unknown"} (no post id) — check Buffer dashboard`);
   } catch (e) {
     console.log(`  ! Buffer post failed (non-fatal): ${e.message}`);
   }
