@@ -1,4 +1,4 @@
-name: "LinkedIn — Personal Studio (carousel, every 2 days)"
+name: "LinkedIn — Personal Studio (carousel, 2x/week)"
 
 # Fully automated personal-brand studio: pick a fresh breakout repo OR paper (never mixed, never
 # repeated), write the insight-hook + POV + dual CEO/CTO breakdown, render a code-drawn diagram
@@ -6,7 +6,7 @@ name: "LinkedIn — Personal Studio (carousel, every 2 days)"
 # comment. Nothing posts until LI_ACCESS_TOKEN is set; manual runs default to a safe dry-run.
 on:
   schedule:
-    - cron: "0 8 */2 * *" # ~every 2 days, 08:00 UTC
+    - cron: "0 8 * * 2,4" # Tue + Thu 08:00 UTC — 2x/week, kept premium/exclusive
   workflow_dispatch:
     inputs:
       kind:
