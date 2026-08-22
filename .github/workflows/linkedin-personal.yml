@@ -6,7 +6,7 @@ name: "LinkedIn — Personal Studio (carousel, 2x/week)"
 # comment. Nothing posts until LI_ACCESS_TOKEN is set; manual runs default to a safe dry-run.
 on:
   schedule:
-    - cron: "0 8 * * 2,4" # Tue + Thu 08:00 UTC — 2x/week, kept premium/exclusive
+    - cron: "0 8 * * 1,4" # Mon + Thu 08:00 UTC — 2x/week, spaced out, kept premium/exclusive
   workflow_dispatch:
     inputs:
       kind:
