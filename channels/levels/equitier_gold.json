@@ -26,5 +26,19 @@
       "oi": null,
       "dxy": 98.76
     }
+  },
+  {
+    "date": "2026-08-24",
+    "hero": 4687.62,
+    "side": "hold-above",
+    "price": 4700,
+    "structure": "bullish",
+    "bullTarget": 4704,
+    "bearTarget": 4655,
+    "driver": {
+      "kind": "gold",
+      "oi": null,
+      "dxy": 98.83
+    }
   }
 ]
