@@ -1,0 +1,97 @@
+name: "Equitier — Daily Facebook Reels (investing shorts)"
+
+# TWO short videos a day: premium, international investing/finance explainers in ENGLISH (natural
+# Kokoro voice), AI-generated visuals (Pollinations, free), a hard first-3-seconds hook. Posts to the
+# Equitier Facebook Page + Instagram.
+on:
+  schedule:
+    - cron: "30 17 * * *" # afternoon US / evening EU
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: "Optional topic (blank = auto-pick a trending investing one)"
+        required: false
+        type: string
+      publish:
+        description: "publish = post to FB+IG · test = render only (download the artifact)"
+        type: choice
+        options: [publish, test]
+        default: publish
+        required: false
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: theranos-doc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: theranos-doc/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install headless-Chrome libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng
+      - run: npm ci
+      - run: pip install edge-tts soundfile kokoro
+      - name: Pick a trending investing topic (scout)
+        id: scout
+        run: |
+          TOPIC="${{ github.event.inputs.topic }}"
+          if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=equitier --one)"; fi
+          echo "Chosen topic: $TOPIC"
+          echo "topic=$TOPIC" >> "$GITHUB_OUTPUT"
+      - name: Write 2 investing shorts (Groq)
+        env:
+          CHANNEL: equitier
+          TOPICS: ${{ steps.scout.outputs.topic }}
+          MODE: shorts
+          SHORTS: "2"
+          LANGUAGE: English
+          IG_TONE: "1"
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
+        run: node scripts/generate_script.mjs
+      - name: Persist topic history (no repeats)
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add channels/history/*.json 2>/dev/null || true
+          git commit -m "chore(history): equitier fb reels [skip ci]" || { echo "no history change"; exit 0; }
+          git pull --rebase --autostash || true
+          git push || echo "push skipped"
+      - name: Render (Kokoro voice + AI images) + post to Facebook + Instagram
+        env:
+          VOICE: kokoro
+          AI_IMAGES: "1"
+          UPLOAD: "0" # not YouTube — Facebook/Instagram only
+          META_UPLOAD: ${{ github.event.inputs.publish == 'test' && '0' || '1' }}
+          META_TARGETS: "fb,ig"
+          META_PAGE_ID_EQUITIER: ${{ vars.META_PAGE_ID_EQUITIER || secrets.META_PAGE_ID_EQUITIER }}
+          META_IG_USER_ID_EQUITIER: ${{ vars.META_IG_USER_ID_EQUITIER || secrets.META_IG_USER_ID_EQUITIER }}
+          META_PAGE_TOKEN_EQUITIER: ${{ secrets.META_PAGE_TOKEN_EQUITIER }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run batch -- --only=equitier
+      - name: Deliver as downloadable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: equitier-fb-run${{ github.run_number }}
+          path: theranos-doc/out/equitier*.zip
+          retention-days: 30
+          if-no-files-found: warn

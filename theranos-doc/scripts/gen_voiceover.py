@@ -52,7 +52,7 @@ TICKS_PER_SECOND = 10_000_000
 VOICE_MODE = os.environ.get("VOICE", "auto").strip().lower() or "auto"
 
 # Lazily-initialised heavy models (only loaded if actually used).
-_kokoro_pipe = None
+_kokoro_pipes = {}  # lang_code -> KPipeline (a=American English, h=Hindi, …)
 _chatter_model = None
 
 
@@ -64,12 +64,12 @@ def rate_to_speed(rate: str) -> float:
     return max(0.5, min(2.0, 1.0 + int(m.group(1)) / 100.0))
 
 
-def load_kokoro():
-    global _kokoro_pipe
-    if _kokoro_pipe is None:
+def load_kokoro(lang_code="a"):
+    # 'a' = American English, 'h' = Hindi. One pipeline cached per language.
+    if lang_code not in _kokoro_pipes:
         from kokoro import KPipeline  # noqa: WPS433 (lazy import by design)
-        _kokoro_pipe = KPipeline(lang_code="a")  # 'a' = American English
-    return _kokoro_pipe
+        _kokoro_pipes[lang_code] = KPipeline(lang_code=lang_code)
+    return _kokoro_pipes[lang_code]
 
 
 def load_chatterbox():
@@ -153,12 +153,12 @@ async def synth_edge(text: str, voice: str, out_path: str, rate: str = "+0%") ->
     raise RuntimeError(f"edge-tts failed after 5 retries: {last_error}")
 
 
-def synth_kokoro(text: str, out_path: str, voice: str, speed: float) -> float:
+def synth_kokoro(text: str, out_path: str, voice: str, speed: float, lang_code: str = "a") -> float:
     """Kokoro: writes a wav, returns real spoken length measured from the samples."""
     import numpy as np
     import soundfile as sf
 
-    pipe = load_kokoro()
+    pipe = load_kokoro(lang_code)
     chunks = [a for _, _, a in pipe(text, voice=voice, speed=speed) if a is not None]
     wav = np.concatenate(chunks) if chunks else np.zeros(1, dtype="float32")
     sf.write(out_path, wav, 24000)
@@ -207,14 +207,17 @@ def choose_engine(meta) -> tuple[str, str | None]:
     voice = meta.get("voice", "en-US-GuyNeural")
     lang = (meta.get("language") or voice[:2] or "en").lower()
     is_english = lang.startswith("en")
+    is_hindi = lang.startswith("hi")
 
-    # Non-English never clones/Kokoros — edge-tts handles ur/hi best.
-    if not is_english:
+    # Urdu (and any other non-en/hi language) stays on edge-tts — Kokoro has no Urdu voice.
+    # Hindi CAN use Kokoro now (lang_code 'h'), for a more natural Hinglish than edge.
+    if not is_english and not is_hindi:
         return "edge", None
 
     if VOICE_MODE == "edge":
         return "edge", None
-    if VOICE_MODE == "myvoice":
+    # Voice cloning is English-only; on Hindi, fall through to Kokoro Hindi.
+    if VOICE_MODE == "myvoice" and is_english:
         ref = resolve_ref_voice(meta)
         try:
             if not ref:
@@ -227,9 +230,9 @@ def choose_engine(meta) -> tuple[str, str | None]:
             print(traceback.format_exc())
             return "edge", None
 
-    # "auto" or "kokoro": Kokoro for English, with edge-tts fallback.
+    # "auto"/"kokoro" (and myvoice on Hindi): Kokoro — Hindi pipeline for hi, else English. edge fallback.
     try:
-        load_kokoro()
+        load_kokoro("h" if is_hindi else "a")
         return "kokoro", None
     except Exception as e:
         print(f"NOTE: Kokoro unavailable ({e}); using edge-tts.")
@@ -248,6 +251,11 @@ async def main():
     kokoro_voice = meta.get("kokoroVoice", "am_michael")
     pause = float(meta.get("pauseBetweenLinesSec", 0.25))
     lines = script["lines"]
+    # Kokoro language + voice: Hindi content uses the 'h' pipeline + a Hindi voice (hm_omega/hm_psi male,
+    # hf_alpha/hf_beta female); everything else uses English. Override the Hindi voice via meta.kokoroVoiceHi.
+    _lang = (meta.get("language") or voice[:2] or "en").lower()
+    k_lang = "h" if _lang.startswith("hi") else "a"
+    k_voice = (meta.get("kokoroVoiceHi", "hm_omega")) if k_lang == "h" else kokoro_voice
 
     os.makedirs(AUDIO_DIR, exist_ok=True)
     # Clear stale clips so a switch between engines (mp3<->wav) never leaves orphans behind.
@@ -259,7 +267,7 @@ async def main():
 
     engine, ref_wav = choose_engine(meta)
     ext = "mp3" if engine == "edge" else "wav"
-    label = {"edge": f"edge-tts ({voice})", "kokoro": f"Kokoro ({kokoro_voice})",
+    label = {"edge": f"edge-tts ({voice})", "kokoro": f"Kokoro ({k_voice}, lang={k_lang})",
              "chatterbox": f"your voice ({os.path.basename(ref_wav) if ref_wav else '?'})"}[engine]
     print(f"Voice mode '{VOICE_MODE}' -> engine: {label} @ {fps}fps, {len(lines)} lines\n")
 
@@ -276,7 +284,7 @@ async def main():
 
         try:
             if engine == "kokoro":
-                speech_sec = synth_kokoro(spoken, out_path, kokoro_voice, speed)
+                speech_sec = synth_kokoro(spoken, out_path, k_voice, speed, k_lang)
             elif engine == "chatterbox":
                 speech_sec = synth_chatterbox(spoken, out_path, ref_wav)
             else:
