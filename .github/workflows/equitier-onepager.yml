@@ -89,7 +89,7 @@ jobs:
       - name: Post to Instagram (no-op unless Meta secrets are set / test run)
         if: ${{ github.event.inputs.publish != 'test' }}
         env:
-          META_TARGETS: "fb,ig"
+          META_TARGETS: "ig"
           META_STORY: "1"
           META_PAGE_ID_EQUITIER: ${{ vars.META_PAGE_ID_EQUITIER || secrets.META_PAGE_ID_EQUITIER }}
           META_IG_USER_ID_EQUITIER: ${{ vars.META_IG_USER_ID_EQUITIER || secrets.META_IG_USER_ID_EQUITIER }}

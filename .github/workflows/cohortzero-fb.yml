@@ -2,7 +2,7 @@ name: "Cohort Zero — Daily Facebook Reels (Hinglish shorts)"
 
 # TWO short videos a day for the Pakistani audience: business / how-to-start-a-startup content in
 # HINGLISH (Hindi voice via Kokoro + English words + English on-screen captions), AI-generated visuals
-# (Pollinations, free), a hard first-3-seconds hook. Posts to the Cohort Zero Facebook Page + Instagram.
+# (Pollinations, free), a hard first-3-seconds hook. Posts to the Cohort Zero Facebook Page (Instagram stays the one-page reels).
 on:
   schedule:
     - cron: "30 15 * * *" # ~20:30 PKT — Pakistan evening scroll
@@ -13,7 +13,7 @@ on:
         required: false
         type: string
       publish:
-        description: "publish = post to FB+IG · test = render only (download the artifact)"
+        description: "publish = post to Facebook · test = render only (download the artifact)"
         type: choice
         options: [publish, test]
         default: publish
@@ -76,13 +76,13 @@ jobs:
           git commit -m "chore(history): cohortzero fb reels [skip ci]" || { echo "no history change"; exit 0; }
           git pull --rebase --autostash || true
           git push || echo "push skipped"
-      - name: Render (Kokoro Hindi voice + AI images) + post to Facebook + Instagram
+      - name: Render (Kokoro Hindi voice + AI images) + post to Facebook
         env:
           VOICE: kokoro
           AI_IMAGES: "1"
           UPLOAD: "0" # not YouTube — Facebook/Instagram only
           META_UPLOAD: ${{ github.event.inputs.publish == 'test' && '0' || '1' }}
-          META_TARGETS: "fb,ig"
+          META_TARGETS: "fb"
           META_PAGE_ID_COHORTZERO: ${{ vars.META_PAGE_ID_COHORTZERO || secrets.META_PAGE_ID_COHORTZERO }}
           META_IG_USER_ID_COHORTZERO: ${{ vars.META_IG_USER_ID_COHORTZERO || secrets.META_IG_USER_ID_COHORTZERO }}
           META_PAGE_TOKEN_COHORTZERO: ${{ secrets.META_PAGE_TOKEN_COHORTZERO }}
