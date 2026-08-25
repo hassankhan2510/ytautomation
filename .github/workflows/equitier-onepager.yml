@@ -96,11 +96,17 @@ jobs:
           META_PAGE_TOKEN_EQUITIER: ${{ secrets.META_PAGE_TOKEN_EQUITIER }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node scripts/meta_upload.mjs --channel=equitier --video=out/equitier_onepager.mp4 --script=jobs/equitier_onepager.json
-      - name: Render the 4:5 LinkedIn card image (still)
-        if: ${{ github.event.inputs.publish != 'test' }}
-        run: npx remotion still OnePagerLI out/card_li.png --props=out/onepager_props.json --frame=120
-      - name: Cross-post to LinkedIn via Buffer (image + caption; no-op without BUFFER_ACCESS_TOKEN)
-        if: ${{ github.event.inputs.publish != 'test' }}
+      - name: Render the 3-slide LinkedIn carousel (INSIGHT only = 1/day)
+        if: ${{ github.event.inputs.publish != 'test' && steps.mode.outputs.mode == 'lesson' }}
+        run: |
+          i=0
+          jq -c '.[]' out/li_slides.json | while read -r slide; do
+            i=$((i+1))
+            printf '%s' "$slide" > out/li_slide_props.json
+            npx remotion still OnePagerLI "out/li_slide_0$i.png" --props=out/li_slide_props.json --frame=120
+          done
+      - name: Cross-post the carousel to LinkedIn via Buffer (no-op without BUFFER_ACCESS_TOKEN)
+        if: ${{ github.event.inputs.publish != 'test' && steps.mode.outputs.mode == 'lesson' }}
         env:
           BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
           BUFFER_CHANNEL_ID_EQUITIER: ${{ vars.BUFFER_CHANNEL_ID_EQUITIER }}
@@ -108,7 +114,7 @@ jobs:
           BUFFER_MODE: ${{ vars.BUFFER_MODE }}
           BUFFER_SCHEDULING: ${{ vars.BUFFER_SCHEDULING }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/buffer_post.mjs --channel=equitier --props=out/onepager_props.json --script=jobs/equitier_onepager.json --image=out/card_li.png
+        run: node scripts/buffer_post.mjs --channel=equitier --props=out/onepager_props.json --script=jobs/equitier_onepager.json --imageglob=out/li_slide_*.png
       - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
         with:

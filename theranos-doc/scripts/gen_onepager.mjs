@@ -342,6 +342,18 @@ async function main() {
   };
   fs.writeFileSync(path.join(OUT, "onepager_props.json"), JSON.stringify(props, null, 2));
 
+  // LinkedIn CAROUSEL: LinkedIn rewards multi-slide documents far more than single images. Emit a
+  // 3-slide deck (hook -> the point -> follow/repost CTA) reusing the same OnePagerLI card look; the
+  // workflow renders each as a still and posts them as a Buffer multi-image gallery.
+  const base = { brand: props.brand, name, at, accent, footer: props.footer, ...(avatar ? { avatar, avatarFit } : {}), ...(bg ? { bg } : {}) };
+  const capLines = Array.isArray(m.captionLines) ? m.captionLines.map(clean).filter(Boolean) : [];
+  const liSlides = [
+    { ...base, kicker: props.kicker, headline: props.headline, cta: "swipe →" },                                   // 1: the hook
+    { ...base, headline: props.subline || props.headline, ...(props.stat ? { stat: props.stat, statLabel: props.statLabel } : {}), subline: capLines.slice(1, 2).join(" "), cta: "swipe →" }, // 2: the point
+    { ...base, headline: "Follow for more.", subline: "Save this and repost if it resonated.", cta: props.at || "follow" }, // 3: CTA
+  ];
+  fs.writeFileSync(path.join(OUT, "li_slides.json"), JSON.stringify(liSlides, null, 2));
+
   // Caption kit for meta_upload.mjs (reads .meta).
   const hashtags = (Array.isArray(m.hashtags) ? m.hashtags : []).map((h) => String(h).replace(/^#/, "")).filter(Boolean).slice(0, 8);
   const job = {
