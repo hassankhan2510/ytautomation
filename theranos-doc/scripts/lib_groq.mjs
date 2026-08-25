@@ -19,9 +19,12 @@
  */
 
 const API = "https://api.groq.com/openai/v1/chat/completions";
-export const GROQ_MODEL = process.env.GROQ_MODEL || "openai/gpt-oss-120b";
-const FALLBACK_MODEL = process.env.GROQ_FALLBACK_MODEL || "";
-const TPM = Number(process.env.GROQ_TPM || 8000);
+// Default to qwen3.6-27b: ~30k TPM / 14.4k requests-per-day free vs gpt-oss-120b's 8k / 1k — the small
+// gpt-oss caps were exhausting mid-run ("all keys at limit"). gpt-oss stays as the fallback model.
+export const GROQ_MODEL = process.env.GROQ_MODEL || "qwen/qwen3.6-27b";
+const FALLBACK_MODEL = process.env.GROQ_FALLBACK_MODEL || "openai/gpt-oss-120b";
+// Per-key TPM: qwen-class free tier ~30k, gpt-oss 8k. Auto by model unless GROQ_TPM overrides.
+const TPM = Number(process.env.GROQ_TPM || (/qwen/i.test(GROQ_MODEL) ? 30000 : 8000));
 const BUDGET = Math.floor(TPM * 0.9); // 10% headroom for token-estimate error, per key
 
 // Gather every distinct key provided.
@@ -62,8 +65,35 @@ function parseRetryMs(body) {
   const m = /try again in ([\d.]+)\s*s/i.exec(body || "");
   return m ? Math.ceil(parseFloat(m[1]) * 1000) + 500 : null;
 }
+// qwen3.x is a reasoning model that can emit <think>…</think> + ```json fences; strip both, then take
+// the first BALANCED {…}/[…] (greedy first-{-to-last-} breaks on stray braces inside a think block).
+function stripThink(txt) {
+  return (txt || "")
+    .replace(/<think>[\s\S]*?<\/think>/gi, "")
+    .replace(/<think>[\s\S]*$/i, "")
+    .replace(/```(?:json)?/gi, "")
+    .trim();
+}
+function extractBalanced(s) {
+  const start = s.search(/[{[]/);
+  if (start < 0) return null;
+  const open = s[start], close = open === "{" ? "}" : "]";
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < s.length; i++) {
+    const c = s[i];
+    if (inStr) { if (esc) esc = false; else if (c === "\\") esc = true; else if (c === '"') inStr = false; continue; }
+    if (c === '"') inStr = true;
+    else if (c === open) depth++;
+    else if (c === close && --depth === 0) return s.slice(start, i + 1);
+  }
+  return null;
+}
 function parseJSON(txt) {
-  try { return JSON.parse(txt); } catch { const m = (txt || "").match(/\{[\s\S]*\}/); if (!m) return null; try { return JSON.parse(m[0]); } catch { return null; } }
+  const s = stripThink(txt);
+  try { return JSON.parse(s); } catch {}
+  const b = extractBalanced(s);
+  if (b) { try { return JSON.parse(b); } catch {} }
+  return null;
 }
 
 /**
@@ -81,15 +111,20 @@ export async function groqJSON(system, user, opts = {}) {
   for (const model of models) {
     // Compound is an agentic SYSTEM and rejects response_format json_object; rely on the prompt instead.
     const isCompound = /compound/i.test(model);
-    // Compound rejects json_object; and gpt-oss sometimes 400s "json_validate_failed" (its reasoning
-    // truncates the JSON). Start in JSON mode unless compound, and drop to prompt-guided mode on such a
-    // 400 — parseJSON is tolerant, so we still get valid JSON out.
-    let jsonMode = !isCompound;
+    const isQwen = /qwen/i.test(model);
+    // Compound rejects json_object; qwen is a reasoning model whose <think> defeats json_object — both
+    // rely on the prompt + tolerant parser instead. gpt-oss keeps json_object but drops it on a
+    // "json_validate_failed" 400 (its reasoning can truncate the JSON).
+    let jsonMode = !isCompound && !isQwen;
+    let dropReasoning = false; // set if the model 400s on reasoning_effort/format
     for (let attempt = 1; attempt <= 4; attempt++) {
       const keyIdx = await reserve(inputEst + cap);
       try {
         const payload = { model, temperature, max_tokens: cap, messages: [{ role: "system", content: system }, { role: "user", content: user }] };
         if (jsonMode) payload.response_format = { type: "json_object" };
+        // qwen: turn thinking OFF so the token budget goes to the ANSWER (not a <think> block that
+        // eats the budget and truncates the JSON), and keep any residual reasoning out of content.
+        if (isQwen && !dropReasoning) { payload.reasoning_effort = "none"; payload.reasoning_format = "hidden"; }
         const res = await fetch(API, {
           method: "POST",
           headers: { Authorization: `Bearer ${UNIQUE_KEYS[keyIdx]}`, "Content-Type": "application/json" },
@@ -120,6 +155,11 @@ export async function groqJSON(system, user, opts = {}) {
             jsonMode = false;
             console.log(`  ! Groq 400 JSON-mode validation — retrying WITHOUT json_object (prompt-guided) [${model}]`);
             continue; // same attempt budget; parseJSON will handle the raw output
+          }
+          if (!dropReasoning && /reasoning/i.test(body)) {
+            dropReasoning = true;
+            console.log(`  ! Groq 400 rejected reasoning params — dropping them and retrying [${model}]`);
+            continue;
           }
           throw new Error(`Groq 400: ${body.slice(0, 180)}`);
         }
