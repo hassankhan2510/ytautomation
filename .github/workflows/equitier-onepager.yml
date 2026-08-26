@@ -6,8 +6,8 @@ name: "Equitier — Daily Insight + Quote Reels → Instagram"
 # weekly per-asset analysis (equitier-daily-meta). Posts only if META_*_EQUITIER secrets are set.
 on:
   schedule:
-    - cron: "20 6 * * *"  # morning — INSIGHT (market psychology)
-    - cron: "20 14 * * *" # afternoon — QUOTE (wealth mindset)
+    # Instagram paused (Meta under review). Keep ONE daily run for the LinkedIn carousel only.
+    - cron: "20 6 * * *" # morning — INSIGHT (-> LinkedIn carousel; Instagram post gated off below)
   workflow_dispatch:
     inputs:
       mode:
@@ -86,8 +86,8 @@ jobs:
           fi
       - name: Render the reel (OnePager, 9:16)
         run: npx remotion render OnePager out/equitier_onepager.mp4 --props=out/onepager_props.json --concurrency=2
-      - name: Post to Instagram (no-op unless Meta secrets are set / test run)
-        if: ${{ github.event.inputs.publish != 'test' }}
+      - name: Post to Instagram (PAUSED — Meta under review; re-enable with repo var EQUITIER_META_ON=1)
+        if: ${{ github.event.inputs.publish != 'test' && vars.EQUITIER_META_ON == '1' }}
         env:
           META_TARGETS: "ig"
           META_STORY: "1"

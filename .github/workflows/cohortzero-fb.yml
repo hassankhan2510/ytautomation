@@ -22,7 +22,7 @@ on:
 jobs:
   make:
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    timeout-minutes: 200
     permissions:
       contents: write
     defaults:
@@ -46,6 +46,8 @@ jobs:
             libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng
       - run: npm ci
       - run: pip install edge-tts soundfile kokoro
+      - name: Random start delay (varies the post time daily — less bot-like to Meta)
+        run: sleep $((RANDOM % 7200)) # 0–2h jitter
       - name: Pick a trending business/startup topic (scout)
         id: scout
         run: |
@@ -53,12 +55,12 @@ jobs:
           if [ -z "$TOPIC" ]; then TOPIC="$(node scripts/scout.mjs --channel=cohortzero --one)"; fi
           echo "Chosen topic: $TOPIC"
           echo "topic=$TOPIC" >> "$GITHUB_OUTPUT"
-      - name: Write 2 Hinglish shorts (Groq)
+      - name: Write 1 Hinglish short (Groq)
         env:
           CHANNEL: cohortzero
           TOPICS: ${{ steps.scout.outputs.topic }}
           MODE: shorts
-          SHORTS: "2"
+          SHORTS: "1"
           LANGUAGE: Hinglish
           IG_TONE: "1"
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

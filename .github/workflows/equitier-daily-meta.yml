@@ -1,14 +1,13 @@
-name: "Equitier — Weekly Market Analysis → Instagram + Facebook"
+name: "Equitier — Weekly Market Analysis → Instagram + Facebook (PAUSED)"
 
-# PER-ASSET WEEKLY technical analysis (a full week's plan + levels), SEPARATE from YouTube — one deep,
-# charted piece per asset instead of shallow daily recaps:
-#   Mon = GOLD · Wed = BITCOIN · Fri = US STOCKS / market deep-dive.
-# Real data + candlestick charts only. Kokoro voice. Posts to the Equitier FB Page + Instagram.
+# PER-ASSET WEEKLY technical analysis (Mon GOLD · Wed BITCOIN · Fri US stocks). PAUSED while the
+# Equitier Meta business is under review (restriction on ads/audiences) — schedule disabled; run
+# manually if needed. Re-enable by uncommenting the schedule block below once the review clears.
 on:
-  schedule:
-    - cron: "0 3 * * 1" # Mon 08:00 PKT — GOLD weekly technical plan
-    - cron: "0 3 * * 3" # Wed 08:00 PKT — BITCOIN weekly technical plan
-    - cron: "0 3 * * 5" # Fri 08:00 PKT — US stocks / market weekly deep-dive
+  # schedule:
+  #   - cron: "0 3 * * 1" # Mon 08:00 PKT — GOLD weekly technical plan
+  #   - cron: "0 3 * * 3" # Wed 08:00 PKT — BITCOIN weekly technical plan
+  #   - cron: "0 3 * * 5" # Fri 08:00 PKT — US stocks / market weekly deep-dive
   workflow_dispatch:
     inputs:
       asset:

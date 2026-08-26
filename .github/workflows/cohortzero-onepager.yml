@@ -8,9 +8,9 @@ name: "Cohort Zero — Daily One-Page Reels → Instagram"
 # MP4 and hands it back as a downloadable artifact.
 on:
   schedule:
-    - cron: "0 10 * * *"  # morning — LESSON
-    - cron: "0 15 * * *"  # afternoon — NEWS
-    - cron: "40 18 * * *" # evening — QUOTE (shareable wisdom for the feed)
+    # 1 post/day (LESSON) -> Instagram + LinkedIn, at a RANDOMIZED time (jitter step below). The extra
+    # daily news/quote posts were removed to cut the Meta footprint and look less automated.
+    - cron: "0 9 * * *" # base ~morning; the random start delay shifts the real time each day
   workflow_dispatch:
     inputs:
       mode:
@@ -33,7 +33,7 @@ on:
 jobs:
   make:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 200
     permissions:
       contents: write
     defaults:
@@ -53,6 +53,8 @@ jobs:
             libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
             libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji
       - run: npm ci
+      - name: Random start delay (varies the post time daily — less bot-like to Meta)
+        run: sleep $((RANDOM % 7200)) # 0–2h jitter
       - name: Decide mode (morning=lesson, evening=news; or manual input)
         id: mode
         run: |

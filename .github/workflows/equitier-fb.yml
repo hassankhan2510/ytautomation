@@ -4,8 +4,9 @@ name: "Equitier — Daily Facebook Reels (investing shorts)"
 # Kokoro voice), AI-generated visuals (Pollinations, free), a hard first-3-seconds hook. Posts to the
 # Equitier Facebook Page (Instagram stays the one-page reels).
 on:
-  schedule:
-    - cron: "30 17 * * *" # afternoon US / evening EU
+  # PAUSED while the Equitier Meta business is under review — schedule disabled; run manually if needed.
+  # schedule:
+  #   - cron: "30 17 * * *" # afternoon US / evening EU
   workflow_dispatch:
     inputs:
       topic:
