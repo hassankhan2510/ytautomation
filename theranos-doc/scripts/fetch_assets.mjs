@@ -142,70 +142,96 @@ async function main() {
   }
 
   const niche = String(script.meta?.niche || "").trim();
+  let changed = false;
+  const conversions = new Map(); // oldAssetName -> newImageName|null (applied to script.json AND timeline.json)
+  // Repoint every line using `assetName` to an IMAGE. A missing VIDEO hard-fails the render
+  // (OffthreadVideo delayRender times out); a missing IMAGE just shows a dark background. So any video
+  // scene we can't source as a real clip is converted to an image scene here.
+  const toImage = (assetName, newAsset) => {
+    for (const l of script.lines) if (l.asset === assetName) { l.type = "image"; if (newAsset) l.asset = newAsset; else delete l.asset; }
+    conversions.set(assetName, newAsset || null);
+    changed = true;
+  };
+  const queriesFor = (assetName, kw) =>
+    [kw[0], kw[1], path.parse(assetName).name.replace(/_/g, " "), niche || "", "cinematic abstract dark background"].filter(Boolean);
+  const compressNote = (bytes, f) => {
+    let note = `${(bytes / 1e6).toFixed(2)} MB`;
+    try {
+      const res = compressAsset(f, orientation, manifest);
+      if (res.before && res.after) { const pct = Math.round((1 - res.after / res.before) * 100); note = `${(res.after / 1e6).toFixed(2)} MB${pct > 0 ? `, -${pct}% compressed` : ""}`; }
+    } catch (e) { note += ` (compress skipped: ${e.message})`; }
+    return note;
+  };
+
   for (const [assetName, info] of need) {
+    const isVideo = info.type === "video";
     const dest = path.join(ASSET_DIR, assetName);
+    // For a video scene, an AI/Pexels IMAGE lands as a .jpg and the scene is converted to image.
+    const imgName = isVideo ? assetName.replace(/\.[^.]+$/, "") + ".jpg" : assetName;
+    const imgDest = path.join(ASSET_DIR, imgName);
     let done = false;
 
-    function compressNote(bytes) {
-      let note = `${(bytes / 1e6).toFixed(2)} MB`;
-      try {
-        const res = compressAsset(dest, orientation, manifest);
-        if (res.before && res.after) {
-          const pct = Math.round((1 - res.after / res.before) * 100);
-          note = `${(res.after / 1e6).toFixed(2)} MB${pct > 0 ? `, -${pct}% compressed` : ""}`;
-        }
-      } catch (e) {
-        note += ` (compress skipped: ${e.message})`;
+    // 1) Video scene: try a real Pexels CLIP first (keeps motion) — only if a key is set.
+    if (isVideo && PEXELS_KEY) {
+      for (const q of queriesFor(assetName, info.keywords)) {
+        try {
+          const link = await pexelsVideo(q, orientation);
+          if (!link) continue;
+          const bytes = await download(link, dest);
+          if (bytes < 1500) { fs.rmSync(dest, { force: true }); continue; }
+          log(`  + ${assetName}  <- video "${q}"  (${compressNote(bytes, dest)})`);
+          done = true; break;
+        } catch { /* next query */ }
       }
-      return note;
     }
 
-    // AI image FIRST for image scenes when enabled (free Pollinations). Video scenes still use Pexels
-    // so the reel keeps motion. AI can be slow, so allow up to 90s per image.
-    if (AI && info.type !== "video") {
+    // 2) AI image (free Pollinations) — for image scenes, and the fallback for video scenes. A video
+    //    scene that gets an AI image is converted to an image scene so the render loads the .jpg.
+    if (!done && AI) {
       try {
         const seed = hashNum(assetName) % 100000;
         const url = pollinationsUrl(aiPrompt(info.keywords, thumbStyle, niche), orientation, seed);
-        const bytes = await download(url, dest, 90000);
-        if (bytes > 3000) {
-          log(`  + ${assetName}  <- AI image (pollinations)  (${compressNote(bytes)})`);
-          done = true;
-        } else {
-          fs.rmSync(dest, { force: true });
-        }
-      } catch (e) {
-        log(`  ! AI image failed for ${assetName} (${String(e.message).slice(0, 60)}) — trying Pexels`);
+        const bytes = await download(url, imgDest, 90000);
+        if (bytes > 3000) { if (isVideo) toImage(assetName, imgName); log(`  + ${imgName}  <- AI image (pollinations)  (${compressNote(bytes, imgDest)})`); done = true; }
+        else fs.rmSync(imgDest, { force: true });
+      } catch (e) { log(`  ! AI image failed for ${assetName} (${String(e.message).slice(0, 60)})`); }
+    }
+
+    // 3) Pexels IMAGE fallback (image scenes, or converting a video scene to an image).
+    if (!done && PEXELS_KEY) {
+      for (const q of queriesFor(assetName, info.keywords)) {
+        try {
+          const link = await pexelsImage(q, orientation);
+          if (!link) continue;
+          const bytes = await download(link, imgDest);
+          if (bytes < 1500) { fs.rmSync(imgDest, { force: true }); continue; }
+          if (isVideo) toImage(assetName, imgName);
+          log(`  + ${imgName}  <- image "${q}"  (${compressNote(bytes, imgDest)})`);
+          done = true; break;
+        } catch { /* next query */ }
       }
     }
 
-    // Pexels: primary for video scenes, and the fallback for images. Try the specific keyword first,
-    // then progressively more generic fallbacks so a keyword with NO match still gets a relevant clip.
-    if (!done && PEXELS_KEY) {
-      const queries = [
-        info.keywords[0],
-        info.keywords[1],
-        path.parse(assetName).name.replace(/_/g, " "),
-        niche && `${niche}`,
-        "cinematic abstract dark background",
-      ].filter(Boolean);
-      for (const query of queries) {
-        try {
-          const link =
-            info.type === "video"
-              ? await pexelsVideo(query, orientation)
-              : await pexelsImage(query, orientation);
-          if (!link) continue; // no result for this query — try the next fallback
-          const bytes = await download(link, dest);
-          if (bytes < 1500) { fs.rmSync(dest, { force: true }); continue; } // tiny/corrupt — try next
-          log(`  + ${assetName}  <- "${query}"  (${compressNote(bytes)})`);
-          done = true;
-          break;
-        } catch (err) {
-          /* try the next fallback query */
-        }
-      }
+    // 4) Last resort: nothing found. For a video scene, convert to image WITHOUT an asset so the render
+    //    shows a dark background instead of hanging on a missing video.
+    if (!done) {
+      if (isVideo) { toImage(assetName, null); log(`  ! no clip for ${assetName} — scene set to a dark background`); }
+      else log(`  ! could not fetch ${assetName} — scene will show a dark background`);
     }
-    if (!done) log(`  ! could not fetch ${assetName} — scene will show a dark background`);
+  }
+  if (changed) {
+    fs.writeFileSync(SCRIPT_JSON, JSON.stringify(script, null, 2));
+    // timeline.json is generated by gen_voiceover BEFORE this step and is what the render actually
+    // reads — patch the same converted lines there, or the render still expects the missing video.
+    try {
+      const TL = path.join(ROOT, "src", "data", "timeline.json");
+      if (fs.existsSync(TL)) {
+        const tl = JSON.parse(fs.readFileSync(TL, "utf-8"));
+        for (const l of tl.lines || []) if (conversions.has(l.asset)) { const na = conversions.get(l.asset); l.type = "image"; if (na) l.asset = na; else delete l.asset; }
+        fs.writeFileSync(TL, JSON.stringify(tl, null, 2));
+      }
+    } catch (e) { log(`  ! timeline patch skipped (${e.message})`); }
+    log("  ~ script.json + timeline.json updated (unsourced video scenes -> images)");
   }
   saveManifest(manifest);
   log("\nAsset fetch complete.\n");
