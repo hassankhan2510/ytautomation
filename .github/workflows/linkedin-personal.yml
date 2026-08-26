@@ -1,12 +1,15 @@
-name: "LinkedIn — Personal Studio (carousel, 2x/week)"
+name: "LinkedIn — Personal Studio (carousel, PAUSED)"
 
 # Fully automated personal-brand studio: pick a fresh breakout repo OR paper (never mixed, never
 # repeated), write the insight-hook + POV + dual CEO/CTO breakdown, render a code-drawn diagram
 # carousel, and post it to your PERSONAL profile as a document with the source link in the first
 # comment. Nothing posts until LI_ACCESS_TOKEN is set; manual runs default to a safe dry-run.
+#
+# STOPPED: auto-posting disabled (it was hurting the personal profile's reach). Runs only if you
+# trigger it by hand. Re-enable by uncommenting the schedule block below.
 on:
-  schedule:
-    - cron: "0 8 * * 1" # Monday 08:00 UTC — 1x/week, kept premium/exclusive
+  # schedule:
+  #   - cron: "0 8 * * 1" # Monday 08:00 UTC
   workflow_dispatch:
     inputs:
       kind:
