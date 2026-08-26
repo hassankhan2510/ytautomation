@@ -1,0 +1,12 @@
+{
+  "meta": { "accent": "#e11d48", "ink": "#141a22", "brand": "COHORT ZERO", "fps": 30 },
+  "totalDurationInFrames": 720,
+  "scenes": [
+    { "text": "Most startups don't fail from a bad idea.", "primitives": ["idea", "cross"], "startFrame": 0, "durationInFrames": 120 },
+    { "text": "They fail because nobody actually wanted it.", "primitives": ["people", "cross"], "startFrame": 120, "durationInFrames": 120 },
+    { "text": "Winners obsess over one thing: a real problem.", "primitives": ["magnifier", "target"], "startFrame": 240, "durationInFrames": 120 },
+    { "text": "So talk to customers before you build.", "primitives": ["speech", "arrow_right", "people"], "startFrame": 360, "durationInFrames": 120 },
+    { "text": "Then build the smallest thing that solves it.", "primitives": ["gear", "check"], "startFrame": 480, "durationInFrames": 120 },
+    { "text": "Paying customers beat a perfect plan.", "primitives": ["coin", "trophy"], "startFrame": 600, "durationInFrames": 120 }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "whiteboard-explainer",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Isolated 2.5D 'living ink' whiteboard-explainer spike (Remotion + Groq + Kokoro). Does not touch the main pipeline.",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "scenes": "node scripts/gen_scenes.mjs",
+    "voice": "python scripts/voice.py",
+    "render": "remotion render Whiteboard out/whiteboard.mp4 --concurrency=2"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.500",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.500"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "5.9.3"
+  }
+}

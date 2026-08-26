@@ -31,3 +31,9 @@ theranos-doc/li/
 
 # generated one-pager background (fetched fresh each CI run)
 theranos-doc/public/onepager_bg.jpg
+
+# whiteboard spike
+whiteboard/node_modules/
+whiteboard/out/
+whiteboard/public/audio/
+whiteboard/scripts/__pycache__/
