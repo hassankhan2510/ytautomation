@@ -1,71 +1,73 @@
 """
-Kokoro voiceover for the whiteboard explainer. Reads src/data/scenes.json, synthesizes one clip per
-scene into public/audio/line_NN.wav, and rewrites each scene's real timing (startFrame /
-durationInFrames) + audio path + the total. Falls back to word-count-estimated timing (no audio) if
-Kokoro isn't installed, so `npm run render` still works.
+VOICEOVER + TIMING — narrate each scene with Kokoro (free, CPU, natural), concatenate into one track,
+and rewrite scenes.json so every scene's `from`/`durationInFrames` matches the real spoken length.
+Writes public/audio/voice.wav. Fully best-effort: if Kokoro isn't available it leaves the fixed
+timing untouched (the video still renders, just silent).
 
-  pip install kokoro soundfile   (+ apt espeak-ng)
   python scripts/voice.py
 """
-import json, os, glob
+import json
+import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCENES = os.path.join(ROOT, "src", "data", "scenes.json")
 AUDIO_DIR = os.path.join(ROOT, "public", "audio")
-FPS = 30
-PAUSE = 0.35          # gap after each line
-VOICE = os.environ.get("KOKORO_VOICE", "am_michael")
-SR = 24000
 
-def load_kokoro():
-    from kokoro import KPipeline
-    return KPipeline(lang_code="a")
+VOICE = os.environ.get("WB_KOKORO_VOICE", "am_michael")
+SPEED = float(os.environ.get("WB_VOICE_SPEED", "1.05"))
+SR = 24000  # Kokoro sample rate
 
 def main():
     with open(SCENES, "r", encoding="utf-8") as f:
-        doc = json.load(f)
-    os.makedirs(AUDIO_DIR, exist_ok=True)
-    for old in glob.glob(os.path.join(AUDIO_DIR, "line_*")):
-        try: os.remove(old)
-        except OSError: pass
+        data = json.load(f)
+    fps = int(data.get("fps", 30))
+    scenes = data.get("scenes", [])
+    if not scenes:
+        print("no scenes"); return
 
-    pipe = None
     try:
-        import numpy as np, soundfile as sf
-        pipe = load_kokoro()
-        print(f"Kokoro ready (voice {VOICE})")
+        import numpy as np
+        import soundfile as sf
+        from kokoro import KPipeline
     except Exception as e:
-        print(f"NOTE: Kokoro unavailable ({e}) — using word-estimated timing, no audio.")
+        print(f"NOTE: Kokoro/soundfile unavailable ({e}) — leaving fixed timing, rendering silent.")
+        return
 
+    try:
+        pipe = KPipeline(lang_code="a")  # American English
+    except Exception as e:
+        print(f"NOTE: Kokoro pipeline failed to load ({e}) — silent render.")
+        return
+
+    os.makedirs(AUDIO_DIR, exist_ok=True)
+    gap = np.zeros(int(0.35 * SR), dtype="float32")
+    track = []
     cursor = 0
-    for i, s in enumerate(doc["scenes"]):
-        text = s.get("text", "")
-        speech = 0.0
-        if pipe is not None:
-            try:
-                import numpy as np, soundfile as sf
-                chunks = [a for _, _, a in pipe(text, voice=VOICE, speed=1.0) if a is not None]
-                if chunks:
-                    audio = np.concatenate(chunks)
-                    speech = len(audio) / SR
-                    name = f"line_{i:02d}.wav"
-                    sf.write(os.path.join(AUDIO_DIR, name), audio, SR)
-                    s["audio"] = f"audio/{name}"
-            except Exception as e:
-                print(f"  ! scene {i} synth failed ({e})")
-        if speech <= 0:
-            speech = max(1.6, len(text.split()) * 0.40)  # estimate
-            s.pop("audio", None)
-        dur = max(FPS, int(round((speech + PAUSE) * FPS)))
-        s["startFrame"] = cursor
-        s["durationInFrames"] = dur
-        cursor += dur
-        print(f"  [{i+1}/{len(doc['scenes'])}] {speech:4.1f}s  {text[:48]}")
 
-    doc["totalDurationInFrames"] = cursor
+    for i, s in enumerate(scenes):
+        text = (s.get("text") or "").strip()
+        try:
+            parts = [a for _, _, a in pipe(text, voice=VOICE, speed=SPEED) if a is not None]
+            audio = np.concatenate(parts) if parts else np.zeros(int(1.2 * SR), dtype="float32")
+        except Exception as e:
+            print(f"  ! scene {i} synth failed ({e}); using a short gap")
+            audio = np.zeros(int(1.4 * SR), dtype="float32")
+        dur_sec = len(audio) / SR + 0.35
+        frames = max(fps, int(round(dur_sec * fps)))
+        s["from"] = cursor
+        s["durationInFrames"] = frames
+        cursor += frames
+        track.append(np.asarray(audio, dtype="float32"))
+        track.append(gap)
+        print(f"  [{i+1}/{len(scenes)}] {dur_sec:4.1f}s  {frames:>3}f  {text[:52]}")
+
+    full = np.concatenate(track) if track else np.zeros(1, dtype="float32")
+    sf.write(os.path.join(AUDIO_DIR, "voice.wav"), full, SR)
+    data["audio"] = "audio/voice.wav"
+    data["totalDurationInFrames"] = cursor + 15
     with open(SCENES, "w", encoding="utf-8") as f:
-        json.dump(doc, f, indent=2, ensure_ascii=False)
-    print(f"\nUpdated timing -> total {cursor} frames ({cursor/FPS:.1f}s). Now: npm run render")
+        json.dump(data, f, indent=2)
+    print(f"\n+ public/audio/voice.wav  ({cursor} frames total)\n+ scenes.json timing synced")
 
 if __name__ == "__main__":
     main()

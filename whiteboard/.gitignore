@@ -1,3 +1,4 @@
 node_modules/
 out/
 public/audio/
+.DS_Store

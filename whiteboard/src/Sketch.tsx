@@ -1,90 +1,69 @@
 import React, { useEffect, useRef, useState } from "react";
 import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
-import { byId } from "./primitives";
+import type { Primitive } from "./primitives";
 
 /**
- * One primitive rendered as premium 2.5D "living ink":
- *   1) the outline STROKES on (hand-drawing),
- *   2) then the fill region lifts off the page — gradient + drop-shadow + a spring scale-pop,
- *   3) a gentle continuous float so it feels alive, not static.
- * Frame is LOCAL (place inside a <Sequence>). Colours come from the accent.
+ * SKETCH — renders ONE primitive in the premium "living ink" 2.5D style:
+ *   1) the outline STROKES on (hand-drawing) via animated stroke-dashoffset,
+ *   2) the closed region then FILLS with an accent gradient + a spring scale-pop and a soft drop
+ *      shadow, so it "lifts off the page" (the 2.5D depth cue),
+ *   3) a gentle continuous float keeps it alive.
+ * Pure SVG/CSS — CPU-only, $0, deterministic.
  */
 export const Sketch: React.FC<{
-  id: string;
-  accent?: string;
-  ink?: string;
-  drawFrames?: number;
-  size?: number;
-}> = ({ id, accent = "#e11d48", ink = "#141a22", drawFrames = 26, size = 320 }) => {
-  const prim = byId(id);
+  primitive: Primitive;
+  accent: string;
+  delay?: number;      // frames to wait before starting
+  drawFrames?: number; // how long the stroke-on takes
+  size?: number;       // px
+}> = ({ primitive, accent, delay = 0, drawFrames = 34, size = 320 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const ref = useRef<SVGPathElement>(null);
-  const [len, setLen] = useState(600);
-  useEffect(() => { if (ref.current) setLen(ref.current.getTotalLength()); }, [id]);
+  const [len, setLen] = useState(1200);
+  useEffect(() => { if (ref.current) setLen(ref.current.getTotalLength()); }, [primitive.draw]);
 
-  if (!prim) return null;
-  const uid = `g_${id}`;
-
-  // 1) draw-on
-  const dashoffset = interpolate(frame, [0, drawFrames], [len, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  // 2) fill lift (after the outline is mostly drawn)
-  const fillStart = drawFrames - 4;
-  const pop = spring({ frame: frame - fillStart, fps, config: { damping: 12, mass: 0.6 } });
-  const fillOpacity = interpolate(frame, [fillStart, fillStart + 12], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const lift = interpolate(pop, [0, 1], [0, 1]);
-  // 3) gentle float
-  const floatY = Math.sin((frame / fps) * 1.1) * 4;
+  const t = frame - delay;
+  const dash = interpolate(t, [0, drawFrames], [len, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const appear = interpolate(t, [0, 6], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  // Fill pops in once the outline is ~70% drawn.
+  const fillStart = drawFrames * 0.7;
+  const fillSpring = spring({ frame: t - fillStart, fps, config: { damping: 200 } });
+  const float = Math.sin((frame + delay) / 26) * 4; // slow living-ink bob
+  const gid = `g_${primitive.id}`;
 
   return (
-    <div style={{ width: size, height: size, transform: `translateY(${floatY}px)` }}>
-      <svg viewBox="0 0 100 100" width="100%" height="100%" style={{ overflow: "visible" }}>
-        <defs>
-          <linearGradient id={uid} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor={accent} />
-            <stop offset="100%" stopColor={shade(accent, -0.35)} />
-          </linearGradient>
-          <filter id={`${uid}_s`} x="-40%" y="-40%" width="180%" height="180%">
-            <feDropShadow dx="0" dy={3.5} stdDeviation={3} floodColor="rgba(0,0,0,0.28)" />
-          </filter>
-        </defs>
-
-        {/* soft ground shadow that grows as the ink lifts */}
-        {prim.fill ? (
-          <ellipse cx="50" cy="94" rx={26 * lift} ry={4 * lift} fill="rgba(0,0,0,0.14)" />
+    <svg viewBox="0 0 100 100" width={size} height={size} style={{ overflow: "visible", opacity: appear, transform: `translateY(${float}px)` }}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={accent} stopOpacity={0.95} />
+          <stop offset="100%" stopColor={accent} stopOpacity={0.62} />
+        </linearGradient>
+        <filter id={`${gid}_sh`} x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="#0b1220" floodOpacity="0.22" />
+        </filter>
+      </defs>
+      <g filter={`url(#${gid}_sh)`}>
+        {primitive.fill ? (
+          <path
+            d={primitive.fill}
+            fill={`url(#${gid})`}
+            opacity={fillSpring}
+            style={{ transform: `scale(${interpolate(fillSpring, [0, 1], [0.9, 1])})`, transformOrigin: "50px 50px" }}
+          />
         ) : null}
-
-        {/* the FILL region, lifted off the page */}
-        {prim.fill ? (
-          <g style={{ transformOrigin: "50px 50px", transform: `scale(${interpolate(pop, [0, 1], [0.86, 1])})`, filter: `url(#${uid}_s)` }}>
-            <path d={prim.fill} fill={`url(#${uid})`} opacity={fillOpacity} />
-          </g>
-        ) : null}
-
-        {/* the OUTLINE, drawn on and kept crisp on top */}
         <path
           ref={ref}
-          d={prim.draw}
+          d={primitive.draw}
           fill="none"
-          stroke={ink}
+          stroke="#1f2937"
           strokeWidth={2.6}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeDasharray={len}
-          strokeDashoffset={dashoffset}
+          strokeDashoffset={dash}
         />
-      </svg>
-    </div>
+      </g>
+    </svg>
   );
 };
-
-// darken/lighten a #rrggbb by pct (-1..1)
-function shade(hex: string, pct: number): string {
-  const h = hex.replace("#", "");
-  const n = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16);
-  const f = pct < 0 ? 0 : 255, t = Math.abs(pct);
-  const r = Math.round(((n >> 16) & 255) * (1 - t) + f * t);
-  const g = Math.round(((n >> 8) & 255) * (1 - t) + f * t);
-  const b = Math.round((n & 255) * (1 - t) + f * t);
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}

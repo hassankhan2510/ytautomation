@@ -1,22 +1,20 @@
-name: "Whiteboard Explainer — Demo Render"
+name: "Whiteboard — Explainer Demo (render)"
 
-# Isolated 2.5D whiteboard-explainer spike (whiteboard/ folder). Renders an MP4 you download from the
-# run's artifacts — nothing is posted anywhere. `sample` renders the committed sample scenes (silent,
-# instant). `generate` writes a fresh AI script + Kokoro voice for your topic, then renders.
+# Isolated spike: renders ONE 2.5D "living ink" whiteboard explainer and hands back the MP4 as an
+# artifact. Optional AI scene-writing (Groq) + Kokoro narration. Touches nothing in the main pipeline.
 on:
   workflow_dispatch:
     inputs:
-      mode:
-        description: "sample = render committed sample (fast) · generate = AI script + voice from your topic"
-        type: choice
-        options: [sample, generate]
-        default: sample
-        required: false
       topic:
-        description: "Topic (generate mode)"
+        description: "Topic (blank = use the built-in sample script)"
         required: false
         type: string
-        default: "why most startups actually fail"
+      ai:
+        description: "Write the script + pick icons with AI (Groq)? Needs a topic."
+        type: choice
+        options: [yes, no]
+        default: yes
+        required: false
 
 jobs:
   render:
@@ -39,27 +37,26 @@ jobs:
           sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
             libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
             libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng
-      - run: npm install
-      - name: Generate AI script + Kokoro voice (generate mode only)
-        if: ${{ github.event.inputs.mode == 'generate' }}
+      - run: npm install --no-audit --no-fund
+      - run: pip install kokoro soundfile numpy edge-tts
+      - name: Write scenes with AI (optional)
+        if: ${{ github.event.inputs.ai != 'no' && github.event.inputs.topic != '' }}
         env:
           TOPIC: ${{ github.event.inputs.topic }}
-          BRAND: "COHORT ZERO"
-          NICHE: "startup / founder"
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
           GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
           GROQ_TPM: ${{ vars.GROQ_TPM }}
-        run: |
-          pip install kokoro soundfile edge-tts
-          node scripts/gen_scenes.mjs
-          python scripts/voice.py
+        run: node scripts/gen_scenes.mjs
+      - name: Narrate (Kokoro) + sync timing
+        run: python scripts/voice.py
       - name: Render the explainer
         run: npx remotion render Whiteboard out/whiteboard.mp4 --concurrency=2
-      - name: Upload the MP4
+      - name: Deliver as downloadable artifact
         uses: actions/upload-artifact@v4
         with:
-          name: whiteboard-${{ github.event.inputs.mode }}-run${{ github.run_number }}
+          name: whiteboard-demo-run${{ github.run_number }}
           path: whiteboard/out/whiteboard.mp4
           retention-days: 30
           if-no-files-found: warn

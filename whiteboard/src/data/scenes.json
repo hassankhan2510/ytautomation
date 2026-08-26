@@ -1,12 +1,17 @@
 {
-  "meta": { "accent": "#e11d48", "ink": "#141a22", "brand": "COHORT ZERO", "fps": 30 },
-  "totalDurationInFrames": 720,
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "accent": "#e11d48",
+  "brand": "COHORT ZERO",
+  "title": "Why most startups die",
   "scenes": [
-    { "text": "Most startups don't fail from a bad idea.", "primitives": ["idea", "cross"], "startFrame": 0, "durationInFrames": 120 },
-    { "text": "They fail because nobody actually wanted it.", "primitives": ["people", "cross"], "startFrame": 120, "durationInFrames": 120 },
-    { "text": "Winners obsess over one thing: a real problem.", "primitives": ["magnifier", "target"], "startFrame": 240, "durationInFrames": 120 },
-    { "text": "So talk to customers before you build.", "primitives": ["speech", "arrow_right", "people"], "startFrame": 360, "durationInFrames": 120 },
-    { "text": "Then build the smallest thing that solves it.", "primitives": ["gear", "check"], "startFrame": 480, "durationInFrames": 120 },
-    { "text": "Paying customers beat a perfect plan.", "primitives": ["coin", "trophy"], "startFrame": 600, "durationInFrames": 120 }
-  ]
+    { "text": "Most startups don't die from competition. They die from building something nobody wants.", "primitives": ["rocket", "cross"], "from": 0, "durationInFrames": 95 },
+    { "text": "The number one killer is no product-market fit — no real demand for what you made.", "primitives": ["target", "warning"], "from": 95, "durationInFrames": 95 },
+    { "text": "Founders fall in love with their idea, not with the customer's actual problem.", "primitives": ["idea", "person"], "from": 190, "durationInFrames": 95 },
+    { "text": "Talk to twenty real users before you write a single line of code.", "primitives": ["people", "speech"], "from": 285, "durationInFrames": 95 },
+    { "text": "Charge money early. Paying customers are the only proof that matters.", "primitives": ["coin", "check"], "from": 380, "durationInFrames": 95 },
+    { "text": "Build what people already pay for — then pour fuel on it.", "primitives": ["chart_up", "flag"], "from": 475, "durationInFrames": 110 }
+  ],
+  "totalDurationInFrames": 585
 }

@@ -1,12 +1,10 @@
 /**
- * SCENE WRITER — one Groq call (reuses the main pipeline's qwen client) that BOTH writes a short
- * whiteboard-explainer script AND picks 1-3 icon primitives per scene from the tagged catalog.
- * Writes src/data/scenes.json with placeholder timing; voice.py then fills real timing + audio.
+ * SCENE WRITER — one Groq call that (a) writes a punchy whiteboard-explainer script and (b) picks the
+ * matching primitive icon(s) for each line from the tagged catalog. Reuses the main pipeline's proven
+ * Groq client (qwen, throttled, robust JSON). Writes src/data/scenes.json.
  *
- *   TOPIC="why most startups fail" BRAND="COHORT ZERO" NICHE=business GROQ_API_KEY=... node scripts/gen_scenes.mjs
+ *   TOPIC="Why most startups die" GROQ_API_KEY=xxx node scripts/gen_scenes.mjs
  *   node scripts/gen_scenes.mjs --dry     # no API — keeps the existing sample scenes.json
- *
- * Groq keys come from the same env as the main pipeline (GROQ_API_KEY[_2/_3], GROQ_MODEL, GROQ_TPM).
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -18,60 +16,61 @@ const ROOT = path.resolve(__dirname, "..");
 const SCENES = path.join(ROOT, "src", "data", "scenes.json");
 const DRY = process.argv.includes("--dry");
 
-const TOPIC = process.env.TOPIC || "why most startups actually fail";
-const BRAND = process.env.BRAND || "COHORT ZERO";
-const NICHE = process.env.NICHE || "startup / founder";
-const ACCENT = process.env.ACCENT || "#e11d48";
+const TOPIC = process.env.TOPIC || "Why most startups die";
+const BRAND = process.env.WB_BRAND || "COHORT ZERO";
+const ACCENT = process.env.WB_ACCENT || "#e11d48";
+const AUDIENCE = process.env.WB_AUDIENCE || "founders and early-stage startups";
+const FPS = 30;
+const SCENE_FRAMES = 95; // default per-scene length; voice.py overrides with real audio timing
 
-// id -> tags (kept in sync with src/primitives.ts). The AI may only choose ids from here.
+// id -> tags (kept in sync with src/primitives.ts). The AI may only choose from these ids.
 const CATALOG = {
   idea: "idea insight innovation think learn aha", rocket: "launch startup growth scale fast momentum",
-  chart_up: "growth revenue increase results profit traction up", bars: "data metrics comparison stats numbers",
-  arrow_right: "next flow then leads step cause result", target: "goal focus aim objective product market fit niche",
-  coin: "money cash revenue price invest wealth capital", person: "founder customer person user you ceo",
-  people: "team network community users audience cohort partners", building: "company business market office enterprise vc firm",
+  chart_up: "growth revenue increase results profit traction", bars: "data metrics comparison stats numbers",
+  arrow_right: "next flow then leads step cause result", target: "goal focus aim product-market-fit niche",
+  coin: "money cash revenue price invest wealth capital", person: "founder customer user you ceo",
+  people: "team network community users audience cohort", building: "company business market corporate office",
   warning: "warning risk mistake danger avoid fail trap", check: "success correct do right win done works",
-  cross: "wrong dont stop avoid no fail myth", clock: "time patience timing wait speed long term compound",
-  gear: "system how process engine mechanism build works", magnifier: "research find search analysis discover insight",
-  steps: "steps how to guide plan roadmap framework stages", speech: "advice quote talk opinion message story ask",
+  cross: "wrong dont stop avoid no fail myth", clock: "time patience timing speed long-term compound",
+  gear: "system how process engine mechanism build", magnifier: "research find search analysis discover",
+  steps: "steps how-to guide plan roadmap framework", speech: "advice quote talk opinion message ask",
   shield: "moat defense protect security trust advantage", flag: "milestone goal win launch achievement",
-  handshake: "deal partnership agreement funding close acquire", brain: "ai brain learn smart intelligence psychology mindset",
-  funnel: "funnel sales conversion filter leads pipeline", scale: "balance tradeoff compare decision versus weigh",
+  handshake: "deal partnership funding close acquire term-sheet", brain: "ai brain learn smart psychology mindset",
+  funnel: "funnel sales conversion leads pipeline acquisition", scale: "balance tradeoff compare decision versus",
   key: "key unlock secret access solution answer", trophy: "win success best achievement top champion",
-  calendar: "calendar schedule daily plan routine consistency habit", cloud: "cloud saas tech software platform infra",
-  chart_down: "loss crash decline down drop burn churn risk", plus: "add more grow new benefit gain",
+  calendar: "schedule daily plan routine consistency habit", cloud: "cloud saas tech software platform",
+  chart_down: "loss crash decline down burn churn risk", plus: "add more grow new benefit gain",
 };
-const IDS = new Set(Object.keys(CATALOG));
+const VALID = new Set(Object.keys(CATALOG));
 
 async function main() {
-  if (DRY) { console.log("dry: leaving existing scenes.json untouched"); return; }
+  if (DRY) { console.log("dry: leaving existing sample scenes.json in place"); return; }
 
-  const catalogText = Object.entries(CATALOG).map(([id, tags]) => `${id}: ${tags}`).join("\n");
+  const catalogText = Object.entries(CATALOG).map(([id, tags]) => `${id} — ${tags}`).join("\n");
   const sys =
-    `You script a punchy WHITEBOARD EXPLAINER for "${BRAND}" (${NICHE}). Return ONLY JSON: ` +
-    `{"scenes":[{"text": string, "primitives": string[]}]}. 6-8 scenes. Each "text" is ONE on-screen ` +
-    `line <= 9 words, plain and concrete, building a single clear argument with a strong first line and ` +
-    `a payoff at the end. For each scene choose 1-3 "primitives" — icon ids FROM THIS CATALOG ONLY that ` +
-    `visualize the line (e.g. an idea + a cross for "not about the idea"). CATALOG (id: keywords):\n${catalogText}\n` +
-    `Rules: use ONLY ids from the catalog; 1-3 per scene; prefer icons whose keywords match the line; no markdown.`;
-  const usr = `TOPIC: ${TOPIC}\nWrite the explainer now.`;
+    `You script a premium WHITEBOARD EXPLAINER video for "${BRAND}" (audience: ${AUDIENCE}). Return ONLY JSON: ` +
+    `{"title": string, "scenes": [ {"text": string, "primitives": [1-2 ids]} ] } with 6-8 scenes. ` +
+    `RULES: each "text" is ONE spoken idea, <= 16 words, concrete and specific (no fluff, no markdown, no emojis); ` +
+    `the scenes build hook -> insight -> payoff and can be read aloud naturally. For each scene choose 1-2 ` +
+    `primitive IDs whose meaning matches the idea, using ONLY ids from this catalog:\n${catalogText}`;
+  const model = await groqJSON(sys, `TOPIC: ${TOPIC}`, { maxTokens: 1600, temperature: 0.6 });
+  if (!model || !Array.isArray(model.scenes) || !model.scenes.length) {
+    console.error("  ! Groq returned no usable scenes — keeping the existing scenes.json.");
+    process.exit(1);
+  }
 
-  const m = await groqJSON(sys, usr, { maxTokens: 1500, temperature: 0.6 });
-  if (!m || !Array.isArray(m.scenes) || !m.scenes.length) { console.error("Groq returned no scenes — re-run."); process.exit(1); }
-
-  const fps = 30, per = 120; // placeholder 4s/scene; voice.py overrides with real speech length
-  let start = 0;
-  const scenes = m.scenes.slice(0, 8).map((s) => {
-    const prims = (Array.isArray(s.primitives) ? s.primitives : []).map(String).filter((id) => IDS.has(id)).slice(0, 3);
-    const scene = { text: String(s.text || "").replace(/[*`#]/g, "").trim().slice(0, 90), primitives: prims.length ? prims : ["idea"], startFrame: start, durationInFrames: per };
-    start += per;
+  let from = 0;
+  const scenes = model.scenes.slice(0, 8).map((s) => {
+    const prims = (Array.isArray(s.primitives) ? s.primitives : []).filter((p) => VALID.has(p)).slice(0, 2);
+    const scene = { text: String(s.text || "").replace(/[*`#]/g, "").trim(), primitives: prims.length ? prims : ["idea"], from, durationInFrames: SCENE_FRAMES };
+    from += SCENE_FRAMES;
     return scene;
   }).filter((s) => s.text);
 
-  const doc = { meta: { accent: ACCENT, ink: "#141a22", brand: BRAND, fps }, totalDurationInFrames: start, scenes };
-  fs.writeFileSync(SCENES, JSON.stringify(doc, null, 2));
-  console.log(`  + ${path.relative(ROOT, SCENES)} — ${scenes.length} scenes`);
-  scenes.forEach((s, i) => console.log(`    ${i + 1}. [${s.primitives.join(", ")}]  ${s.text}`));
-  console.log(`\nNext:  python scripts/voice.py   (adds Kokoro voice + real timing)\n       npm run render`);
+  const data = { fps: FPS, width: 1920, height: 1080, accent: ACCENT, brand: BRAND, title: String(model.title || TOPIC), scenes, totalDurationInFrames: from + 15 };
+  fs.writeFileSync(SCENES, JSON.stringify(data, null, 2));
+  console.log(`  + scenes.json  "${data.title}"  (${scenes.length} scenes)`);
+  scenes.forEach((s, i) => console.log(`    ${i + 1}. [${s.primitives.join(", ")}]  ${s.text.slice(0, 60)}`));
 }
+
 main().catch((e) => { console.error("gen_scenes failed:", e.message); process.exit(1); });

@@ -1,20 +1,19 @@
 import React from "react";
 import { Composition } from "remotion";
-import { WhiteboardVideo, ScenesDoc } from "./WhiteboardVideo";
-import scenes from "./data/scenes.json";
-
-const doc = scenes as ScenesDoc;
+import { WhiteboardVideo, type WBData } from "./WhiteboardVideo";
+import data from "./data/scenes.json";
 
 export const RemotionRoot: React.FC = () => {
+  const d = data as WBData;
   return (
     <Composition
       id="Whiteboard"
       component={WhiteboardVideo}
-      durationInFrames={Math.max(60, doc.totalDurationInFrames || 720)}
-      fps={30}
-      width={1920}
-      height={1080}
-      defaultProps={{ doc }}
+      durationInFrames={Math.max(30, d.totalDurationInFrames || 300)}
+      fps={d.fps || 30}
+      width={d.width || 1920}
+      height={d.height || 1080}
+      defaultProps={{ data: d }}
     />
   );
 };
