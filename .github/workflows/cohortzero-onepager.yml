@@ -7,10 +7,9 @@ name: "Cohort Zero — Daily One-Page Reels → Instagram"
 # Posts only if the Meta secrets for Cohort Zero are set (META_*_COHORTZERO); otherwise it renders the
 # MP4 and hands it back as a downloadable artifact.
 on:
-  schedule:
-    # 1 post/day (LESSON) -> Instagram + LinkedIn, at a RANDOMIZED time (jitter step below). The extra
-    # daily news/quote posts were removed to cut the Meta footprint and look less automated.
-    - cron: "0 9 * * *" # base ~morning; the random start delay shifts the real time each day
+  # STOPPED: all Cohort Zero auto-posting paused (Instagram + LinkedIn). Manual dispatch only.
+  # schedule:
+  #   - cron: "0 9 * * *" # base ~morning; the random start delay shifts the real time each day
   workflow_dispatch:
     inputs:
       mode:

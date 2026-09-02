@@ -4,8 +4,9 @@ name: "Cohort Zero — Daily Facebook Reels (Hinglish shorts)"
 # HINGLISH (Hindi voice via Kokoro + English words + English on-screen captions), AI-generated visuals
 # (Pollinations, free), a hard first-3-seconds hook. Posts to the Cohort Zero Facebook Page (Instagram stays the one-page reels).
 on:
-  schedule:
-    - cron: "30 15 * * *" # ~20:30 PKT — Pakistan evening scroll
+  # STOPPED: all Cohort Zero auto-posting paused (Facebook). Manual dispatch only; re-enable to resume.
+  # schedule:
+  #   - cron: "30 15 * * *" # ~20:30 PKT — Pakistan evening scroll
   workflow_dispatch:
     inputs:
       topic:

@@ -4,8 +4,9 @@ name: "Cohort Zero — Weekly (auto: 1 long + 1 short, Tue/Thu)"
 # ONE short in YOUR cloned voice and uploads both to Cohort Zero as PRIVATE for review. Runs Tue/Thu =
 # 2 longs + 2 shorts/week. Blank topic on manual runs = auto-pick.
 on:
-  schedule:
-    - cron: "0 13 * * 2,4" # Tue/Thu ~08:00 US-Eastern — founders starting the workday
+  # STOPPED: all Cohort Zero auto-posting paused. Manual dispatch only; re-enable by uncommenting.
+  # schedule:
+  #   - cron: "0 13 * * 2,4" # Tue/Thu ~08:00 US-Eastern — founders starting the workday
   workflow_dispatch:
     inputs:
       topic:
