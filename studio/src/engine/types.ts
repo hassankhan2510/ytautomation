@@ -41,7 +41,7 @@ export type Job = {
   music?: string;
   /** Word timings for `audio`. If absent, timing is estimated from the text. */
   words?: Word[];
-  /** Max GPU shader transitions ("hero cuts") — each costs real render time on CPU. Default 3. */
+  /** Cap on real GPU shader cuts when the render enables shaders (slow on CPU runners). Default: no cap. */
   shaderCuts?: number;
   /** On-screen handle for end card / chrome (e.g. "@cohort_zero"). */
   handle?: string;

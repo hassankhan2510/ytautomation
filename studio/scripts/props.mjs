@@ -50,10 +50,12 @@ for (const [i, b] of job.beats.entries()) {
   }
 }
 
-// auto = 3 shader "hero cuts" (fast) · max = shaders on every eligible cut (slow, ~18 min) · off = CSS only
-const mode = process.env.SHADERS || "auto";
-const shaders = mode !== "off";
-if (mode === "max") job.shaderCuts = 99;
+// off (default) = CSS cuts only, ~4 min. on = real WebGL shader cuts on big beats, ~18 min.
+// (Measured: any shader cut makes Remotion render the WHOLE adjacent scenes via HTML-in-canvas at
+// ~5-9 s/frame on CPU runners, so even a 3-cut budget took 18 min — it's all-or-nothing.)
+const mode = process.env.SHADERS || "off";
+const shaders = mode === "on" || mode === "max" || mode === "auto";
+if (shaders && job.shaderCuts === undefined) job.shaderCuts = 99;
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify({ job, shaders }, null, 2));
 console.log(`props → ${outPath} · ${job.beats.length} beats · theme=${job.theme} · seed=${job.seed} · shaders=${shaders}`);

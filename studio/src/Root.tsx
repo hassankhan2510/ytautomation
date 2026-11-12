@@ -22,7 +22,7 @@ export const Root: React.FC = () => (
       height={1920}
       fps={FPS}
       durationInFrames={FPS * 30}
-      defaultProps={{ job: hero as unknown as Job, shaders: true }}
+      defaultProps={{ job: hero as unknown as Job, shaders: false }}
       calculateMetadata={calculateMetadata}
     />
   </>

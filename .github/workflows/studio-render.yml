@@ -20,10 +20,10 @@ on:
         required: false
         type: string
       shaders:
-        description: "GPU shader cuts: auto = 3 hero cuts (~7 min) · max = every big cut (~18 min) · off = CSS only (~4 min)"
+        description: "Real GPU shader cuts: off = fast CSS cuts incl. echo zoom-blur (~4 min) · on = WebGL shader cuts (~18 min on CPU runners)"
         type: choice
-        options: [auto, max, "off"]
-        default: auto
+        options: ["off", "on"]
+        default: "off"
 
 jobs:
   render:

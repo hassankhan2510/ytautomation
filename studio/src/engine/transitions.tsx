@@ -68,6 +68,41 @@ const Flash: Comp = ({ children, presentationDirection: dir, presentationProgres
   );
 };
 
+/**
+ * ECHO ZOOM — After-Effects-style radial zoom blur WITHOUT shaders: the scene is stacked N times,
+ * each copy more scaled (and optionally rotated) and fainter → reads as a true radial streak.
+ * Only costs extra on the ~7 transition frames, so it's CPU-cheap (unlike HTML-in-canvas shaders).
+ */
+const echoZoom = (spin: number): Comp => ({ children, presentationDirection: dir, presentationProgress: p }) => {
+  const enter = dir === "entering";
+  const k = Math.sin(p * Math.PI); // streak intensity peaks mid-cut
+  const base = enter ? interpolate(p, [0, 1], [1.7, 1]) : interpolate(p, [0, 1], [1, 2.4]);
+  const opacity = enter ? interpolate(p, [0.35, 0.65], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) : interpolate(p, [0.35, 0.65], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
+  const N = 7;
+  return (
+    <AbsoluteFill style={{ transform: `scale(${base}) rotate(${(enter ? 1 - p : p) * spin * 2}deg)`, opacity }}>
+      {Array.from({ length: N }, (_, i) => (
+        <AbsoluteFill key={i} style={{ transform: `scale(${1 + i * 0.06 * k}) rotate(${i * spin * 0.6 * k}deg)`, opacity: i === 0 ? 1 : 0.42 * (1 - i / N) * k, filter: i ? `blur(${1 + i * 0.8 * k}px)` : undefined, mixBlendMode: i ? "screen" : undefined }}>
+          {children}
+        </AbsoluteFill>
+      ))}
+    </AbsoluteFill>
+  );
+};
+
+/** BURN — warm film-burn bloom sweeps across the cut (CSS stand-in for the filmBurn shader). */
+const Burn: Comp = ({ children, presentationDirection: dir, presentationProgress: p }) => {
+  const enter = dir === "entering";
+  const k = Math.sin(p * Math.PI);
+  return (
+    <AbsoluteFill style={{ opacity: enter ? (p > 0.5 ? 1 : 0) : p <= 0.5 ? 1 : 0 }}>
+      {children}
+      <AbsoluteFill style={{ mixBlendMode: "screen", opacity: k, background: `radial-gradient(60% 45% at ${20 + p * 60}% ${70 - p * 40}%, rgba(255,170,80,0.95), rgba(200,16,46,0.75) 40%, transparent 75%)`, filter: "blur(20px)" }} />
+      <AbsoluteFill style={{ background: "#fff", opacity: Math.max(0, k - 0.7) * 2 }} />
+    </AbsoluteFill>
+  );
+};
+
 export const zoomPunch = () => make(ZoomPunch);
 export const whip = () => make(Whip);
 export const glitch = () => make(Glitch);
@@ -86,6 +121,9 @@ export const TRANSITIONS: Record<string, { shader: boolean; make: Factory }> = {
   whip: { shader: false, make: () => whip() },
   glitch: { shader: false, make: () => glitch() },
   flash: { shader: false, make: () => flash() },
+  echoZoom: { shader: false, make: () => make(echoZoom(0)) },
+  spinZoom: { shader: false, make: ({ rng }) => make(echoZoom(rng.sign() * 4)) },
+  burn: { shader: false, make: () => make(Burn) },
   slide: { shader: false, make: ({ rng }) => cast(slide({ direction: rng.pick(["from-right", "from-bottom", "from-left"] as const) })) },
   wipe: { shader: false, make: ({ rng }) => cast(wipe({ direction: rng.pick(["from-left", "from-top-left", "from-bottom-right"] as const) })) },
   flip: { shader: false, make: ({ rng }) => cast(flip({ direction: rng.pick(["from-left", "from-right"] as const), perspective: 1800 })) },
@@ -105,8 +143,8 @@ export const TRANSITIONS: Record<string, { shader: boolean; make: Factory }> = {
 
 /** Energy buckets — hype beats get violent cuts, calm beats get soft ones. */
 const BY_ENERGY: Record<1 | 2 | 3, { css: string[]; shader: string[]; frames: number }> = {
-  3: { css: ["zoomPunch", "whip", "glitch", "flash"], shader: ["zoomBlur", "crossZoom", "filmBurn"], frames: 7 },
-  2: { css: ["slide", "pushCut", "wipe", "cube", "whip"], shader: ["crosswarp", "swap", "blurSlide"], frames: 10 },
+  3: { css: ["echoZoom", "spinZoom", "zoomPunch", "whip", "glitch", "flash", "burn"], shader: ["zoomBlur", "crossZoom", "filmBurn"], frames: 8 },
+  2: { css: ["slide", "pushCut", "wipe", "cube", "whip", "echoZoom", "burn"], shader: ["crosswarp", "swap", "blurSlide"], frames: 10 },
   1: { css: ["fade", "iris", "flip"], shader: ["dreamyZoom", "ripple"], frames: 14 },
 };
 

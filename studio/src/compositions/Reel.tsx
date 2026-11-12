@@ -48,7 +48,7 @@ const BeatScene: React.FC<{ beat: TimedBeat; seed: number; backdrop: (typeof BAC
  * Sync trick: each sequence lasts beat.frames + T (T = the outgoing transition), so the overlap is
  * eaten by the transition and every beat's content still starts exactly on its first spoken word.
  */
-export const Reel: React.FC<ReelProps> = ({ job, shaders = true }) => {
+export const Reel: React.FC<ReelProps> = ({ job, shaders = false }) => {
   const { fps, width, height } = useVideoConfig();
   const timeline = useMemo(() => buildTimeline(job, fps), [job, fps]);
   const theme = getTheme(job.theme);
@@ -58,9 +58,8 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = true }) => {
     const rng = makeRng(job.seed);
     let prevT: string | null = null;
     let prevB: string | null = null;
-    // HERO CUTS: a GPU shader transition costs ~9s/frame on a CPU runner (vs ~0.25s), so each video
-    // gets a small budget of them, spent on its highest-energy cuts. Everything else uses CSS cuts.
-    let budget = job.shaderCuts ?? 3;
+    // Shader cuts (only when the render enables them) go on high-energy cuts, capped by job.shaderCuts.
+    let budget = job.shaderCuts ?? 99;
     return timeline.beats.map((b, i) => {
       const isLast = i === timeline.beats.length - 1;
       const eligible = useShaders && budget > 0 && (b.energy === 3 || Boolean(b.transition));
