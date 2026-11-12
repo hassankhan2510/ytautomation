@@ -50,7 +50,10 @@ for (const [i, b] of job.beats.entries()) {
   }
 }
 
-const shaders = (process.env.SHADERS || "auto") !== "off";
+// auto = 3 shader "hero cuts" (fast) · max = shaders on every eligible cut (slow, ~18 min) · off = CSS only
+const mode = process.env.SHADERS || "auto";
+const shaders = mode !== "off";
+if (mode === "max") job.shaderCuts = 99;
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, JSON.stringify({ job, shaders }, null, 2));
 console.log(`props → ${outPath} · ${job.beats.length} beats · theme=${job.theme} · seed=${job.seed} · shaders=${shaders}`);

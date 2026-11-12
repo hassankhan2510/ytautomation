@@ -146,7 +146,7 @@ export const Search: React.FC<PrimitiveProps> = ({ beat }) => {
         </div>
         <div style={{ background: "#FFFFFF", borderRadius: "0 0 44px 44px", overflow: "hidden", maxHeight: drop * 420, boxShadow: "0 30px 60px rgba(0,0,0,0.35)" }}>
           {suggestions.map((sg, i) => (
-            <div key={i} style={{ display: "flex", gap: 24, padding: "26px 40px", fontSize: 40, color: "#202124", background: i === hi ? alpha(theme.accent, 0.14) : "transparent", borderTop: "1px solid #EEE" }}>
+            <div key={i} style={{ display: "flex", gap: 24, padding: "26px 40px", fontSize: 40, color: "#202124", background: i === hi ? "#F1F1F3" : "transparent", borderLeft: i === hi ? `8px solid ${theme.accent}` : "8px solid transparent", borderTop: "1px solid #EEE" }}>
               <span style={{ color: "#9AA0A6" }}>⌕</span>
               <span>{sg.startsWith(query) ? <>{query}<b>{sg.slice(query.length)}</b></> : sg}</span>
             </div>
@@ -205,10 +205,10 @@ export const Phone: React.FC<PrimitiveProps> = ({ beat }) => {
   const items = prop<string[]>(beat, "items", [beat.text, "Day 2 is live", "+1,204 followers", "Brand deal inbound"]);
   const app = prop(beat, "app", "Feed");
   const s = pop(frame, fps, 0, "smooth");
-  const scroll = easeInOut(frame, 10, Math.max(20, beat.frames - 16)) * Math.max(0, items.length * 250 - 900);
+  const scroll = easeInOut(frame, 10, Math.max(20, beat.frames - 16)) * Math.max(0, items.length * 250 - 760);
   return (
     <Safe>
-      <div style={{ width: 600, height: 1180, borderRadius: 90, padding: 18, background: "#1A1A1D", boxShadow: `0 60px 140px rgba(0,0,0,0.6), 0 0 0 3px #333, 0 0 80px ${alpha(theme.accent, 0.25)}`, transform: `perspective(1800px) rotateY(${interpolate(s, [0, 1], [-28, -6])}deg) rotateX(${interpolate(s, [0, 1], [12, 3])}deg) scale(${interpolate(s, [0, 1], [0.8, 1])})`, opacity: s }}>
+      <div style={{ width: 520, height: 1000, borderRadius: 80, padding: 16, background: "#1A1A1D", boxShadow: `0 60px 140px rgba(0,0,0,0.6), 0 0 0 3px #333, 0 0 80px ${alpha(theme.accent, 0.25)}`, transform: `perspective(1800px) rotateY(${interpolate(s, [0, 1], [-28, -6])}deg) rotateX(${interpolate(s, [0, 1], [12, 3])}deg) scale(${interpolate(s, [0, 1], [0.8, 1])})`, opacity: s }}>
         <div style={{ width: "100%", height: "100%", borderRadius: 74, overflow: "hidden", background: theme.bg, position: "relative", fontFamily: theme.body }}>
           <div style={{ position: "absolute", top: 18, left: "50%", marginLeft: -70, width: 140, height: 40, borderRadius: 20, background: "#000", zIndex: 3 }} />
           <div style={{ padding: "84px 30px 20px", fontSize: 40, fontWeight: 900, color: theme.ink, background: theme.bg, position: "relative", zIndex: 2 }}>{app}</div>

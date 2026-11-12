@@ -75,7 +75,7 @@ export const flash = () => make(Flash);
 
 /* ---------------- Selection ---------------- */
 
-type Ctx = { width: number; height: number; rng: Rng; shaders: boolean };
+type Ctx = { width: number; height: number; rng: Rng; shaders: boolean; shaderChance?: number };
 type Factory = (c: Ctx) => TransitionPresentation<P>;
 
 const cast = (t: unknown) => t as TransitionPresentation<P>;
@@ -117,8 +117,8 @@ export function pickTransition(beat: TimedBeat, c: Ctx, prev: string | null): { 
   if (forced && (!forced.shader || c.shaders)) {
     return { name: beat.transition!, frames: bucket.frames, presentation: forced.make(c) };
   }
-  // Mix shader looks in ~half the time when available, so it's not ALL shaders (they read as effects).
-  const pool = c.shaders && c.rng.chance(0.5) ? bucket.shader : bucket.css;
+  // Mix shader looks in only some of the time, so it's not ALL shaders (they read as effects).
+  const pool = c.shaders && c.rng.chance(c.shaderChance ?? 0.5) ? bucket.shader : bucket.css;
   const options = pool.filter((n) => n !== prev);
   const name = c.rng.pick(options.length ? options : pool);
   return { name, frames: bucket.frames, presentation: TRANSITIONS[name].make(c) };

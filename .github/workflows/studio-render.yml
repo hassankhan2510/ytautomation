@@ -20,9 +20,9 @@ on:
         required: false
         type: string
       shaders:
-        description: "GPU shader transitions/effects (auto = use if the renderer supports them, else CSS)"
+        description: "GPU shader cuts: auto = 3 hero cuts (~7 min) · max = every big cut (~18 min) · off = CSS only (~4 min)"
         type: choice
-        options: [auto, "off"]
+        options: [auto, max, "off"]
         default: auto
 
 jobs:

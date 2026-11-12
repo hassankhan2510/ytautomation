@@ -6,7 +6,7 @@ import { buildTimeline } from "../engine/timeline";
 import { getTheme } from "../engine/theme";
 import { makeRng } from "../engine/rng";
 import { RenderProvider } from "../engine/render-context";
-import { pickTransition } from "../engine/transitions";
+import { pickTransition, TRANSITIONS } from "../engine/transitions";
 import { Backdrop, BACKDROPS, CameraRig, Grain, LightLeak, ProgressBar, Vignette } from "../engine/fx";
 import { resolvePrimitive } from "../engine/registry";
 import { Captions } from "./Captions";
@@ -58,9 +58,14 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = true }) => {
     const rng = makeRng(job.seed);
     let prevT: string | null = null;
     let prevB: string | null = null;
+    // HERO CUTS: a GPU shader transition costs ~9s/frame on a CPU runner (vs ~0.25s), so each video
+    // gets a small budget of them, spent on its highest-energy cuts. Everything else uses CSS cuts.
+    let budget = job.shaderCuts ?? 3;
     return timeline.beats.map((b, i) => {
       const isLast = i === timeline.beats.length - 1;
-      const t = isLast ? null : pickTransition(b, { width, height, rng, shaders: useShaders }, prevT);
+      const eligible = useShaders && budget > 0 && (b.energy === 3 || Boolean(b.transition));
+      const t = isLast ? null : pickTransition(b, { width, height, rng, shaders: eligible, shaderChance: budget >= 99 ? 0.5 : 0.75 }, prevT);
+      if (t && TRANSITIONS[t.name]?.shader) budget--;
       if (t) prevT = t.name;
       const pool = BACKDROPS.filter((k) => k !== prevB);
       const backdrop = (b.props?.backdrop as (typeof BACKDROPS)[number]) && BACKDROPS.includes(b.props?.backdrop as never) ? (b.props!.backdrop as (typeof BACKDROPS)[number]) : rng.pick(pool);
