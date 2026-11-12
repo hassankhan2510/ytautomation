@@ -1,0 +1,21 @@
+{
+  "id": "showcase2",
+  "title": "Why nobody hires video editors in 2027",
+  "theme": "crimson",
+  "seed": 23,
+  "handle": "@cohort_zero",
+  "beats": [
+    { "text": "Breaking. Editors are getting replaced.", "primitive": "splitFlap", "energy": 3, "props": { "rows": ["BREAKING", "EDITORS", "REPLACED"] } },
+    { "text": "Everyone is searching for this right now.", "primitive": "search", "energy": 2, "props": { "query": "make reels without editing", "suggestions": ["make reels without editing app", "make reels without editing free", "make reels without editing ai"], "pick": 1 } },
+    { "text": "One founder posted this and it blew up.", "primitive": "tweet", "energy": 2, "props": { "body": "I stopped hiring editors.\nMy code edits 40 reels a week.\nCost: $0.", "likes": 48200, "reposts": 6100 } },
+    { "text": "So I asked you.", "primitive": "poll", "energy": 2, "props": { "question": "Would you let code edit your videos?", "options": ["Already do", "Never"], "result": [74, 26] } },
+    { "text": "Here's the actual site.", "primitive": "browser", "energy": 2, "props": { "url": "cohortzero.co/studio", "headline": "Videos that edit themselves", "cards": ["Script", "Voice", "Motion"] } },
+    { "text": "And this is my feed now.", "primitive": "phone", "energy": 1, "props": { "app": "Inbox", "items": ["Can you build this for us?", "Collab with our brand?", "How is this free?", "Day 2 when??", "Hiring? I'll work for free"] } },
+    { "text": "The machine never sleeps.", "primitive": "tape", "energy": 3, "props": { "tape": "BUILD IN PUBLIC", "word": "Never sleeps" } },
+    { "text": "Talent is everywhere. Systems are rare.", "primitive": "quote", "energy": 1, "emphasis": ["Systems"], "props": { "author": "Cohort Zero" } },
+    { "text": "The plan: script, voice, motion, then scale.", "primitive": "roadmap", "energy": 2, "props": { "steps": ["Script", "Voice", "Motion", "Scale"], "done": 3 } },
+    { "text": "Ranking every way to make reels.", "primitive": "tierList", "energy": 2, "props": { "items": [{ "name": "Code engine", "tier": "S" }, { "name": "CapCut", "tier": "A" }, { "name": "Freelancer", "tier": "B" }, { "name": "Agency", "tier": "C" }] } },
+    { "text": "Ten thousand plays.", "primitive": "burst", "energy": 3, "props": { "word": "10,000 plays" } },
+    { "text": "Comment SYSTEM and I'll send you the whole thing.", "primitive": "commentCta", "energy": 3, "props": { "keyword": "SYSTEM" }, "hold": 1.0 }
+  ]
+}

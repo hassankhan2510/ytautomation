@@ -43,7 +43,7 @@ export const Terminal: React.FC<PrimitiveProps> = ({ beat }) => {
     <Safe>
       <div style={{ transform: `scale(${interpolate(win, [0, 1], [0.9, 1])}) translateY(${(1 - win) * 40}px)`, opacity: win }}>
         <WindowChrome theme={theme} title={title} width={920}>
-          <div style={{ padding: "30px 34px 40px", minHeight: 520, fontFamily: theme.mono, fontSize: 32, lineHeight: 1.55, color: "#E8E8EA" }}>
+          <div style={{ padding: "30px 34px 40px", minHeight: 560, fontFamily: theme.mono, fontSize: 38, lineHeight: 1.5, color: "#E8E8EA" }}>
             {shown.map((s, i) => {
               const typed = s.cmd ? s.cmd.slice(0, Math.max(0, Math.floor((frame - s.cmdStart) * cps))) : "";
               const typing = s.cmd && frame < s.cmdEnd;
@@ -106,7 +106,7 @@ export const Code: React.FC<PrimitiveProps> = ({ beat }) => {
     <Safe>
       <div style={{ opacity: win, transform: `perspective(1400px) rotateX(${(1 - win) * 18}deg) scale(${interpolate(win, [0, 1], [0.92, 1])})` }}>
         <WindowChrome theme={theme} title={file} width={940}>
-          <div style={{ padding: "28px 0 40px", minHeight: 460, fontFamily: theme.mono, fontSize: 30, lineHeight: 1.6 }}>
+          <div style={{ padding: "28px 0 40px", minHeight: 500, fontFamily: theme.mono, fontSize: 36, lineHeight: 1.55 }}>
             {lines.map((ln, i) => {
               const take = Math.max(0, Math.min(ln.length, budget));
               budget -= ln.length;

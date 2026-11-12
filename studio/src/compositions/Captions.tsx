@@ -42,13 +42,13 @@ export const Captions: React.FC = () => {
   const s = spring({ frame: frame - chunk.from, fps, config: { damping: 14, stiffness: 260, mass: 0.6 } });
   return (
     <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 470, pointerEvents: "none" }}>
-      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "6px 16px", maxWidth: 900, transform: `scale(${interpolate(s, [0, 1], [0.7, 1])}) translateY(${(1 - s) * 30}px)`, opacity: Math.min(1, s * 2) }}>
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 18px", maxWidth: 940, transform: `scale(${interpolate(s, [0, 1], [0.7, 1])}) translateY(${(1 - s) * 30}px)`, opacity: Math.min(1, s * 2) }}>
         {chunk.words.map((w, i) => {
           const active = frame >= w.from && frame < (chunk.words[i + 1]?.from ?? chunk.to);
           const said = frame >= w.from;
           const hot = active || (w.emphasis && said);
           return (
-            <span key={i} style={{ fontFamily: theme.body, fontWeight: 900, fontSize: 70, lineHeight: 1.15, textTransform: "uppercase", letterSpacing: -1, padding: "2px 16px", borderRadius: 14, color: hot ? theme.onAccent : said ? theme.ink : alpha(theme.ink, 0.55), background: hot ? (w.emphasis ? theme.accent : alpha(theme.accent, 0.9)) : "transparent", transform: active ? "scale(1.08) rotate(-1.5deg)" : "none", textShadow: hot ? "none" : "0 4px 0 rgba(0,0,0,0.55), 0 0 24px rgba(0,0,0,0.6)", WebkitTextStroke: hot ? "0" : `2px ${alpha("#000000", 0.5)}` }}>
+            <span key={i} style={{ fontFamily: theme.body, fontWeight: 900, fontSize: 88, lineHeight: 1.12, textTransform: "uppercase", letterSpacing: -1, padding: "2px 16px", borderRadius: 14, color: hot ? theme.onAccent : said ? theme.ink : alpha(theme.ink, 0.55), background: hot ? (w.emphasis ? theme.accent : alpha(theme.accent, 0.9)) : "transparent", transform: active ? "scale(1.08) rotate(-1.5deg)" : "none", textShadow: hot ? "none" : "0 4px 0 rgba(0,0,0,0.55), 0 0 24px rgba(0,0,0,0.6)", WebkitTextStroke: hot ? "0" : `2px ${alpha("#000000", 0.5)}` }}>
               {w.w.replace(/[*_#]/g, "")}
             </span>
           );

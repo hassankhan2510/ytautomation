@@ -55,9 +55,11 @@ jobs:
         run: node scripts/props.mjs "$JOB_FILE" out/props.json
       - name: Render (shader path, falls back to CSS path on failure)
         run: |
-          if npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info; then
+          if npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --gl=swangle --log=info; then
             echo "Rendered."
+            echo "Rendered on the **shader** path (swangle WebGL2)." >> "$GITHUB_STEP_SUMMARY"
           else
+            echo "Shader path failed → rendered on the **CSS** path." >> "$GITHUB_STEP_SUMMARY"
             echo "::warning::Render failed with shaders — retrying on the CSS-only path."
             node -e "const f='out/props.json';const p=JSON.parse(require('fs').readFileSync(f));p.shaders=false;require('fs').writeFileSync(f,JSON.stringify(p))"
             npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
