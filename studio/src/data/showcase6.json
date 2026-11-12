@@ -1,0 +1,22 @@
+{
+  "id": "showcase6",
+  "title": "Tech news: solo creators are beating agencies",
+  "theme": "crimson",
+  "seed": 89,
+  "handle": "@cohort_zero",
+  "beats": [
+    { "text": "Breaking: solo creators are now out-shipping agencies.", "primitive": "newsBanner", "energy": 3, "props": { "headline": "Solo creators now out-ship agencies", "label": "BREAKING" } },
+    { "text": "And everyone is writing about it.", "primitive": "headlines", "energy": 2, "props": { "clips": [{ "source": "THE BUILD DAILY", "title": "One-person studios are the new agencies" }, { "source": "FOUNDER WEEKLY", "title": "AI cut video costs to near zero" }, { "source": "MARKET WATCHLIST", "title": "Short-form demand hits record" }] } },
+    { "text": "How did we get here?", "primitive": "history", "energy": 2, "props": { "items": [{ "year": "2016", "text": "Pro editors only" }, { "year": "2020", "text": "Templates & apps" }, { "year": "2024", "text": "AI assists" }, { "year": "2026", "text": "Code edits for you" }] } },
+    { "text": "These are the tools that made it possible.", "primitive": "appGrid", "energy": 2, "props": { "apps": [{ "name": "Remotion" }, { "name": "Groq" }, { "name": "Kokoro" }, { "name": "Whisper" }, { "name": "Actions" }, { "name": "Pexels" }], "pick": 0 } },
+    { "text": "The whole system, mapped.", "primitive": "mindMap", "energy": 2, "props": { "center": "REEL", "branches": ["Hook", "Script", "Voice", "Motion", "Captions", "Music"] } },
+    { "text": "Most people only see the tip.", "primitive": "iceberg", "energy": 2, "props": { "top": "The viral reel", "below": ["600 failed drafts", "Late nights", "Code nobody sees", "Systems"] } },
+    { "text": "Where the real growth comes from.", "primitive": "pie", "energy": 2, "props": { "data": [{ "label": "Distribution", "value": 60 }, { "label": "Content", "value": 25 }, { "label": "Product", "value": 15 }] } },
+    { "text": "From a hundred thousand views to customers.", "primitive": "funnel", "energy": 2, "props": { "stages": [{ "label": "Views", "value": "100,000" }, { "label": "Profile visits", "value": "4,200" }, { "label": "Follows", "value": "1,300" }, { "label": "Customers", "value": "86" }] } },
+    { "text": "The sweet spot is where skill meets demand.", "primitive": "venn", "energy": 2, "props": { "a": "Skills", "b": "Demand", "mid": "Money" } },
+    { "text": "Low effort, high impact.", "primitive": "quadrant", "energy": 2, "props": { "hero": "This system", "dots": [{ "label": "Agency", "x": 0.85, "y": 0.4 }, { "label": "Freelancer", "x": 0.62, "y": 0.3 }, { "label": "Templates", "x": 0.25, "y": 0.18 }] } },
+    { "text": "What actually compounds.", "primitive": "pyramid", "energy": 2, "props": { "levels": ["Consistency", "Skills", "Systems", "Leverage"] } },
+    { "text": "The results after ninety days.", "primitive": "statGrid", "energy": 3, "props": { "stats": [{ "value": 1.2, "suffix": "M", "label": "views" }, { "value": 14, "label": "videos / week" }, { "value": 0, "prefix": "$", "label": "monthly cost" }, { "value": 92, "suffix": "%", "label": "watch-through" }] } },
+    { "text": "Follow for tomorrow's tech news.", "primitive": "outro", "energy": 1, "props": { "cta": "Follow for tech news" }, "hold": 1.0 }
+  ]
+}

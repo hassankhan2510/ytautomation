@@ -9,6 +9,7 @@ import { Calendar, Checklist, LineChart, Meter, Price, Ring } from "../primitive
 import { BeforeAfter, CardFan, Flip3D, GlitchTitle, Orbit, ZoomThrough } from "../primitives/cinematic";
 import { AuroraType, Blob, CodeRain, DotWave, FlowField, Globe, IsoBuild, NeuralNet, Prism, Radar, Warp } from "../primitives/generative";
 import { ErrorPopups, Keyboard, Loading, Pov, Receipt, Rotator, Scoreboard, SlotMachine, Spotlight, StickyNotes, Timer, Verdict } from "../primitives/memes";
+import { AppGrid, Funnel, Headlines, History, Iceberg, MindMap, NewsBanner, Pie, Pyramid, Quadrant, StatGrid, Venn } from "../primitives/explainers";
 
 export type PrimitiveMeta = {
   id: string;
@@ -94,6 +95,18 @@ export const REGISTRY: Record<string, Entry> = {
   spotlight: def(Spotlight, { id: "spotlight", category: "text", showsText: true, energy: 2, description: "Black stage; a spotlight searches, then locks onto the word. The big reveal.", props: "word?: string" }),
   keyboard: def(Keyboard, { id: "keyboard", category: "ui", showsText: false, energy: 2, description: "3D keyboard; keys light as a shortcut is pressed, combo appears above. Tips, shortcuts, tools.", props: "keys: string[] (e.g. ['CTRL','SHIFT','P'] — letters must exist on the keyboard), caption?: string" }),
   scoreboard: def(Scoreboard, { id: "scoreboard", category: "data", showsText: false, energy: 2, description: "Stadium scoreboard: two sides, stat rows count up, winning values glow.", props: "a: string, b: string, rows: {label, a: number, b: number}[], lowerWins?: string[] (row labels where lower is better)" }),
+  newsBanner: def(NewsBanner, { id: "newsBanner", category: "text", showsText: false, energy: 3, description: "NEWS: BREAKING/LIVE bar wipes in, headline slams, ticker crawls. Open every tech-news reel with it.", props: "headline: string, label?: string ('BREAKING'), ticker?: string" }),
+  headlines: def(Headlines, { id: "headlines", category: "text", showsText: false, energy: 2, description: "NEWS: newspaper clippings from different outlets stack up, rotated. 'Everyone is talking about this'.", props: "clips: {source, title}[] (2-3; invent generic outlet names, never real publications)" }),
+  history: def(History, { id: "history", category: "layout", showsText: false, energy: 2, description: "Horizontal timeline scrolls through years; active milestone lifts. Company/tech history, 'how we got here'.", props: "items: {year, text}[] (3-5)" }),
+  appGrid: def(AppGrid, { id: "appGrid", category: "ui", showsText: false, energy: 2, description: "Home-screen app grid; one icon jiggles then lifts. 'The tools I use', tool reveals.", props: "apps: {name, letter?, color?}[] (6-9), pick?: index" }),
+  mindMap: def(MindMap, { id: "mindMap", category: "layout", showsText: false, energy: 2, description: "Centre idea with curved branches drawing out to child nodes. Frameworks, 'everything you need for X'.", props: "center: string, branches: string[] (4-7)" }),
+  funnel: def(Funnel, { id: "funnel", category: "data", showsText: false, energy: 2, description: "Funnel stages narrow downward with values. Marketing/sales/growth breakdowns.", props: "stages: {label, value}[] (3-5, top first)" }),
+  venn: def(Venn, { id: "venn", category: "layout", showsText: false, energy: 2, description: "Two circles slide together; the overlap label slams in. 'The sweet spot'.", props: "a: string, b: string, mid: string" }),
+  pyramid: def(Pyramid, { id: "pyramid", category: "layout", showsText: false, energy: 2, description: "Levels stack bottom-up into a pyramid; top tier lit. Hierarchies, priorities.", props: "levels: string[] (3-5, bottom first)" }),
+  quadrant: def(Quadrant, { id: "quadrant", category: "data", showsText: false, energy: 2, description: "2x2 matrix; option dots pop in, the hero dot travels to the best corner (low effort, high impact).", props: "dots: {label, x: 0-1, y: 0-1}[], hero: string, xLabel?: string, yLabel?: string" }),
+  iceberg: def(Iceberg, { id: "iceberg", category: "layout", showsText: false, energy: 2, description: "MEME: iceberg — the tip is what people see; camera dives and hidden layers appear below. Success vs reality.", props: "top: string, below: string[] (3-5)" }),
+  pie: def(Pie, { id: "pie", category: "data", showsText: false, energy: 2, description: "Pie slices sweep in; the biggest pops out; % labels + legend.", props: "data: {label, value}[] (2-5)" }),
+  statGrid: def(StatGrid, { id: "statGrid", category: "data", showsText: false, energy: 2, description: "2x2 KPI tiles flip up in sequence with counting numbers. Results recaps.", props: "stats: {value: number, prefix?, suffix?, label}[] (4)" }),
   outro: def(Outro, { id: "outro", category: "brand", showsText: false, energy: 1, description: "End card: avatar ring draws, handle types, follow button gets tapped. Always the last beat.", props: "handle?: string, cta?: string, logo?: 'brand/<file>'" }),
 };
 
