@@ -105,7 +105,7 @@ export const Globe: React.FC<PrimitiveProps> = ({ beat }) => {
         ))}
         {home.z > 0 ? <circle cx={home.x} cy={home.y} r={14 + Math.sin(frame / 4) * 4} fill={theme.accent} style={{ filter: `drop-shadow(0 0 14px ${theme.accent})` }} /> : null}
       </svg>
-      {label ? <Hero text={label} theme={theme} s={easeOut(frame, 10, 12)} y={560} max={110} /> : null}
+      {label ? <Hero text={label} theme={theme} s={easeOut(frame, 10, 12)} y={-600} max={110} /> : null}
     </AbsoluteFill>
   );
 };
@@ -272,7 +272,7 @@ export const DotWave: React.FC<PrimitiveProps> = ({ beat }) => {
       const h = (Math.sin(c * 0.35 + frame * 0.08) + Math.cos(r * 0.3 + frame * 0.06) + noise2D(`w${seed}`, c * 0.15, r * 0.15 + frame * 0.01) * 1.4) * 60;
       const f = 900 / z3;
       const x = W / 2 + x3 * f;
-      const y = 1280 - (h - 260) * f * 0.9 - (rows - r) * 6;
+      const y = 1010 + (170 - h) * f * 0.55; // camera above the surface, horizon at ~1000px
       if (x < -20 || x > W + 20) continue;
       const near = 1 - r / rows;
       dots.push(<circle key={`${r}-${c}`} cx={x} cy={y} r={Math.max(1.2, 5 * f * 0.55)} fill={h > 60 ? theme.accent : theme.ink} opacity={0.15 + near * 0.6} />);
@@ -320,7 +320,7 @@ export const AuroraType: React.FC<PrimitiveProps> = ({ beat }) => {
   const size = fitSize((text || beat.text).split(/\s+/), 940, 190, 90, 0.56);
   const gx = 50 + noise2D(`ax${seed}`, frame / 80, 0) * 40;
   const gy = 50 + noise2D(`ay${seed}`, frame / 80, 1) * 40;
-  const grad = `radial-gradient(60% 60% at ${gx}% ${gy}%, ${theme.accent2}, ${theme.accent} 45%, ${theme.bg2} 100%)`;
+  const grad = `radial-gradient(60% 60% at ${gx}% ${gy}%, #FFFFFF, ${theme.accent2} 25%, ${theme.accent} 70%, ${theme.accent} 100%)`;
   return (
     <AbsoluteFill>
       {[0, 1, 2].map((k) => (
@@ -341,7 +341,7 @@ export const NeuralNet: React.FC<PrimitiveProps> = ({ beat }) => {
   const output = prop(beat, "output", beat.text);
   const inputs = prop<string[]>(beat, "inputs", []);
   const layers = [Math.max(3, inputs.length || 4), 6, 6, 3, 1];
-  const x0 = 140, x1 = 940, yTop = 520, yBot = 1340;
+  const x0 = inputs.length ? 270 : 140, x1 = 940, yTop = 520, yBot = 1340;
   const nodes = layers.map((n, li) => Array.from({ length: n }, (_, k) => ({ x: x0 + (li / (layers.length - 1)) * (x1 - x0), y: yTop + ((k + 0.5) / n) * (yBot - yTop), li, k })));
   const edges: React.ReactNode[] = [];
   const pulses: React.ReactNode[] = [];
@@ -359,7 +359,7 @@ export const NeuralNet: React.FC<PrimitiveProps> = ({ beat }) => {
       <svg width={W} height={H} style={{ position: "absolute", inset: 0, opacity: easeOut(frame, 0, 8) }}>
         {edges}{pulses}
         {nodes.flat().map((n) => <circle key={`n${n.li}-${n.k}`} cx={n.x} cy={n.y} r={n.li === layers.length - 1 ? 30 : 16} fill={theme.bg} stroke={theme.accent} strokeWidth={4} style={{ filter: fired(n.li) > 0.1 ? `drop-shadow(0 0 ${fired(n.li) * 20}px ${theme.accent})` : "none" }} />)}
-        {inputs.map((t, k) => <text key={k} x={x0 - 30} y={nodes[0][k]?.y + 10} textAnchor="end" fill={theme.dim} fontFamily={theme.mono} fontSize={28} fontWeight={700}>{t}</text>)}
+        {inputs.map((t, k) => <text key={k} x={x0 - 30} y={nodes[0][k]?.y + 10} textAnchor="end" fill={theme.dim} fontFamily={theme.mono} fontSize={34} fontWeight={700}>{t}</text>)}
       </svg>
       <div style={{ position: "absolute", left: 120, right: 120, top: out.y + 70, textAlign: "center", fontFamily: theme.body, fontWeight: 900, fontSize: 64, color: theme.ink, opacity: easeOut(frame, beat.frames * 0.35, 10) }}>{output}</div>
     </AbsoluteFill>
@@ -430,7 +430,7 @@ export const Radar: React.FC<PrimitiveProps> = ({ beat }) => {
           </div>
         );
       })}
-      {label ? <Hero text={label} theme={theme} s={easeOut(frame, 8, 10)} y={520} max={100} /> : null}
+      {label ? <Hero text={label} theme={theme} s={easeOut(frame, 8, 10)} y={-620} max={100} /> : null}
     </AbsoluteFill>
   );
 };

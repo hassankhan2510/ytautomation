@@ -39,6 +39,8 @@ export const Captions: React.FC = () => {
   if (!chunk) return null;
   const beat = timeline.beats[chunk.beat];
   if (!beat || resolvePrimitive(beat.primitive).meta.showsText) return null;
+  // A photo beat with no image renders a generative hero-word scene → it already shows the text.
+  if (beat.primitive === "photo" && !beat.props?.src) return null;
   const s = spring({ frame: frame - chunk.from, fps, config: { damping: 14, stiffness: 260, mass: 0.6 } });
   return (
     <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 470, pointerEvents: "none" }}>
