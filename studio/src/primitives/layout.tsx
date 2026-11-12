@@ -3,7 +3,9 @@ import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoCo
 import { useRender } from "../engine/render-context";
 import { alpha } from "../engine/theme";
 import { easeOut, pop } from "../engine/motion";
+import { hash01 } from "../engine/rng";
 import { prop, Safe, type PrimitiveProps } from "./common";
+import { AuroraType, Blob, DotWave, FlowField, Warp } from "./generative";
 
 const src = (p: string) => (/^https?:\/\//.test(p) ? p : staticFile(p));
 
@@ -108,7 +110,7 @@ export const Bars: React.FC<PrimitiveProps> = ({ beat }) => {
 export const Photo: React.FC<PrimitiveProps> = ({ beat, rng }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { theme } = useRender();
+  const { theme, seed } = useRender();
   const file = prop(beat, "src", "");
   const caption = prop(beat, "caption", "");
   const s = pop(frame, fps, 0, "smooth");
@@ -116,9 +118,9 @@ export const Photo: React.FC<PrimitiveProps> = ({ beat, rng }) => {
   const kb = interpolate(frame, [0, beat.frames], [1.04, 1.16]);
   const panX = interpolate(frame, [0, beat.frames], [0, dir * 26]);
   if (!file) {
-    return (
-      <Safe><div style={{ fontFamily: theme.body, fontWeight: 800, fontSize: 60, color: theme.ink, textAlign: "center" }}>{beat.text}</div></Safe>
-    );
+    // No picture → a seeded generative world, never a dead frame.
+    const Gen = [Blob, Warp, FlowField, DotWave, AuroraType][Math.floor(hash01(seed, beat.index, beat.text.length) * 5)];
+    return <Gen beat={beat} rng={rng} />;
   }
   return (
     <AbsoluteFill>
