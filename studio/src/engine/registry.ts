@@ -8,6 +8,7 @@ import { Burst, Quote, Roadmap, SplitFlap, Tape, TierList } from "../primitives/
 import { Calendar, Checklist, LineChart, Meter, Price, Ring } from "../primitives/data";
 import { BeforeAfter, CardFan, Flip3D, GlitchTitle, Orbit, ZoomThrough } from "../primitives/cinematic";
 import { AuroraType, Blob, CodeRain, DotWave, FlowField, Globe, IsoBuild, NeuralNet, Prism, Radar, Warp } from "../primitives/generative";
+import { ErrorPopups, Keyboard, Loading, Pov, Receipt, Rotator, Scoreboard, SlotMachine, Spotlight, StickyNotes, Timer, Verdict } from "../primitives/memes";
 
 export type PrimitiveMeta = {
   id: string;
@@ -81,6 +82,18 @@ export const REGISTRY: Record<string, Entry> = {
   neuralNet: def(NeuralNet, { id: "neuralNet", category: "media", showsText: false, energy: 2, description: "GENERATIVE: neural network layers; signal pulses fire through edges to an output label. AI explainers.", props: "output: string, inputs?: string[] (3-6 labels)" }),
   codeRain: def(CodeRain, { id: "codeRain", category: "media", showsText: true, energy: 3, description: "GENERATIVE: falling glyph columns; the word resolves out of the rain. Hacker/AI intros.", props: "word?: string" }),
   radar: def(Radar, { id: "radar", category: "media", showsText: false, energy: 2, description: "GENERATIVE: radar beam sweeps; tagged blips light up as it passes. Opportunities, scanning a market.", props: "items: string[] (3-6), label?: string" }),
+  pov: def(Pov, { id: "pov", category: "text", showsText: true, energy: 2, description: "MEME: 'POV:' tag slams, the scenario types out inside camera viewfinder corners with a REC dot. Relatable openers.", props: "text?: string (scenario; else beat text without 'POV:')" }),
+  loading: def(Loading, { id: "loading", category: "ui", showsText: false, energy: 2, description: "MEME: progress bar fills, stalls at 99% ('time remaining: 98 years'), then snaps to 100 with a flash.", props: "label?: string, done?: string" }),
+  errorPopups: def(ErrorPopups, { id: "errorPopups", category: "ui", showsText: false, energy: 3, description: "MEME: retro OS error dialogs cascade ('motivation.exe has stopped responding'). Struggles, burnout, chaos.", props: "errors: string[] (3-5 short lines)" }),
+  receipt: def(Receipt, { id: "receipt", category: "data", showsText: false, energy: 2, description: "Thermal receipt prints line items, TOTAL, then a PAID stamp slams. Cost breakdowns.", props: "lines: {item, price}[], total: string, title?: string, stamp?: string" }),
+  rotator: def(Rotator, { id: "rotator", category: "text", showsText: true, energy: 2, description: "'I build [apps → brands → videos → empires]' — the last word rolls through options, lands on the final one.", props: "lead: string, words: string[] (last = punchline)" }),
+  slotMachine: def(SlotMachine, { id: "slotMachine", category: "data", showsText: false, energy: 3, description: "Three reels spin and land one by one; jackpot glow. Luck vs systems, 'the odds'.", props: "result: string[3] (single chars/emoji), symbols?: string[], label?: string" }),
+  verdict: def(Verdict, { id: "verdict", category: "text", showsText: false, energy: 3, description: "A claim card gets slammed with a stamp (OVERRATED / APPROVED / MYTH). Hot takes, myth-busting.", props: "claim: string, verdict: string, good?: boolean (green stamp)" }),
+  timer: def(Timer, { id: "timer", category: "data", showsText: false, energy: 3, description: "Countdown clock races to 00:00 with a shrinking ring; pulses when urgent. Urgency, deadlines.", props: "from?: seconds, label?: string" }),
+  stickyNotes: def(StickyNotes, { id: "stickyNotes", category: "layout", showsText: false, energy: 2, description: "Sticky notes slap onto the wall at jaunty angles, one per idea (max 4).", props: "notes: string[] (max 4, 1-3 words each)" }),
+  spotlight: def(Spotlight, { id: "spotlight", category: "text", showsText: true, energy: 2, description: "Black stage; a spotlight searches, then locks onto the word. The big reveal.", props: "word?: string" }),
+  keyboard: def(Keyboard, { id: "keyboard", category: "ui", showsText: false, energy: 2, description: "3D keyboard; keys light as a shortcut is pressed, combo appears above. Tips, shortcuts, tools.", props: "keys: string[] (e.g. ['CTRL','SHIFT','P'] — letters must exist on the keyboard), caption?: string" }),
+  scoreboard: def(Scoreboard, { id: "scoreboard", category: "data", showsText: false, energy: 2, description: "Stadium scoreboard: two sides, stat rows count up, winning values glow.", props: "a: string, b: string, rows: {label, a: number, b: number}[], lowerWins?: string[] (row labels where lower is better)" }),
   outro: def(Outro, { id: "outro", category: "brand", showsText: false, energy: 1, description: "End card: avatar ring draws, handle types, follow button gets tapped. Always the last beat.", props: "handle?: string, cta?: string, logo?: 'brand/<file>'" }),
 };
 
