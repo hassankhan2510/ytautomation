@@ -1,0 +1,29 @@
+{
+  "name": "studio",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Gen-Z Instagram motion studio: a library of After-Effects-grade Remotion primitives choreographed from a beat sheet. Isolated from theranos-doc.",
+  "type": "module",
+  "scripts": {
+    "dev": "remotion studio",
+    "typecheck": "tsc --noEmit",
+    "render": "remotion render Reel out/reel.mp4 --concurrency=2",
+    "still": "remotion still Reel out/frame.png --frame=60"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.543",
+    "@remotion/google-fonts": "4.0.543",
+    "@remotion/motion-blur": "4.0.543",
+    "@remotion/noise": "4.0.543",
+    "@remotion/paths": "4.0.543",
+    "@remotion/shapes": "4.0.543",
+    "@remotion/transitions": "4.0.543",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.543"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "typescript": "5.9.3"
+  }
+}
