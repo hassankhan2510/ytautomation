@@ -78,11 +78,13 @@ const echoZoom = (spin: number): Comp => ({ children, presentationDirection: dir
   const k = Math.sin(p * Math.PI); // streak intensity peaks mid-cut
   const base = enter ? interpolate(p, [0, 1], [1.7, 1]) : interpolate(p, [0, 1], [1, 2.4]);
   const opacity = enter ? interpolate(p, [0.35, 0.65], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp" }) : interpolate(p, [0.35, 0.65], [1, 0], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
-  const N = 7;
+  // NOTE: no per-copy blur/blend-mode — on CPU runners those cost ~15 s/frame (measured). Plain
+  // scaled + faded copies already read as a radial streak at reel speed.
+  const N = 5;
   return (
     <AbsoluteFill style={{ transform: `scale(${base}) rotate(${(enter ? 1 - p : p) * spin * 2}deg)`, opacity }}>
       {Array.from({ length: N }, (_, i) => (
-        <AbsoluteFill key={i} style={{ transform: `scale(${1 + i * 0.06 * k}) rotate(${i * spin * 0.6 * k}deg)`, opacity: i === 0 ? 1 : 0.42 * (1 - i / N) * k, filter: i ? `blur(${1 + i * 0.8 * k}px)` : undefined, mixBlendMode: i ? "screen" : undefined }}>
+        <AbsoluteFill key={i} style={{ transform: `scale(${1 + i * 0.07 * k}) rotate(${i * spin * 0.6 * k}deg)`, opacity: i === 0 ? 1 : 0.38 * (1 - i / N) * k }}>
           {children}
         </AbsoluteFill>
       ))}
@@ -97,7 +99,7 @@ const Burn: Comp = ({ children, presentationDirection: dir, presentationProgress
   return (
     <AbsoluteFill style={{ opacity: enter ? (p > 0.5 ? 1 : 0) : p <= 0.5 ? 1 : 0 }}>
       {children}
-      <AbsoluteFill style={{ mixBlendMode: "screen", opacity: k, background: `radial-gradient(60% 45% at ${20 + p * 60}% ${70 - p * 40}%, rgba(255,170,80,0.95), rgba(200,16,46,0.75) 40%, transparent 75%)`, filter: "blur(20px)" }} />
+      <AbsoluteFill style={{ opacity: k * 0.85, background: `radial-gradient(60% 45% at ${20 + p * 60}% ${70 - p * 40}%, rgba(255,190,110,0.95), rgba(200,16,46,0.7) 40%, transparent 78%)` }} />
       <AbsoluteFill style={{ background: "#fff", opacity: Math.max(0, k - 0.7) * 2 }} />
     </AbsoluteFill>
   );
