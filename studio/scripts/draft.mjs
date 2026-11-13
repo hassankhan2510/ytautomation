@@ -108,7 +108,7 @@ If there are no instructions, "facts" is the whole input and the rest are empty.
     // Source = the facts + the creator's own words (their hook / must-include lines are trusted, not "invented").
     paragraph = [facts, hookWanted, ...must].filter(Boolean).join("\n");
     directionsText = dir.length ? `\nCREATOR DIRECTIONS — follow these exactly; they override the default style rules:\n- ${dir.join("\n- ")}\n` : "";
-    briefReport.push(dir.length ? dir.map((d) => d.replace(/^([A-Z ]+):.*$/, "$1").trim()).join(", ").toLowerCase() : "none");
+    briefReport.push(dir.length ? dir.map((d) => d.split(":")[0].replace(/\(.*$/, "").trim()).join(", ").toLowerCase() : "none");
     console.log(`  brief: ${dir.length} direction(s) — ${briefReport[0]}`);
   }
 }
