@@ -108,7 +108,7 @@ const STOP = new Set("the a an and or but of to in on for with at by from is are
 const bgQuery = (b) => {
   if (b.bg) return String(b.bg);
   const words = String(b.text || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
-  const topic = String(job.title || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
+  const topic = String(job.subject || job.title || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
   // No director query (e.g. the scene was swapped by the fact guard) → anchor on the reel's subject.
   return [...new Set([...topic.slice(0, 2), ...words.sort((x, y) => y.length - x.length).slice(0, 1)])].join(" ") || "abstract light";
 };
@@ -126,46 +126,90 @@ async function download(url, file) {
   fs.writeFileSync(file, buf);
 }
 if (BG_MODE !== "off" && PEXELS) {
-  const usedIds = new Set();
-  let got = 0;
-  for (const [i, b] of job.beats.entries()) {
-    if (OWN_BACKDROP.has(b.primitive) || b.bgSrc) continue;
-    const q = bgQuery(b);
-    const base = `bg/${job.id || "job"}-${i}`;
+  /* FOOTAGE JUDGE — never take the first stock result blindly. Gather several candidates per scene
+   * (with their real descriptions: photo alt text / the video's descriptive URL slug), then ONE LLM call
+   * picks, for every scene, only footage that clearly shows that line's subject/context — or none.
+   * Wrong footage is worse than no footage (a stock-market reel once showed unrelated clips; a Taj Mahal
+   * reel showed chained hands for "workers"). Rejected scenes get one subject-anchored retry, then fall
+   * back to the generated backdrop. */
+  const slugDesc = (url) => decodeURIComponent(String(url || "").split("/").filter(Boolean).pop() || "").replace(/-\d+$/, "").replace(/-/g, " ");
+  const subject = String(job.subject || job.title || "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+  async function candidatesFor(q) {
+    const out = [];
     try {
       if (BG_MODE === "video") {
         const d = await pexels(`https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&orientation=portrait&size=medium&per_page=15`);
-        const vid = (d.videos || []).find((v) => !usedIds.has(`v${v.id}`) && v.duration >= 6);
-        const file = vid && (vid.video_files || [])
-          .filter((f) => f.file_type === "video/mp4" && f.height > f.width && f.height >= 960 && f.height <= 1920)
-          .sort((x, y) => Math.abs(x.height - 1280) - Math.abs(y.height - 1280))[0];
-        if (file) {
-          await download(file.link, path.join("public", `${base}.mp4`));
-          Object.assign(b, { bgSrc: `${base}.mp4`, bgKind: "video" });
-          usedIds.add(`v${vid.id}`);
-          job.credits.push({ beat: i, title: `Pexels video ${vid.id}`, artist: vid.user?.name || "Pexels", license: "Pexels License", url: vid.url });
-          got++;
-          console.log(`beat ${i}: bg video "${q}" -> ${file.width}x${file.height}`);
-          continue;
+        for (const v of d.videos || []) {
+          if (v.duration < 6) continue;
+          const file = (v.video_files || []).filter((f) => f.file_type === "video/mp4" && f.height > f.width && f.height >= 960 && f.height <= 1920).sort((x, y) => Math.abs(x.height - 1280) - Math.abs(y.height - 1280))[0];
+          if (file) out.push({ kind: "video", id: `v${v.id}`, desc: slugDesc(v.url), link: file.link, w: file.width, h: file.height, credit: { title: `Pexels video ${v.id}`, artist: v.user?.name || "Pexels", license: "Pexels License", url: v.url } });
+          if (out.length >= 6) break;
         }
       }
       const p = await pexels(`https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&orientation=portrait&per_page=15`);
-      const ph = (p.photos || []).find((x) => !usedIds.has(`p${x.id}`));
-      if (ph) {
-        await download(`${ph.src.original}?auto=compress&cs=tinysrgb&fit=crop&w=1080&h=1920`, path.join("public", `${base}.jpg`));
-        Object.assign(b, { bgSrc: `${base}.jpg`, bgKind: "image" });
-        usedIds.add(`p${ph.id}`);
-        job.credits.push({ beat: i, title: `Pexels photo ${ph.id}`, artist: ph.photographer || "Pexels", license: "Pexels License", url: ph.url });
-        got++;
-        console.log(`beat ${i}: bg photo "${q}"`);
-      } else {
-        console.log(`beat ${i}: no background found for "${q}" — generated backdrop`);
+      for (const x of (p.photos || []).slice(0, 6)) {
+        out.push({ kind: "image", id: `p${x.id}`, desc: String(x.alt || slugDesc(x.url)), link: `${x.src.original}?auto=compress&cs=tinysrgb&fit=crop&w=1080&h=1920`, credit: { title: `Pexels photo ${x.id}`, artist: x.photographer || "Pexels", license: "Pexels License", url: x.url } });
       }
     } catch (e) {
-      console.warn(`beat ${i}: background failed (${e.message}) — generated backdrop`);
+      console.warn(`  candidates for "${q}" failed: ${e.message}`);
     }
+    return out;
   }
-  console.log(`backgrounds: ${got}/${job.beats.length} scenes have real footage (${BG_MODE})`);
+  async function judge(scenes) {
+    const { groqJSON } = await import("../../theranos-doc/scripts/lib_groq.mjs");
+    const res = await groqJSON(
+      `You are a strict PHOTO EDITOR for a factual video. For each SCENE choose the ONE candidate whose description clearly shows the subject or context of that spoken line, within the reel's SUBJECT — or -1 if none truly fits.
+REJECT: a different place, country, landmark, era or event; anything implying a claim the line doesn't make (e.g. chains/slavery when the line says workers; a crash when it says growth); unrelated generic stock (random people, offices, phones) unless the line is about them; brand logos; identifiable public figures; disturbing imagery.
+Prefer footage that is literal and specific over vague "mood" shots. Each candidate may be used once in the whole reel.
+Return ONLY JSON: {"picks":[{"scene":n,"pick":candidate number or -1,"why":"max 8 words"}]}`,
+      `SUBJECT OF THE REEL: ${subject || "(see lines)"}\n\n` + scenes.map((s) => `SCENE ${s.n} — line: "${s.line}" (search: ${s.q})\n${s.c.map((c, k) => `  ${k + 1}. [${c.kind}] ${c.desc}`).join("\n") || "  (no candidates)"}`).join("\n\n"),
+      { maxTokens: 1500, temperature: 0.1 },
+    );
+    return new Map((res?.picks || []).map((p) => [Number(p.scene), { pick: Number(p.pick), why: String(p.why || "") }]));
+  }
+
+  const usedIds = new Set();
+  const todo = job.beats.map((b, i) => ({ b, i })).filter(({ b }) => !OWN_BACKDROP.has(b.primitive) && !b.bgSrc && String(b.text || "").trim());
+  let got = 0, rejected = 0;
+  for (const round of [1, 2]) {
+    if (!todo.length) break;
+    const scenes = [];
+    for (const { b, i } of todo) {
+      // Round 2: anchor the search on the reel's subject + the line's main words.
+      const q = round === 1 ? bgQuery(b) : [subject.split(" ").slice(0, 3).join(" "), bgQuery({ text: b.text, title: "" })].join(" ").trim();
+      const c = (await candidatesFor(q)).filter((x) => !usedIds.has(x.id));
+      scenes.push({ n: scenes.length + 1, b, i, q, line: String(b.text), c });
+    }
+    let picks = new Map();
+    try { picks = await judge(scenes); } catch (e) { console.warn(`  footage judge failed (${e.message}) — scenes keep the generated backdrop`); }
+    const next = [];
+    for (const s of scenes) {
+      const p = picks.get(s.n);
+      const cand = p && p.pick >= 1 ? s.c[p.pick - 1] : null;
+      if (!cand || usedIds.has(cand.id)) {
+        if (round === 1) next.push({ b: s.b, i: s.i });
+        else { rejected++; console.log(`beat ${s.i}: no fitting footage ("${s.q}") — generated backdrop${p?.why ? ` (${p.why})` : ""}`); }
+        continue;
+      }
+      const base = `bg/${job.id || "job"}-${s.i}`;
+      const file = `${base}.${cand.kind === "video" ? "mp4" : "jpg"}`;
+      try {
+        await download(cand.link, path.join("public", file));
+        Object.assign(s.b, { bgSrc: file, bgKind: cand.kind });
+        usedIds.add(cand.id);
+        job.credits.push({ beat: s.i, ...cand.credit });
+        got++;
+        console.log(`beat ${s.i}: ${cand.kind} "${cand.desc}" ✓ (${p.why})`);
+      } catch (e) {
+        if (round === 1) next.push({ b: s.b, i: s.i });
+        else console.warn(`beat ${s.i}: download failed (${e.message}) — generated backdrop`);
+      }
+    }
+    todo.splice(0, todo.length, ...next);
+  }
+  const msg = `🎞️ Footage judge: ${got} scene(s) got matching footage · ${rejected} kept the generated backdrop (nothing fit)`;
+  console.log(msg);
+  if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, msg + "\n");
 } else if (BG_MODE !== "off") {
   console.warn("PEXELS_API_KEY not set — scenes use the generated backdrop");
 }

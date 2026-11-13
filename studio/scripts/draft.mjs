@@ -80,6 +80,7 @@ Return ONLY JSON:
  "hooks":[{"text":"…","type":"curiosity|contrarian|pov|number|stakes","score":1-10}] (exactly 3, max 12 words each, different types),
  "chosen": index of the best hook,
  "lines":[{"text":"${language === "urdu" ? "the line in ROMAN Urdu (Latin letters) mixed with English, as shown on screen" : "spoken line"}","intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
+ "subject": "2-4 ENGLISH words naming what this reel is about, for stock-footage search and checks (e.g. 'Taj Mahal Agra', 'stock market trading', 'Apollo moon landing')",
  "mood": one of [mystery, ancient, reflective, science, tension, awe, epic, future, modern, sci-fi, calm, uplifting] — the music mood of the whole reel,
  "caption":"1-2 short lines + a question that drives comments + 5 hashtags"}
 ${language === "urdu" ? `LANGUAGE: "Urdish" for a Pakistani Gen-Z audience — MOSTLY ENGLISH. Every noun, technical term and content word stays in English (computer, RAM, memory, wire, landing, software, mission, astronauts, Moon, years, blocks…). Urdu is ONLY the simple glue and everyday phrases: hai, tha, the, ye, wo, aur, ke, ki, ka, ko, se, mein, pe, par, bhi, toh, nahi, kya, sirf, phir, "kya aapko pata hai", "ye hua", "wo hua", "socho". Never formal or difficult Urdu words. Example: "1969 mein Apollo 11 ne two astronauts ko Moon pe land kiya. Kya aapko pata hai, computer mein sirf 4 KB RAM thi?" "text" is written in Latin letters like that — the voice version is made in a later step. Hooks, caption and visuals follow the same style.
@@ -395,6 +396,7 @@ const date = new Date().toISOString().slice(0, 10);
 const job = {
   id: `${date}-${slug}`,
   title: hookText,
+  subject: clean(written.subject || "").slice(0, 60),
   theme,
   seed: Number(process.env.SEED) || Math.floor(Math.random() * 9000) + 100,
   handle,

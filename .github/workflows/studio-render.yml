@@ -53,6 +53,10 @@ jobs:
           SHADERS: ${{ github.event.inputs.shaders }}
           JOB_FILE: ${{ github.event.inputs.job || 'src/data/job.json' }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
         run: node scripts/props.mjs "$JOB_FILE" out/props.json
       - name: Render (shader path, falls back to CSS path on failure)
         run: |
