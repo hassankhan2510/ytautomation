@@ -15,6 +15,8 @@ const job = JSON.parse(fs.readFileSync(jobPath, "utf8"));
 if (process.env.THEME && process.env.THEME !== "job") job.theme = process.env.THEME;
 if (process.env.SEED && /^\d+$/.test(process.env.SEED)) job.seed = Number(process.env.SEED);
 if (!Array.isArray(job.beats) || job.beats.length === 0) throw new Error(`${jobPath}: no beats`);
+if ((process.env.MUSIC || "auto") === "none") delete job.music;
+if ((process.env.SFX || "on") === "off") job.sfx = false;
 
 const STYLE = "cinematic, moody, deep black and crimson red lighting, high contrast, 35mm film grain, no text, no watermark";
 

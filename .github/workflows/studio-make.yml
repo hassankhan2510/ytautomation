@@ -1,0 +1,147 @@
+name: "Studio — Make Reel (one click)"
+
+# Paste a raw paragraph → finished reel. One run does everything:
+#   AI director (hook + script + scene casting) → archival/AI images → narration in YOUR cloned
+#   voice → word-synced captions + scenes → music (ducked under the voice) + sound effects → MP4.
+# Download "studio-reel-…" from the run page: reel.mp4 + caption.txt (credits included) + poster.
+# Nothing is posted anywhere.
+on:
+  workflow_dispatch:
+    inputs:
+      paragraph:
+        description: "Raw paragraph / topic notes (the facts and numbers you include are the only ones it may use)"
+        required: true
+        type: string
+      style:
+        description: "Format"
+        type: choice
+        options: [explainer, techNews, breakdown, story, buildInPublic]
+        default: explainer
+      theme:
+        description: "Colour theme"
+        type: choice
+        options: [crimson, ocean, grape, sunrise, lagoon, mango, mint, neon, acid, electric, paper, taxi]
+        default: crimson
+      voice:
+        description: "Narration: mine = your cloned voice · kokoro / edge = AI voices · none = silent"
+        type: choice
+        options: [mine, kokoro, edge, none]
+        default: mine
+      verbatim:
+        description: "no = AI writes the script (default) · yes = read my text word-for-word"
+        type: choice
+        options: ["no", "yes"]
+        default: "no"
+      music:
+        description: "Background music"
+        type: choice
+        options: [auto, none]
+        default: auto
+      sfx:
+        description: "Sound effects (whooshes, hits, pops)"
+        type: choice
+        options: ["on", "off"]
+        default: "on"
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install system libraries (headless Chrome, ffmpeg, espeak)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng ffmpeg
+      - run: npm install --no-audit --no-fund
+      - name: Install voice engines
+        if: ${{ github.event.inputs.voice != 'none' }}
+        run: |
+          pip install numpy soundfile edge-tts
+          pip install kokoro
+          if [ "${{ github.event.inputs.voice }}" = "mine" ]; then pip install chatterbox-tts peft resemble-perth; fi
+
+      - name: ① Write hook + script + cast scenes (AI director)
+        id: draft
+        env:
+          PARAGRAPH: ${{ github.event.inputs.paragraph }}
+          STYLE: ${{ github.event.inputs.style }}
+          VERBATIM: ${{ github.event.inputs.verbatim }}
+          THEME: ${{ github.event.inputs.theme }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
+        run: node scripts/draft.mjs
+
+      - name: ② Images, music, sound settings
+        env:
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+          MUSIC: ${{ github.event.inputs.music }}
+          SFX: ${{ github.event.inputs.sfx }}
+          SHADERS: "off"
+        run: node scripts/props.mjs "$JOB_FILE" out/props.json
+
+      - name: ③ Narrate (your voice) + lock timing to the speech
+        env:
+          VOICE: ${{ github.event.inputs.voice }}
+        run: python scripts/narrate.py out/props.json
+
+      - name: ④ Render the reel
+        run: |
+          npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+          npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
+
+      - name: ⑤ Caption file (credits included)
+        env:
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync("out/props.json", "utf8")).job;
+            const lines = [p.title || "", "", p.caption || ""];
+            const img = (p.credits || []).filter((c) => c.beat !== "music");
+            if (img.length) lines.push("", "Images: " + img.map((c) => `${c.title} — ${c.artist} (${c.license})`).join("; "));
+            if (p.hooks && p.hooks.length) lines.push("", "--- alternative hooks ---", ...p.hooks);
+            fs.writeFileSync("out/caption.txt", lines.join("\n").trim() + "\n");
+            const s = process.env.GITHUB_STEP_SUMMARY;
+            if (s) fs.appendFileSync(s, "\n### 📋 Caption\n```\n" + lines.join("\n").trim() + "\n```\n");
+          '
+          cp "$JOB_FILE" out/
+
+      - name: Deliver
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-reel-run${{ github.run_number }}
+          path: |
+            studio/out/reel.mp4
+            studio/out/poster.jpg
+            studio/out/caption.txt
+            studio/out/*.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Save the draft (edit + re-render later with "Studio — Render Reel")
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add studio/src/data/drafts/ 2>/dev/null || true
+          git commit -m "studio: draft ${{ steps.draft.outputs.draft }} [skip ci]" || { echo "nothing to commit"; exit 0; }
+          git pull --rebase --autostash || true
+          git push || echo "push skipped"

@@ -43,6 +43,10 @@ export type Job = {
   words?: Word[];
   /** Cap on real GPU shader cuts when the render enables shaders (slow on CPU runners). Default: no cap. */
   shaderCuts?: number;
+  /** Sound effects on cuts / key words / end card (default on). */
+  sfx?: boolean;
+  /** Which TTS engine voiced this job (set by scripts/narrate.py). */
+  voice?: string;
   /** Brand mark under public/ (e.g. "brand/cohortzero-mark.png") — used by the end card avatar. */
   logo?: string;
   /** On-screen handle for end card / chrome (e.g. "@cohort_zero"). */

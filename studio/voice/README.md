@@ -1,13 +1,6 @@
-# Encrypted voice reference
+# Voice reference
 
-`voice_ref.wav.enc` is the creator's cleaned voice sample (24 kHz mono WAV), encrypted with
-AES-256-CBC (PBKDF2, 200k iterations). The repo is public, so the raw voice is never committed.
+`voice_ref.wav` is the creator's cleaned voice sample (40 s, 24 kHz mono; highpass, light denoise,
+loudness-normalised). `scripts/narrate.py` clones it with Chatterbox (MIT) to read every script.
 
-Renders decrypt it in memory with the `VOICE_KEY` repository secret:
-
-```
-printf '%s\n' "$VOICE_KEY" > /tmp/vk
-openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in voice/voice_ref.wav.enc -out /tmp/voice_ref.wav -pass file:/tmp/vk
-```
-
-Raw recordings + the key stay local in `voice-raw/` (git-ignored).
+To change the voice: replace `voice_ref.wav` with a new clean 20-60 s recording (WAV, quiet room).

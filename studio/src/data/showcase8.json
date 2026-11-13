@@ -1,0 +1,23 @@
+{
+  "id": "showcase8",
+  "title": "The science you were never taught properly",
+  "theme": "lagoon",
+  "seed": 113,
+  "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
+  "beats": [
+    { "text": "The future is calling. Do you pick up?", "primitive": "phoneCall", "energy": 3, "props": { "caller": "The Future", "subtitle": "incoming call…" } },
+    { "text": "In 1953, the secret of life made the front page.", "primitive": "newspaperSpin", "energy": 3, "props": { "masthead": "THE DAILY CHRONICLE", "headline": "Secret of life discovered", "date": "1953", "search": "DNA double helix model 1953" } },
+    { "text": "A twisted ladder, folded inside every cell you have.", "primitive": "dnaHelix", "energy": 1, "props": { "label": "The double helix" } },
+    { "text": "Go smaller, and everything is made of atoms.", "primitive": "atom", "energy": 2, "props": { "symbol": "C", "name": "Carbon", "number": "6" } },
+    { "text": "One equation changed physics forever.", "primitive": "chalkboard", "energy": 1, "props": { "title": "1905", "lines": ["E = mc²", "energy = mass × c²"] } },
+    { "text": "Zoom out, and we are one small planet around one star.", "primitive": "solarSystem", "energy": 1, "props": { "highlight": 2, "label": "You are here" } },
+    { "text": "Today, all of that runs through tiny chips.", "primitive": "circuitBoard", "energy": 2, "props": { "label": "AI" } },
+    { "text": "Ideas travel like ships once did.", "primitive": "mapRoute", "energy": 2, "props": { "title": "How ideas spread", "points": [{ "name": "Lab" }, { "name": "Paper" }, { "name": "Classroom" }, { "name": "Your phone" }] } },
+    { "text": "From the lab to your pocket, in one lifetime.", "primitive": "boardingPass", "energy": 2, "props": { "from": "The Lab", "to": "Your Pocket", "fromCode": "LAB", "toCode": "YOU", "stamp": "ARRIVED" } },
+    { "text": "But read the fine print. Science is never finished.", "primitive": "magnifier", "energy": 2, "props": { "detail": "results may change with new evidence", "label": "the catch" } },
+    { "text": "Every discovery has a heartbeat: curiosity.", "primitive": "heartbeat", "energy": 2, "props": { "bpm": 72, "label": "BPM", "caption": "curiosity: still alive" } },
+    { "text": "Remember the people who were curious first.", "primitive": "polaroidStack", "energy": 1, "props": { "items": ["first lab", "late nights", "the breakthrough"], "search": "1950s scientist laboratory photograph" } },
+    { "text": "Follow for more science, told properly.", "primitive": "outro", "energy": 1, "props": { "cta": "Follow for more" }, "hold": 1.0 }
+  ]
+}

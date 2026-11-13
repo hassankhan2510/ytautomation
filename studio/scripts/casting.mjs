@@ -7,30 +7,32 @@
  * two or three. Ordered best-first; casting enforces no repeats + family variety + wildcards.
  */
 export const INTENTS = {
-  hook: ["glitchTitle", "warp", "zoomThrough", "stomp", "spotlight", "codeRain", "tape", "splitFlap", "auroraType", "pov", "flip3d"],
-  question: ["search", "spotlight", "iceberg", "slotMachine", "poll", "zoomThrough", "declassified"],
-  date: ["yearRewind", "calendar", "history", "splitFlap", "archiveFilm", "typewriter", "bookChapter"],
-  place: ["locate", "globe", "archiveFilm", "radar", "photo"],
-  person: ["museumFrame", "archiveFilm", "photo", "quote", "tweet", "chat"],
-  bigNumber: ["counter", "burst", "statGrid", "meter", "ring", "price", "splitFlap"],
+  hook: ["glitchTitle", "warp", "zoomThrough", "stomp", "spotlight", "codeRain", "tape", "splitFlap", "auroraType", "pov", "flip3d", "phoneCall", "newspaperSpin"],
+  question: ["search", "spotlight", "iceberg", "slotMachine", "poll", "zoomThrough", "declassified", "phoneCall", "magnifier"],
+  date: ["yearRewind", "calendar", "history", "splitFlap", "archiveFilm", "typewriter", "bookChapter", "newspaperSpin"],
+  place: ["locate", "globe", "archiveFilm", "radar", "photo", "mapRoute", "boardingPass"],
+  person: ["museumFrame", "archiveFilm", "photo", "quote", "tweet", "chat", "polaroidStack"],
+  bigNumber: ["counter", "burst", "statGrid", "meter", "ring", "price", "splitFlap", "heartbeat"],
   comparison: ["scaleCompare", "versus", "bars", "scoreboard", "thenNow", "beforeAfter", "venn", "strike"],
-  change: ["lineChart", "thenNow", "history", "roadmap", "yearRewind", "beforeAfter", "ghGrid"],
-  process: ["roadmap", "isoBuild", "checklist", "neuralNet", "funnel", "mindMap", "pyramid", "list"],
-  causeEffect: ["redString", "roadmap", "funnel", "neuralNet", "mindMap", "iceberg"],
-  fact: ["factCard", "highlight", "decode", "flip3d", "splitFlap", "headlines", "maskReveal"],
-  research: ["researchPaper", "factCard", "headlines", "pie", "quadrant", "lineChart", "statGrid"],
-  list: ["list", "stickyNotes", "tierList", "cardFan", "orbit", "appGrid", "pie", "checklist"],
+  change: ["lineChart", "thenNow", "history", "roadmap", "yearRewind", "beforeAfter", "ghGrid", "boardingPass"],
+  process: ["roadmap", "isoBuild", "checklist", "neuralNet", "funnel", "mindMap", "pyramid", "list", "circuitBoard", "chalkboard"],
+  causeEffect: ["redString", "roadmap", "funnel", "neuralNet", "mindMap", "iceberg", "mapRoute"],
+  fact: ["factCard", "highlight", "decode", "flip3d", "splitFlap", "headlines", "maskReveal", "magnifier", "chalkboard"],
+  research: ["researchPaper", "factCard", "headlines", "pie", "quadrant", "lineChart", "statGrid", "magnifier", "chalkboard", "dnaHelix"],
+  list: ["list", "stickyNotes", "tierList", "cardFan", "orbit", "appGrid", "pie", "checklist", "polaroidStack"],
   myth: ["strike", "verdict", "iceberg", "glitchTitle", "declassified"],
-  secret: ["declassified", "spotlight", "zoomThrough", "cardFan", "decode", "iceberg", "codeRain"],
-  tech: ["neuralNet", "codeRain", "terminal", "code", "browser", "dotWave", "keyboard", "notifs"],
-  struggle: ["errorPopups", "loading", "pov", "chat", "typewriter", "timer", "blob"],
-  news: ["newsBanner", "headlines", "notifs", "tweet", "search", "globe", "phone"],
+  secret: ["declassified", "spotlight", "zoomThrough", "cardFan", "decode", "iceberg", "codeRain", "magnifier"],
+  tech: ["neuralNet", "codeRain", "terminal", "code", "browser", "dotWave", "keyboard", "notifs", "circuitBoard"],
+  struggle: ["errorPopups", "loading", "pov", "chat", "typewriter", "timer", "blob", "heartbeat", "phoneCall"],
+  news: ["newsBanner", "headlines", "notifs", "tweet", "search", "globe", "phone", "newspaperSpin"],
   quote: ["quote", "typewriter", "tweet", "auroraType", "museumFrame"],
   money: ["price", "receipt", "bars", "counter", "scoreboard", "slotMachine"],
-  scale: ["scaleCompare", "globe", "dotWave", "meter", "warp"],
+  scale: ["scaleCompare", "globe", "dotWave", "meter", "warp", "solarSystem", "atom"],
   chapter: ["bookChapter", "tape", "warp", "zoomThrough", "prism", "dayStamp"],
-  lesson: ["auroraType", "flowField", "maskReveal", "prism", "rotator", "highlight", "blob", "flip3d"],
-  emotion: ["blob", "flowField", "auroraType", "spotlight", "pov", "quote"],
+  lesson: ["auroraType", "flowField", "maskReveal", "prism", "rotator", "highlight", "blob", "flip3d", "chalkboard"],
+  emotion: ["blob", "flowField", "auroraType", "spotlight", "pov", "quote", "heartbeat", "polaroidStack"],
+  science: ["dnaHelix", "atom", "solarSystem", "chalkboard", "neuralNet", "scaleCompare", "researchPaper", "dotWave"],
+  journey: ["mapRoute", "boardingPass", "locate", "globe", "archiveFilm", "history"],
   cta: ["commentCta", "outro"],
 };
 export const INTENT_LIST = Object.keys(INTENTS);
@@ -46,7 +48,7 @@ const PLAIN_TEXT = new Set(["stomp", "flip3d", "highlight", "maskReveal", "decod
  * families the reel hasn't used yet (creative surprise, still energy-appropriate).
  */
 /** Versatile cinematic scenes that can carry almost any line — the wildcard pool for creative surprise. */
-const WILDCARDS = ["globe", "warp", "dotWave", "flowField", "blob", "orbit", "cardFan", "isoBuild", "iceberg", "prism", "burst", "tape", "spotlight", "zoomThrough", "glitchTitle", "neuralNet", "radar", "codeRain", "scaleCompare", "redString", "archiveFilm", "museumFrame", "yearRewind", "declassified"];
+const WILDCARDS = ["mapRoute", "solarSystem", "dnaHelix", "newspaperSpin", "phoneCall", "circuitBoard", "globe", "warp", "dotWave", "flowField", "blob", "orbit", "cardFan", "isoBuild", "iceberg", "prism", "burst", "tape", "spotlight", "zoomThrough", "glitchTitle", "neuralNet", "radar", "codeRain", "scaleCompare", "redString", "archiveFilm", "museumFrame", "yearRewind", "declassified"];
 const h01 = (...n) => { let x = 0; for (const v of n) x = Math.imul(x ^ (v * 2654435761), 1597334677) >>> 0; return (x % 10007) / 10007; };
 
 /**

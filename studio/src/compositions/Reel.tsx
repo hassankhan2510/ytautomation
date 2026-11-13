@@ -10,6 +10,7 @@ import { pickTransition, TRANSITIONS } from "../engine/transitions";
 import { Backdrop, BACKDROPS, CameraRig, Grain, LightLeak, ProgressBar, Vignette } from "../engine/fx";
 import { resolvePrimitive } from "../engine/registry";
 import { Captions } from "./Captions";
+import { SoundLayer, useDuckedVolume } from "./Sound";
 import type { Job, TimedBeat } from "../engine/types";
 import "../engine/fonts";
 
@@ -73,6 +74,13 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = false }) => {
     });
   }, [timeline, job.seed, width, height, useShaders]);
 
+  const voiced = Boolean(job.audio);
+  const musicVolume = useDuckedVolume(timeline, voiced);
+  const cuts = useMemo(
+    () => plan.flatMap((p, i) => (p.t && plan[i + 1] ? [{ into: plan[i + 1].beat, name: p.t.name, frames: p.t.frames }] : [])),
+    [plan],
+  );
+
   return (
     <RenderProvider value={{ theme, seed: job.seed, shaders: useShaders, timeline, handle: job.handle, logo: job.logo }}>
       <AbsoluteFill style={{ background: theme.bg }}>
@@ -95,7 +103,8 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = false }) => {
         <Vignette strength={theme.vivid ? 0.18 : theme.dark ? 0.55 : 0.25} />
         <ProgressBar />
         {job.audio ? <Audio src={staticFile(job.audio)} /> : null}
-        {job.music ? <Audio src={staticFile(job.music)} volume={job.audio ? 0.12 : 0.5} loop /> : null}
+        {job.music ? <Audio src={staticFile(job.music)} volume={musicVolume} loop /> : null}
+        {job.sfx !== false ? <SoundLayer timeline={timeline} cuts={cuts} voiced={voiced} /> : null}
       </AbsoluteFill>
     </RenderProvider>
   );
