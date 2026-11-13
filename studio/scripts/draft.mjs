@@ -330,6 +330,18 @@ for (const b of beats) {
     if (bad.length || nameless) { removed.push(`${b.primitive}.${k}="${v}"`); delete b.props[k]; }
   }
 }
+// Data scenes must not SHOW a number the source doesn't contain (a scaleCompare once showed an invented
+// "1,000×"). Allowed: source numbers, simple unit scalings of them (2.3 million -> 2300000), tiny counts.
+const DATA_SCENES = new Set(["counter", "scaleCompare", "bars", "statGrid", "lineChart", "pie", "funnel", "scoreboard", "price", "timer", "calendar", "ring", "meter", "history", "receipt", "tierList", "quadrant"]);
+const ORDINAL_KEYS = new Set(["n", "pick", "highlight", "done", "day", "reveal", "from"]);
+const srcVals = [...sourceNums].map(Number).filter(Number.isFinite);
+const derivable = (n) => { const v = Number(n); return srcVals.some((s) => [1, 1e3, 1e6, 1e9, 1e-3, 1e-6].some((k) => Math.abs(s * k - v) < 1e-6 * Math.max(1, Math.abs(v)))); };
+for (const b of beats) {
+  if (!DATA_SCENES.has(b.primitive)) continue;
+  const shownNums = Object.fromEntries(Object.entries(b.props || {}).filter(([k]) => !ORDINAL_KEYS.has(k) && !NOT_SHOWN.has(k)));
+  const bad = nums(JSON.stringify(shownNums)).filter((n) => !sourceNums.has(n) && !/^0?[0-9]$/.test(n) && !derivable(n));
+  if (bad.length) swapSafe(b, `${b.primitive} shows numbers not in the source: ${[...new Set(bad)].join(", ")}`);
+}
 for (const b of beats) {
   const { prompt, prompt2, search, search2, lat, lon, ...shown } = b.props || {};
   if (lat !== undefined || lon !== undefined) places.push(`${shown.place || "?"} (${lat}, ${lon})`);
