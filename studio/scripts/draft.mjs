@@ -1,28 +1,34 @@
-// STUDIO — DRAFT: paragraph → 3 hooks + a full beat sheet (the "editor" step).
-// The LLM only PICKS primitives from the registry menu and fills their props; it never writes
-// render code, so every draft renders. Output: src/data/drafts/<date>-<slug>.json (edit it on
-// GitHub, then render it with "Studio — Render Reel").
+// STUDIO — DRAFT: raw paragraph → finished beat sheet, via a 3-stage AI DIRECTOR.
 //
-// Env: PARAGRAPH (required), STYLE (buildInPublic|techNews|breakdown|story), DAY, THEME, HANDLE, SEED
+//   1. WRITER  (LLM)  paragraph → extracted facts, 3 scored hooks, a Gen-Z script of short lines,
+//                     each line tagged with an INTENT (date, place, comparison, myth, process…).
+//   2. CASTING (code) intent → ~6 best-fit scenes per line from the whole library, with no repeats,
+//                     family variety and wildcards (so the AI can't lazily reuse 2-3 scenes).
+//   3. DIRECTOR (LLM) picks the best candidate per line and fills its props properly (archival photo
+//                     searches, real coordinates, short on-screen text).
+//   + GUARD (code)    repairs bad picks, flags any number not in the source, scores the edit.
+//
+// The LLM never writes render code, so every draft renders. Output: src/data/drafts/<date>-<slug>.json
+// Env: PARAGRAPH (required), STYLE (explainer|buildInPublic|techNews|breakdown|story),
+//      VERBATIM (yes = use the paragraph word-for-word as the script), DAY, THEME, HANDLE, SEED
 // All LLM calls go through the shared throttled client (free-tier TPM limits).
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { groqJSON } from "../../theranos-doc/scripts/lib_groq.mjs";
+import { castCandidates, INTENT_LIST, scoreEdit } from "./casting.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const paragraph = (process.env.PARAGRAPH || "").trim();
 if (paragraph.length < 30) throw new Error("PARAGRAPH is empty/too short — paste what the video is about.");
-const style = process.env.STYLE || "buildInPublic";
+const style = process.env.STYLE || "explainer";
 const day = Number(process.env.DAY || 0) || null;
 const theme = process.env.THEME && process.env.THEME !== "job" ? process.env.THEME : "crimson";
 const handle = process.env.HANDLE || "@cohort_zero";
-// VERBATIM: the paragraph IS the narration script — split it into beats word-for-word; the LLM only
-// chooses the visual for each beat (it may not rewrite a single word).
 const verbatim = /^(yes|true|1)$/i.test(process.env.VERBATIM || "");
+const clean = (s) => String(s ?? "").replace(/[*_#`]/g, "").replace(/\s+/g, " ").trim();
 
-/** Split a script into spoken beats: whole sentences up to 18 words; longer ones split at the most
- *  natural point near the middle (punctuation first, then connectors like "and/but/which"). */
+/* ───────────── Script splitting (verbatim mode) ───────────── */
 const CONNECT = /^(and|but|or|so|because|which|who|that|when|while|where|with|without|until|after|before|then|by|to|into|from|on|in)$/i;
 function splitLong(words) {
   if (words.length <= 18) return [words.join(" ")];
@@ -42,102 +48,131 @@ function segment(script) {
   return sentences.map((x) => x.trim()).filter(Boolean).flatMap((x) => splitLong(x.split(" ")));
 }
 
-/* ── 1. The menu, parsed straight from the registry (single source of truth) ── */
+/* ───────────── The library, parsed straight from the registry ───────────── */
 const reg = fs.readFileSync(path.join(ROOT, "src/engine/registry.ts"), "utf8");
 const STR = `"((?:[^"\\\\]|\\\\.)*)"`;
 const re = new RegExp(`id: "([A-Za-z0-9]+)", category: "([a-z]+)", showsText: (?:true|false), energy: (\\d), description: ${STR}, props: ${STR}`, "g");
 const menu = [...reg.matchAll(re)].map((m) => ({ id: m[1], category: m[2], energy: Number(m[3]), description: m[4], props: m[5] }));
 if (menu.length < 20) throw new Error(`Could not parse the primitive menu (got ${menu.length}).`);
-const ids = new Set(menu.map((m) => m.id));
-const menuText = menu.map((m) => `- ${m.id} [${m.category}, e${m.energy}]: ${m.description} PROPS: ${m.props}`).join("\n");
+const byId = new Map(menu.map((m) => [m.id, m]));
 
-/* ── 2. Prompt ── */
 const STYLES = {
-  buildInPublic: `Build-in-public diary. Beat 1 MUST be "dayStamp" with props.day=${day ?? 1}. Show proof of work (terminal, code, ghGrid, checklist, isoBuild).`,
-  techNews: `Fast tech-news report. Beat 1 MUST be "newsBanner". Use headlines/history/globe/neuralNet/quadrant where they fit. Neutral, factual tone.`,
-  breakdown: `Project/concept breakdown ("how X works"). Open on a strong hook primitive; use explainers (mindMap, roadmap, funnel, pyramid, isoBuild, neuralNet).`,
-  story: `Personal story arc: hook → struggle → turning point → result → lesson. Use meme formats (pov, errorPopups, loading, iceberg, verdict) where they fit.`,
-  explainer: `Gen-Z explainer of history / facts / research — cinematic, never a textbook. Lean on the DOC primitives (yearRewind, archiveFilm, museumFrame, locate, declassified, redString, researchPaper, factCard, scaleCompare, bookChapter, typewriter, thenNow) and cut them with modern kinetic/generative/meme ones (stomp, flip3d, warp, globe, iceberg, verdict) for pace. Open with a curiosity hook (yearRewind / declassified / stomp work well).
-AI image prompts (props.prompt/prompt2): describe the SCENE visually — era, place, objects, lighting, camera angle — no text in the image, no logos, never a real living person's likeness. Historical figures only as an atmospheric period portrait.
-locate needs REAL coordinates; scaleCompare needs REAL relative sizes; researchPaper/factCard citations ONLY if the source names them.`,
+  explainer: "Gen-Z explainer of history / facts / research: cinematic, fast, never a textbook. Open loop in line 1, pay it off by the end.",
+  buildInPublic: `Build-in-public diary, Day ${day ?? 1}. Honest, specific, proof of work.`,
+  techNews: "Fast tech-news report. Neutral, factual, why-it-matters angle.",
+  breakdown: "Concept/project breakdown: how X works, step by step.",
+  story: "Personal story arc: hook → struggle → turning point → result → lesson.",
 };
-const system = `You are the EDITOR of a premium Instagram Reels studio (Gen-Z audience, founder/tech niche, brand ${handle}).
-You turn a source paragraph into a 25-40 second vertical reel by choosing MOTION PRIMITIVES from a fixed menu and filling their props.
-Return ONLY a JSON object: {"hooks":[3 strings],"chosen":0|1|2,"caption":string,"beats":[...]}.
 
-HOOKS: 3 different scroll-stopping first lines (max 10 words each): one curiosity gap, one bold claim, one relatable/POV. "chosen" = the strongest.
-BEATS (9-13 total). Each beat: {"text": what is SPOKEN (max 14 words, casual spoken English, no emojis, no markdown, no hashtags), "primitive": id from MENU, "energy": 1|2|3, "emphasis": [1-2 words from text], "props": {...per the primitive's PROPS}}.
-- Beat 1 speaks the chosen hook. Last beat MUST be "outro" with props.cta (e.g. "Follow for Day ${(day ?? 1) + 1}").
-- Never use the same primitive twice in a row; use each at most twice; mix families (text, ui, data, generative, memes).
-- Energy: 3 for hook/reveals/wins, 2 for explanation, 1 for calm/reflective beats. Rhythm: don't put three 1s in a row.
-- Props: keep strings SHORT (they are on-screen). Only use props listed for that primitive.
-FACTS (strict): never invent numbers, statistics, quotes, people, or company/publication names that are not in the SOURCE.
-If the source has no numbers, do NOT use number-driven primitives (counter, bars, statGrid, lineChart, ring, meter, pie, funnel, scoreboard, price) with made-up values.
-Invented outlet names for "headlines" must be obviously generic (e.g. "THE BUILD DAILY").
-CAPTION: 1-2 short lines + a question to drive comments + 5 relevant hashtags.
-STYLE: ${STYLES[style] || STYLES.buildInPublic}
-
-MENU:
-${menuText}`;
+/* ═════════════ STAGE 1 — WRITER ═════════════ */
+const writerSystem = `You are the head WRITER of a premium Instagram Reels studio (Gen-Z audience; brand ${handle}).
+${verbatim ? "The creator already wrote the script. Keep every line EXACTLY as given; your job is to tag each line and write hooks." : "Turn the SOURCE into a 25-45 second spoken script."}
+Return ONLY JSON:
+{"facts":[every concrete fact in the SOURCE: numbers, dates, names, places — copied, not invented],
+ "hooks":[{"text":"…","type":"curiosity|contrarian|pov|number|stakes","score":1-10}] (exactly 3, max 12 words each, different types),
+ "chosen": index of the best hook,
+ "lines":[{"text":"spoken line","intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
+ "caption":"1-2 short lines + a question that drives comments + 5 hashtags"}
+SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
+- ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, spoken casual English (contractions, 'you'), no emojis/markdown."}
+- ${verbatim ? "" : "Structure: hook (open loop) → context → 3-6 escalating facts/turns (a pattern interrupt every ~3 lines: question, myth, 'but here's the thing') → payoff → takeaway. Do NOT write a follow/CTA line; it is added automatically."}
+- intent = what the line IS: a date → "date", a location → "place", a person → "person", a big number → "bigNumber", two things side by side → "comparison", steps → "process", A causes B → "causeEffect", a study → "research", a misconception → "myth", hidden info → "secret", a ranking/set → "list", how it changed → "change", a tech mechanism → "tech". Use "fact"/"lesson" only when nothing more specific fits. Vary intents.
+- energy: 3 hook/reveals/wins, 2 explanation, 1 reflective. Never three 1s in a row.
+FACTS (strict): every number, date, name and place in the script must come from the SOURCE. Never invent statistics, quotes, studies or sources.
+STYLE: ${STYLES[style] || STYLES.explainer}`;
 const segments = verbatim ? segment(paragraph).slice(0, 24) : [];
-const verbatimRules = `
-VERBATIM MODE — the creator wrote the script; you are ONLY the visual editor.
-The script is pre-split into ${segments.length} numbered segments. Return "beats" with EXACTLY ${segments.length} items, in order, one per segment,
-each {"i": segment number, "primitive", "energy", "emphasis": [1-2 words that appear in that segment], "props"} — do NOT include "text"; never rewrite, merge, drop or reorder segments.
-"hooks": 3 alternative opening lines the creator could record instead of segment 1 (suggestions only). Do not add an outro; it is appended automatically.`;
-const user = verbatim
-  ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
-  : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
+const writerUser = verbatim ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
 
-/* ── 3. Call + validate (never trust the LLM shape) ── */
-const out = await groqJSON(verbatim ? system + "\n" + verbatimRules : system, user, { maxTokens: 4500, temperature: 0.7 });
-if (!out || !Array.isArray(out.beats) || !out.beats.length) throw new Error("Groq returned no usable beats (see log above).");
-if (verbatim) {
-  // Re-attach the creator's exact words; any segment the LLM skipped still gets a beat.
-  const byIdx = new Map(out.beats.map((b, k) => [Number(b?.i) || k + 1, b]));
-  out.beats = segments.map((text, k) => ({ ...(byIdx.get(k + 1) || { primitive: k % 2 ? "flip3d" : "stomp", energy: 2 }), text }));
-}
+console.log("① WRITER…");
+const written = await groqJSON(writerSystem, writerUser, { maxTokens: 3000, temperature: 0.8 });
+if (!written || !Array.isArray(written.lines) || !written.lines.length) throw new Error("Writer returned no script lines.");
+let lines = written.lines.slice(0, verbatim ? 24 : 14).map((l) => ({
+  text: clean(l?.text),
+  intent: INTENT_LIST.includes(l?.intent) ? l.intent : "fact",
+  energy: [1, 2, 3].includes(Number(l?.energy)) ? Number(l.energy) : 2,
+  visual: clean(l?.visual).slice(0, 120),
+}));
+if (verbatim) lines = segments.map((text, i) => ({ ...(lines[i] || { intent: "fact", energy: 2, visual: "" }), text }));
+lines = lines.filter((l) => l.text);
+const hooks = (written.hooks || []).map((h) => (typeof h === "string" ? { text: h } : h)).filter((h) => h?.text).slice(0, 3);
+const chosen = Math.min(Math.max(0, Number(written.chosen) || 0), Math.max(0, hooks.length - 1));
+lines[0].energy = 3;
+if (!verbatim) lines[0].intent = lines[0].intent === "fact" ? "hook" : lines[0].intent;
+console.log(lines.map((l, i) => `  ${i + 1}. [${l.intent}] ${l.text}`).join("\n"));
 
-const clean = (s) => String(s ?? "").replace(/[*_#`]/g, "").replace(/\s+/g, " ").trim();
-let prev = "";
-const beats = out.beats.slice(0, verbatim ? 24 : 14).map((b, i) => {
-  let primitive = ids.has(b?.primitive) ? b.primitive : "stomp";
-  if (primitive === prev && primitive !== "outro") primitive = prev === "stomp" ? "flip3d" : "stomp";
-  prev = primitive;
-  const energy = [1, 2, 3].includes(Number(b?.energy)) ? Number(b.energy) : 2;
-  const text = clean(b?.text).split(" ").slice(0, verbatim ? 40 : 18).join(" ") || "…";
-  const beat = { text, primitive, energy };
-  if (Array.isArray(b?.emphasis) && b.emphasis.length) beat.emphasis = b.emphasis.slice(0, 2).map(clean);
-  if (b?.props && typeof b.props === "object" && !Array.isArray(b.props)) beat.props = b.props;
-  if (i === 0) beat.energy = 3;
+/* ═════════════ STAGE 2 — CASTING ═════════════ */
+const cast = castCandidates({ lines, menu, docBias: style === "explainer", seed: Number(process.env.SEED) || paragraph.length });
+if (style === "buildInPublic") cast[0].candidates = ["dayStamp", ...cast[0].candidates.filter((c) => c !== "dayStamp")];
+if (style === "techNews") cast[0].candidates = ["newsBanner", ...cast[0].candidates.filter((c) => c !== "newsBanner")];
+const allCands = [...new Set(cast.flatMap((c) => c.candidates))];
+
+/* ═════════════ STAGE 3 — DIRECTOR ═════════════ */
+const directorSystem = `You are the DIRECTOR / motion editor of a premium Gen-Z Instagram studio. For EACH script line choose the single best scene from THAT LINE'S candidates and fill its props.
+Return ONLY JSON: {"beats":[{"i":line number,"primitive":id,"why":"max 8 words","emphasis":[1-2 words from the line],"props":{…}}]} — exactly one per line, in order.
+CHOOSING: the scene must SHOW what the line SAYS (a date → time travel, a place → map lock, a comparison → true-scale or versus…). Prefer the richest, most cinematic option that fits; never pick the same id twice in the whole reel; avoid two plain-text scenes in a row.
+PROPS: follow the schema exactly; on-screen strings are SHORT (titles ≤ 5 words, list items ≤ 4 words). Use ONLY facts from FACTS — never invent numbers, quotes, sources or names.
+IMAGES: for media scenes give "search": 2-5 words naming a REAL subject to find an archival/public-domain photo (e.g. "Apollo Guidance Computer", "Saturn V launch") AND a "prompt" fallback describing the scene visually (era, place, lighting; no text, no logos, no real living person's likeness). thenNow uses search/prompt for THEN and search2/prompt2 for NOW.
+locate needs REAL coordinates (lat/lon numbers with sign). scaleCompare needs REAL relative sizes. Citations only if the source names them.`;
+const scenesDoc = allCands.map((id) => { const m = byId.get(id); return `- ${id} [${m.category}]: ${m.description} PROPS: ${m.props}`; }).join("\n");
+const directorUser = `FACTS:\n${(written.facts || []).map((f) => `- ${clean(f)}`).join("\n") || "- (none beyond the script)"}
+
+SCRIPT (line → its candidates):
+${lines.map((l, i) => `${i + 1}. [${l.intent}, energy ${l.energy}] "${l.text}"  (writer's visual idea: ${l.visual || "—"})\n   candidates: ${cast[i].candidates.join(", ")}`).join("\n")}
+
+SCENE SCHEMAS:
+${scenesDoc}`;
+
+console.log("③ DIRECTOR…");
+const directed = await groqJSON(directorSystem, directorUser, { maxTokens: 5000, temperature: 0.6 });
+const picks = new Map((directed?.beats || []).map((b, k) => [Number(b?.i) || k + 1, b]));
+
+/* ═════════════ GUARD — repair, enforce variety ═════════════ */
+const used = new Set();
+const beats = lines.map((l, k) => {
+  const d = picks.get(k + 1) || {};
+  const cands = cast[k].candidates;
+  let primitive = byId.has(d.primitive) && !used.has(d.primitive) && d.primitive !== "outro" ? d.primitive : null;
+  if (!primitive) primitive = cands.find((c) => !used.has(c)) || menu.find((m) => !used.has(m.id) && m.id !== "outro")?.id || "stomp";
+  used.add(primitive);
+  const beat = { text: l.text, primitive, energy: l.energy };
+  if (Array.isArray(d.emphasis) && d.emphasis.length) beat.emphasis = d.emphasis.slice(0, 2).map(clean);
+  if (d.props && typeof d.props === "object" && !Array.isArray(d.props) && primitive === d.primitive) beat.props = d.props;
+  if (d.why) beat.why = clean(d.why);
   return beat;
 });
-const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow for more";
-if (beats[beats.length - 1].primitive !== "outro") beats.push({ text: style === "buildInPublic" ? `${cta}.` : "Follow for more stories like this.", primitive: "outro", energy: 1, props: { cta } });
-beats[beats.length - 1].hold = 1.0;
 if (style === "buildInPublic" && day) {
-  const first = beats.find((b) => b.primitive === "dayStamp");
-  if (first) first.props = { ...(first.props || {}), day };
+  const ds = beats.find((b) => b.primitive === "dayStamp");
+  if (ds) ds.props = { ...(ds.props || {}), day };
 }
+const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow for more";
+beats.push({ text: style === "buildInPublic" ? `${cta}.` : "Follow for more stories like this.", primitive: "outro", energy: 1, props: { cta }, hold: 1.0 });
 
-/* ── 4. Hallucination guard: every number on screen/spoken must appear in the source ── */
+/* ═════════════ FACT GUARD — numbers must come from the source ═════════════ */
 const nums = (s) => (String(s).match(/\d[\d,.]*/g) || []).map((n) => n.replace(/[,.]+$/, "").replace(/,/g, ""));
 const sourceNums = new Set(nums(paragraph));
 if (day) { sourceNums.add(String(day)); sourceNums.add(String(day + 1)); }
 const flagged = new Set();
-for (const b of beats) for (const n of nums(JSON.stringify({ t: b.text, p: b.props || {} }))) if (!sourceNums.has(n) && !/^0?[0-9]$/.test(n)) flagged.add(n);
+const places = [];
+for (const b of beats) {
+  const { prompt, prompt2, search, search2, lat, lon, ...shown } = b.props || {};
+  if (lat !== undefined || lon !== undefined) places.push(`${shown.place || "?"} (${lat}, ${lon})`);
+  for (const n of nums(JSON.stringify({ t: b.text, p: shown }))) if (!sourceNums.has(n) && !/^0?[0-9]$/.test(n)) flagged.add(n);
+}
 
-/* ── 5. Write the draft ── */
-const slug = clean(out.hooks?.[out.chosen ?? 0] || paragraph).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "draft";
+/* ═════════════ WRITE + REPORT ═════════════ */
+const quality = scoreEdit(beats, menu);
+const hookText = clean(hooks[chosen]?.text || lines[0].text);
+const slug = hookText.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "draft";
 const date = new Date().toISOString().slice(0, 10);
 const job = {
   id: `${date}-${slug}`,
-  title: clean(out.hooks?.[out.chosen ?? 0] || ""),
+  title: hookText,
   theme,
   seed: Number(process.env.SEED) || Math.floor(Math.random() * 9000) + 100,
   handle,
-  hooks: (out.hooks || []).map(clean).slice(0, 3),
-  caption: String(out.caption || "").trim(),
+  hooks: hooks.map((h) => clean(h.text)),
+  caption: String(written.caption || "").trim(),
+  quality,
   ...(flagged.size ? { unverifiedNumbers: [...flagged] } : {}),
   beats,
 };
@@ -145,21 +180,25 @@ const rel = `src/data/drafts/${job.id}.json`;
 fs.mkdirSync(path.join(ROOT, "src/data/drafts"), { recursive: true });
 fs.writeFileSync(path.join(ROOT, rel), JSON.stringify(job, null, 2) + "\n");
 
-/* ── 6. Report (also into the Actions run summary) ── */
-const lines = [
+const report = [
   `### Draft: \`${rel}\``,
   "",
-  "**Hooks** (beat 1 uses the ★ one — edit the JSON to swap):",
-  ...job.hooks.map((h, i) => `${i === (out.chosen ?? 0) ? "★" : "-"} ${h}`),
+  `**Edit quality ${quality.score}/10** — ${quality.unique}/${quality.total} unique scenes · ${quality.families} families · ${quality.doc} documentary · ${quality.plain} plain-text${quality.repeats ? ` · ⚠️ ${quality.repeats} repeats` : ""}`,
   "",
-  `**Beats (${beats.length}):** ${beats.map((b) => b.primitive).join(" → ")}`,
+  "**Hooks** (★ = used):",
+  ...hooks.map((h, i) => `${i === chosen ? "★" : "-"} ${clean(h.text)}${h.type ? ` _(${h.type}${h.score ? `, ${h.score}/10` : ""})_` : ""}`),
   "",
-  ...(flagged.size ? [`⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}`, ""] : ["✅ Every number on screen comes from your paragraph.", ""]),
+  "**Script → scenes:**",
+  ...beats.map((b, i) => `${i + 1}. \`${b.primitive}\` — ${b.text}${b.why ? `  _(${b.why})_` : ""}`),
+  "",
+  flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
+  ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
+  "",
   "**Caption:**",
   "```",
   job.caption,
   "```",
 ];
-console.log(lines.join("\n"));
-if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
+console.log(report.join("\n"));
+if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, report.join("\n") + "\n");
 if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, `draft=${rel}\n`);

@@ -1,6 +1,7 @@
 name: "Studio — Draft Reel"
 
-# Paste a paragraph → free Groq writes 3 hooks + a full beat sheet from the motion-primitive menu →
+# Paste a raw paragraph → 3-stage AI director (writer → casting → director) writes the hook + script
+# and casts the best scene for every line from the whole primitive library →
 # the draft is committed to studio/src/data/drafts/ (edit it on GitHub if you want) → optional
 # preview render as a downloadable MP4. Nothing is posted anywhere.
 on:
@@ -16,10 +17,10 @@ on:
         options: [explainer, buildInPublic, techNews, breakdown, story]
         default: explainer
       verbatim:
-        description: "Use my script WORD-FOR-WORD (AI only picks the visuals). 'no' = AI rewrites it into a hooky reel."
+        description: "no = AI writes the hook + script from your raw paragraph (default) · yes = use my text word-for-word, AI only picks visuals"
         type: choice
-        options: ["yes", "no"]
-        default: "yes"
+        options: ["no", "yes"]
+        default: "no"
       day:
         description: "Day number (build-in-public only)"
         required: false
