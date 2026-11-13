@@ -15,7 +15,7 @@ export function numberWords(raw) {
   if (/^\d+\.\d+$/.test(s)) { const [a, b] = s.split("."); return `${numberWords(a)} point ${b.split("").map((d) => ONES[+d]).join(" ")}`; }
   const n = Number(s);
   if (!Number.isFinite(n) || n > 999_999_999) return raw;
-  if (n >= 1100 && n <= 2099 && n % 100 !== 0 && /^\d{4}$/.test(s)) return `${under100(Math.floor(n / 100))} ${n % 100 < 10 ? "oh " + ONES[n % 100] : under100(n % 100)}`; // years: 1969 -> nineteen sixty nine
+  if (n >= 1100 && n <= 2099 && n % 100 !== 0 && !(n >= 2000 && n <= 2009) && /^\d{4}$/.test(s)) return `${under100(Math.floor(n / 100))} ${n % 100 < 10 ? "oh " + ONES[n % 100] : under100(n % 100)}`; // years: 1969 -> nineteen sixty nine
   const parts = [];
   if (n >= 1_000_000) parts.push(`${under1000(Math.floor(n / 1_000_000))} million`);
   if (n % 1_000_000 >= 1000) parts.push(`${under1000(Math.floor((n % 1_000_000) / 1000))} thousand`);
@@ -32,5 +32,14 @@ export function speakFix(text) {
     .replace(/(\d)([A-Za-z]{1,4})\b/g, "$1 $2") // 4KB -> 4 KB, 5G -> 5 G
     .replace(/\b(\d{3,4})(\s*)(BCE|BC|CE|AD)\b/g, (_, y, sp, era) => `${yearWords(y)}${sp}${era}`) // 2560 BC -> twenty five sixty BC
     .replace(/\b(\d[\d,]*(?:\.\d+)?)\b/g, (m) => numberWords(m))
-    .replace(/\b[A-Z][A-Z0-9]{1,6}\b/g, (m) => WORD_ACRONYMS[m] || (/^[A-Z]+$/.test(m) ? m.split("").map((c) => LETTER[c]).join(" ") : m));
+    .replace(/\b[A-Z][A-Z0-9]{1,6}\b/g, (m) => WORD_ACRONYMS[m] || (pronounceable(m) ? m[0] + m.slice(1).toLowerCase() : /^[A-Z]+$/.test(m) ? m.split("").map((c) => LETTER[c]).join(" ") : m));
+}
+/* ALL-CAPS words said as a WORD (ABHI, FIFA, NEVER), not spelled out like UAE / IPO / HTML.
+ * Same rule as pronounceable() in narrate.py (English reels). */
+const SAY3 = new Set(["NOT", "YES", "WHY", "HOW", "BIG", "NEW", "OLD", "ALL", "NOW", "AND", "THE", "WOW", "BUT", "WHO", "ONE", "TWO", "TEN", "TOP", "WIN", "OUT", "BAD", "GOD"]);
+export function pronounceable(w) {
+  if (SAY3.has(w)) return true;
+  if (w.length < 4 || !/^[A-Z]+$/.test(w)) return false;
+  const vowels = [...w].filter((c, k) => "AEIOU".includes(c) || (c === "Y" && k > 0)).length;
+  return vowels >= 2 && !/[^AEIOUY]{3}/.test(w) && !/[^AEIOUY]{2}$/.test(w);
 }

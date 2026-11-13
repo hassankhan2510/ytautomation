@@ -183,6 +183,93 @@ def trim(wav, thresh=0.012, pad=0.04):
     return wav[a:b]
 
 
+_ONES = "zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split()
+_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+_SPELL3 = {"NOT", "YES", "WHY", "HOW", "BIG", "NEW", "OLD", "ALL", "NOW", "AND", "THE", "WOW", "BUT", "WHO", "ONE", "TWO", "TEN", "TOP", "WIN", "OUT", "BAD", "GOD"}
+
+
+def _u100(n):
+    return _ONES[n] if n < 20 else _TENS[n // 10] + (" " + _ONES[n % 10] if n % 10 else "")
+
+
+def _u1000(n):
+    return _u100(n) if n < 100 else _ONES[n // 100] + " hundred" + (" " + _u100(n % 100) if n % 100 else "")
+
+
+def _year(n):
+    """1969 -> nineteen sixty nine, 2005 -> two thousand five, 1900 -> nineteen hundred, 776 -> seven hundred seventy six."""
+    if n < 1000:
+        return _u1000(n)
+    if 2000 <= n <= 2009:
+        return "two thousand" + (" " + _ONES[n % 100] if n % 100 else "")
+    if n % 100 == 0:
+        return _u100(n // 100) + " hundred"
+    return _u100(n // 100) + " " + ("oh " + _ONES[n % 100] if n % 100 < 10 else _u100(n % 100))
+
+
+def number_words(raw):
+    s = raw.replace(",", "")
+    if re.fullmatch(r"\d+\.\d+", s):
+        a, b = s.split(".")
+        return number_words(a) + " point " + " ".join(_ONES[int(d)] for d in b)
+    if not s.isdigit():
+        return raw
+    n = int(s)
+    if n > 999_999_999_999:
+        return raw
+    if len(s) == 4 and "," not in raw and 1100 <= n <= 2099:
+        return _year(n)  # a bare 4-digit number in a reel is almost always a year
+    parts = []
+    for size, name in ((1_000_000_000, "billion"), (1_000_000, "million"), (1000, "thousand")):
+        if n >= size:
+            parts.append(_u1000(n // size) + " " + name)
+            n %= size
+    if n or not parts:
+        parts.append(_u1000(n))
+    return " ".join(parts)
+
+
+def _ordinal(words):
+    last = words.split()[-1]
+    irregular = {"one": "first", "two": "second", "three": "third", "five": "fifth", "eight": "eighth", "nine": "ninth", "twelve": "twelfth"}
+    new = irregular.get(last) or (last[:-1] + "ieth" if last.endswith("y") else last + "th")
+    return words[: len(words) - len(last)] + new
+
+
+def pronounceable(word):
+    """ALL-CAPS word that is said as a word (ABHI, NASA, FIFA, NEVER) rather than spelled out (UAE, IPO, HTML)."""
+    if word in _SPELL3:
+        return True
+    w = word.upper()
+    if len(w) < 4 or not w.isalpha():
+        return False
+    vowels = sum(c in "AEIOU" or (c == "Y" and k > 0) for k, c in enumerate(w))
+    return vowels >= 2 and not re.search(r"[^AEIOUY]{3}", w) and not re.search(r"[^AEIOUY]{2}$", w)
+
+
+_SCALE = {"k": "thousand", "K": "thousand", "m": "million", "M": "million", "bn": "billion", "b": "billion", "B": "billion", "t": "trillion", "T": "trillion", "tn": "trillion"}
+
+
+def english_speech(text):
+    """Voice-only text for English reels: the screen keeps "1969", "ABHI", "$2B"; the voice says them as words.
+    (Chatterbox/Kokoro read 1969 digit by digit and spelled ABHI letter by letter.)"""
+    t = text
+    t = re.sub(r"\$\s?(\d[\d,]*(?:\.\d+)?)\s*(trillion|billion|million|thousand|tn|bn|[kKmMbBtT])?\b",
+               lambda m: f"{number_words(m.group(1))} {_SCALE.get(m.group(2), m.group(2) or '')} dollars".replace("  ", " "), t)
+    t = re.sub(r"\b(\d[\d,]*(?:\.\d+)?)(bn|[MB])\b", lambda m: f"{number_words(m.group(1))} {_SCALE[m.group(2)]}", t)
+    t = re.sub(r"\b(\d{3,4})\s*(BCE|BC|CE|AD)\b", lambda m: f"{_year(int(m.group(1)))} {' '.join(m.group(2))}", t)
+    t = re.sub(r"\b(\d{4})s\b", lambda m: re.sub(r"y$", "ies", _year(int(m.group(1)))) if _year(int(m.group(1))).endswith("y") else _year(int(m.group(1))) + "s", t)
+    t = re.sub(r"(?<![\d,])'?(\d0)s\b", lambda m: _TENS[int(m.group(1)) // 10][:-1] + "ies", t)  # 90s -> nineties
+    t = re.sub(r"\b(\d+)(st|nd|rd|th)\b", lambda m: _ordinal(number_words(m.group(1))), t)
+    t = re.sub(r"(\d)([A-Za-z]{1,4})\b", r"\1 \2", t)  # 4KB -> 4 KB, 5G -> 5 G
+    t = re.sub(r"\b\d[\d,]*(?:\.\d+)?\b", lambda m: number_words(m.group(0)), t)
+    t = re.sub(r"\b[A-Z]{3,}\b", lambda m: m.group(0).capitalize() if pronounceable(m.group(0)) else m.group(0), t)
+    return t
+
+
+URDU_LETTERS = re.compile(r"[؀-ۿ]")
+
+
 def speakable(text):
     """Normalise symbols a TTS engine would stumble on (never changes meaning)."""
     t = text.replace("→", " to ").replace("&", " and ").replace("%", " percent").replace("×", " times ")
@@ -213,7 +300,9 @@ def main():
     used = None
     segments = []
     for i, beat in enumerate(job["beats"]):
-        text = speakable(beat.get("speak") or beat.get("text", ""))
+        raw = beat.get("speak") or beat.get("text", "")
+        # Urdu `speak` lines are already fixed by speakfix.mjs; everything else gets the English pass.
+        text = speakable(raw if URDU_LETTERS.search(raw) else english_speech(raw))
         if not text:
             segments.append(np.zeros(int(0.4 * SR), dtype=np.float32))
             continue
