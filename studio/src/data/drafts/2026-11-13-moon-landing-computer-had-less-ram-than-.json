@@ -1,0 +1,188 @@
+{
+  "id": "2026-11-13-moon-landing-computer-had-less-ram-than-",
+  "title": "Moon landing computer had less RAM than your calculator",
+  "theme": "grape",
+  "seed": 4167,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "Moon landing computer had less RAM than your calculator",
+    "Software was literally woven into copper wire",
+    "Alarms blaring 10 seconds before touching down"
+  ],
+  "caption": "4KB RAM ne universe change kar diya. 🚀\nAapka phone kitna RAM rakhta hai?\n#apollo11 #spacehistory #techfacts #cohort_zero #1969\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-stay-the-course.mp3",
+  "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 6.5,
+    "unique": 11,
+    "total": 11,
+    "families": 4,
+    "plain": 5,
+    "doc": 3,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Moon landing computer ka RAM aaj ke phone se kam tha.",
+      "primitive": "stomp",
+      "energy": 3,
+      "speak": "Moon landing computer کا ریم آج کے phone سے کم تھا۔",
+      "emphasis": [
+        "RAM",
+        "kam"
+      ],
+      "props": {},
+      "why": "Giant slam matches hook energy",
+      "bg": "vintage computer room cables"
+    },
+    {
+      "text": "1969 mein Apollo 11 ne two humans ko Moon pe land kiya",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "speak": "nineteen sixty nine میں Apollo eleven نے two humans کو Moon پے land کیا",
+      "emphasis": [
+        "1969",
+        "Apollo 11"
+      ],
+      "props": {
+        "to": 1969,
+        "label": "Apollo 11"
+      },
+      "why": "Time travel to specific date",
+      "bg": "lunar surface dust close up"
+    },
+    {
+      "text": "Woh Apollo Guidance Computer mein sirf 4 kilobytes RAM thi",
+      "primitive": "counter",
+      "energy": 3,
+      "speak": "وہ Apollo Guidance Computer میں صرف four kilobytes ریم تھی",
+      "emphasis": [
+        "4 kilobytes"
+      ],
+      "props": {
+        "to": 4,
+        "suffix": " KB",
+        "label": "RAM"
+      },
+      "why": "Odometer rolls to tiny number",
+      "bg": "circuit board macro shot"
+    },
+    {
+      "text": "Software? Wo copper wire mein haath se woven tha",
+      "primitive": "code",
+      "energy": 2,
+      "speak": "Software؟ وہ copper wire میں ہاتھ سے woven تھا",
+      "emphasis": [
+        "copper wire",
+        "woven"
+      ],
+      "props": {
+        "file": "manual_wiring.log",
+        "lines": [
+          "> init rope_memory",
+          "> weave: copper_wire",
+          "> status: manual_ok"
+        ]
+      },
+      "why": "Simulates manual wiring process",
+      "bg": "hands weaving copper wire grid"
+    },
+    {
+      "text": "Is technique ko rope memory kehte the",
+      "primitive": "factCard",
+      "energy": 1,
+      "speak": "اس technique کو rope memory کہتے تھے",
+      "emphasis": [
+        "rope memory"
+      ],
+      "props": {
+        "fact": "Technique: Rope Memory",
+        "n": 5
+      },
+      "why": "Collectible card for term definition",
+      "bg": "intricate wire mesh texture"
+    },
+    {
+      "text": "Landing se seconds pehle computer alarms de dikhane laga.",
+      "primitive": "highlight",
+      "energy": 3,
+      "speak": "Landing سے seconds پہلے computer alarms دے دکھانے لگا۔",
+      "emphasis": [
+        "alarms",
+        "seconds"
+      ],
+      "why": "Alarms as system error logs"
+    },
+    {
+      "text": "System overloaded tha, computer jam ho raha tha",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "System overloaded تھا، computer jam ہو رہا تھا",
+      "emphasis": [
+        "overloaded",
+        "jam"
+      ],
+      "why": "Cause-effect chain visualization"
+    },
+    {
+      "text": "Uska logic smart tha: drop low priority tasks",
+      "primitive": "declassified",
+      "energy": 3,
+      "speak": "اسکا logic smart تھا: drop low priority tasks",
+      "emphasis": [
+        "smart",
+        "drop"
+      ],
+      "props": {
+        "title": "MISSION LOG",
+        "lines": [
+          "STATUS: CRITICAL",
+          "ACTION: DROP LOW",
+          "PRIORITY: LANDING",
+          "RESULT: SAFE"
+        ],
+        "reveal": 1
+      },
+      "why": "Reveals hidden smart logic",
+      "bg": "dark server room shadows"
+    },
+    {
+      "text": "Sirf important tasks chal rahe the, landing safe reh gayi",
+      "primitive": "maskReveal",
+      "energy": 3,
+      "speak": "صرف important tasks چل رہے تھے، landing safe رہ گئی",
+      "emphasis": [
+        "important",
+        "safe"
+      ],
+      "why": "Steps completed safely"
+    },
+    {
+      "text": "4 KB RAM se ek poora mission save ho gaya",
+      "primitive": "auroraType",
+      "energy": 1,
+      "speak": "four کے بی ریم سے ایک پورا mission save ہو گیا",
+      "emphasis": [
+        "4 KB",
+        "save"
+      ],
+      "props": {
+        "word": "Efficiency"
+      },
+      "why": "Premium closing statement",
+      "bg": "aurora borealis night sky"
+    },
+    {
+      "text": "Aisi aur stories ke liye follow karo.",
+      "speak": "ایسی اور stories کے لیے follow کرو۔",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow karo"
+      },
+      "hold": 1
+    }
+  ]
+}
