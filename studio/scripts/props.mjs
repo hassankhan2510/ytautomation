@@ -53,7 +53,9 @@ async function judgeMedia(scenes, what) {
   const { groqJSON } = await import("../../theranos-doc/scripts/lib_groq.mjs");
   const res = await groqJSON(
     `You are a strict PHOTO EDITOR for a factual video. For each SCENE, score every candidate 0-10 for how clearly its description shows the subject or context of THAT spoken line, inside the reel's SUBJECT, and pick the best.
-Score 7+ ONLY if it literally depicts the line's subject (e.g. a stock chart or trading floor for a markets line; the actual monument for a monument line).
+Score 7+ ONLY if it literally depicts the line's subject WITHIN the reel's SUBJECT (e.g. a stock chart, trading app or trading floor for a markets line; the actual monument for a monument line).
+METAPHORS DO NOT COUNT: a crowd rushing a train for "panic", a person studying for "learning", a sunrise for "growth" — score them 0-3 unless the reel is about that thing itself.
+Generic posed stock people (smiling businessman, person at a laptop, team meeting) score 0-4 unless the line is literally about that kind of person in this subject.
 Score LOW (0-3): abstract textures, patterns, generic "mood"/background shots; random people, portraits or offices not specific to the line; a different place, country, landmark, era or event; anything implying a claim the line doesn't make (chains/slavery for "workers", a crash for "growth"); brand logos; identifiable public figures; disturbing imagery.
 Each candidate may be used once in the whole reel.
 Return ONLY JSON: {"picks":[{"scene":n,"pick":candidate number or -1,"score":0-10,"why":"max 8 words"}]}`,
