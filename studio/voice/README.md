@@ -6,8 +6,7 @@ AES-256-CBC (PBKDF2, 200k iterations). The repo is public, so the raw voice is n
 Renders decrypt it in memory with the `VOICE_KEY` repository secret:
 
 ```
-printf "%s
-" "$VOICE_KEY" > /tmp/vk
+printf '%s\n' "$VOICE_KEY" > /tmp/vk
 openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -in voice/voice_ref.wav.enc -out /tmp/voice_ref.wav -pass file:/tmp/vk
 ```
 
