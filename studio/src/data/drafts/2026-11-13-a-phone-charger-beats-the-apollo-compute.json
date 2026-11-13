@@ -1,0 +1,107 @@
+{
+  "id": "2026-11-13-a-phone-charger-beats-the-apollo-compute",
+  "title": "A phone charger beats the Apollo computer every day.",
+  "theme": "crimson",
+  "seed": 7124,
+  "handle": "@cohort_zero",
+  "hooks": [
+    "What powered the first Moon landing? Hint: not a supercomputer.",
+    "A phone charger beats the Apollo computer every day.",
+    "POV: You’re watching 1969 tech beat today’s phones."
+  ],
+  "caption": "When less was more, the Moon was within reach. How do we apply that today? #Apollo #TechHistory #Engineering #WomenInSTEM #SimpleSystems",
+  "unverifiedNumbers": [
+    "1970",
+    "42.3601",
+    "71.0589"
+  ],
+  "beats": [
+    {
+      "text": "In 1969, a computer with less power than your phone's charger landed two humans on the Moon.",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "1969"
+      ],
+      "props": {}
+    },
+    {
+      "text": "The Apollo Guidance Computer had about 4 kilobytes of RAM,",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "kilobytes"
+      ],
+      "props": {}
+    },
+    {
+      "text": "and it was programmed by hand, woven into copper wire by women",
+      "primitive": "photo",
+      "energy": 2,
+      "emphasis": [
+        "women"
+      ],
+      "props": {
+        "prompt": "1970s factory, women weaving copper rope memory, close-up of hands, warm lighting"
+      }
+    },
+    {
+      "text": "in a factory in Massachusetts, a technique engineers called rope memory.",
+      "primitive": "locate",
+      "energy": 2,
+      "emphasis": [
+        "Massachusetts"
+      ],
+      "props": {
+        "place": "Massachusetts, USA",
+        "lat": 42.3601,
+        "lon": -71.0589,
+        "year": "1969"
+      }
+    },
+    {
+      "text": "When alarms went off seconds before landing, the software chose what to drop.",
+      "primitive": "strike",
+      "energy": 3,
+      "emphasis": [
+        "alarms"
+      ],
+      "props": {
+        "wrong": "software freezes",
+        "right": "software chose what to drop"
+      }
+    },
+    {
+      "text": "It saved the mission.",
+      "primitive": "burst",
+      "energy": 3,
+      "emphasis": [
+        "saved"
+      ],
+      "props": {
+        "word": "saved"
+      }
+    },
+    {
+      "text": "The lesson still holds today: a simple system that knows its priorities beats a powerful one that doesn't.",
+      "primitive": "versus",
+      "energy": 3,
+      "emphasis": [
+        "simple"
+      ],
+      "props": {
+        "left": "complex system",
+        "right": "simple system"
+      }
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
