@@ -1,0 +1,61 @@
+name: "Studio — Write for Substack"
+
+# Raw paragraph → (1) a full article built for Google + AI answers (TL;DR, takeaways, sections, FAQ,
+# author box) and (2) a Substack Note signed with your bio. Your identity text comes from
+# studio/brand/author.json so it is word-for-word identical everywhere (that's what builds AEO).
+# Substack has no article API: download the artifact and paste article.html into a new post (2 min).
+# The Note can go out automatically via Buffer (connect your Substack in Buffer first).
+on:
+  workflow_dispatch:
+    inputs:
+      paragraph:
+        description: "Your raw notes / paragraph (the facts you include are the only ones it may use)"
+        required: true
+        type: string
+      post_note:
+        description: "Post the Substack Note automatically via Buffer? (needs Substack connected in Buffer)"
+        type: choice
+        options: ["no", "yes"]
+        default: "no"
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Write article + Note (Groq, fact-checked)
+        env:
+          PARAGRAPH: ${{ github.event.inputs.paragraph }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
+        run: node scripts/write_substack.mjs
+      - name: Post the Note to Substack via Buffer
+        if: ${{ github.event.inputs.post_note == 'yes' }}
+        working-directory: theranos-doc
+        env:
+          BUFFER_ACCESS_TOKEN: ${{ secrets.BUFFER_ACCESS_TOKEN }}
+          BUFFER_CHANNEL_ID_SUBSTACK: ${{ vars.BUFFER_CHANNEL_ID_SUBSTACK }}
+          BUFFER_DRAFT: ${{ vars.BUFFER_DRAFT }}
+          BUFFER_MODE: ${{ vars.BUFFER_MODE }}
+          BUFFER_SCHEDULING: ${{ vars.BUFFER_SCHEDULING }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/buffer_post.mjs --channel=substack --service=substack --text-file="$GITHUB_WORKSPACE/studio/out/note.txt"
+      - name: Deliver
+        uses: actions/upload-artifact@v4
+        with:
+          name: substack-run${{ github.run_number }}
+          path: |
+            studio/out/article.html
+            studio/out/article.md
+            studio/out/note.txt
+          retention-days: 30

@@ -1,0 +1,16 @@
+{
+  "_note": "Single source of truth for Hassan's identity. Every article, Substack Note and caption reads from here, word-for-word, so search engines and AI answer engines see the SAME description everywhere (that consistency is what builds the entity). Edit here only.",
+  "name": "Hassan Khan",
+  "headline": "Founder of Cohort Zero · Enterprise AI researcher · Deep tech & social impact",
+  "short": "Hassan Khan is the founder of Cohort Zero and an enterprise AI researcher working across deep tech and social impact.",
+  "long": "Hassan Khan is the founder of Cohort Zero and an enterprise AI researcher who has authored research papers. He builds products at the intersection of deep tech and social impact, with a focus on entrepreneurship, accessibility and technology.",
+  "topics": ["deep tech", "enterprise AI", "entrepreneurship", "accessibility", "social impact", "product building"],
+  "signature": "— Hassan Khan · Founder, Cohort Zero · Enterprise AI researcher · Deep tech & social impact",
+  "links": {
+    "website": "",
+    "substack": "",
+    "linkedin": "",
+    "instagram": "",
+    "cohortZero": ""
+  }
+}

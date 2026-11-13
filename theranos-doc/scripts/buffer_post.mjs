@@ -31,6 +31,10 @@ const arg = (k, d) => { const a = process.argv.find((x) => x.startsWith(`--${k}=
 const DRY = process.argv.includes("--dry");
 const LIST = process.argv.includes("--list");
 const CHANNEL = (arg("channel", "") || "").toLowerCase();
+// Which Buffer network to post to (default linkedin — existing workflows unchanged). e.g. --service=substack
+const SERVICE = (arg("service", "linkedin") || "linkedin").toLowerCase();
+// Post this exact text (e.g. a Substack Note written by the studio) instead of building it from a video job.
+const TEXT_FILE = arg("text-file", "");
 const PROPS = arg("props", "");
 const SCRIPT = arg("script", "");
 const IMAGE = arg("image", "");         // one local PNG/JPG (single-image post)
@@ -136,7 +140,7 @@ async function main() {
   const meta = scriptJob?.meta || {};
   const brand = props?.brand || meta.brand || CHANNEL.toUpperCase();
 
-  const text = buildText({ props, meta, brand });
+  const text = TEXT_FILE ? fs.readFileSync(TEXT_FILE, "utf8").trim() : buildText({ props, meta, brand });
   if (!text || text.length < 20) skip("no content to post");
   console.log(`  buffer text (${text.length} chars):\n${text.split("\n").map((l) => "    " + l).join("\n")}`);
   if (DRY) { console.log("  (dry) not posting"); return; }
@@ -147,9 +151,9 @@ async function main() {
   const chans = await listChannels();
   if (!channelId) {
     const rx = BRAND_MATCH[CHANNEL] || new RegExp(CHANNEL, "i");
-    const li = chans.filter((c) => /linkedin/i.test(c.service));
+    const li = chans.filter((c) => new RegExp(SERVICE, "i").test(c.service));
     const hit = (li.find((c) => rx.test(c.displayName || c.name)) || li[0]);
-    if (!hit) { console.log(`  ! no LinkedIn channel matched "${CHANNEL}". Connected:`); chans.forEach((c) => console.log(`    ${c.service} ${c.id} ${c.displayName || c.name}`)); skip("channel not found"); }
+    if (!hit) { console.log(`  ! no ${SERVICE} channel matched "${CHANNEL}". Connected:`); chans.forEach((c) => console.log(`    ${c.service} ${c.id} ${c.displayName || c.name}`)); skip("channel not found"); }
     channelId = hit.id; organizationId = hit.organizationId;
     console.log(`  -> channel ${channelId} (${hit.displayName || hit.name})`);
   } else {
