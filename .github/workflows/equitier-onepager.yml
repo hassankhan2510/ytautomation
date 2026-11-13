@@ -1,13 +1,14 @@
-name: "Equitier — Daily Insight + Quote Reels → Instagram"
+name: "Equitier — Daily Insight (STOPPED — manual only)"
 
 # TWO shareable one-page reels a day — a market-PSYCHOLOGY insight (names a trap people recognize in
 # themselves) + a wealth-mindset QUOTE — built to be reposted and sent to a friend, in the creator
 # style with a relevant AI background. Posted to Equitier's Instagram feed AND Story. Separate from the
 # weekly per-asset analysis (equitier-daily-meta). Posts only if META_*_EQUITIER secrets are set.
+# STOPPED 2026-11-13 at the creator's request (no results after 2 months). Uncomment to restart.
 on:
-  schedule:
-    # Instagram paused (Meta under review). Keep ONE daily run for the LinkedIn carousel only.
-    - cron: "20 6 * * *" # morning — INSIGHT (-> LinkedIn carousel; Instagram post gated off below)
+  # schedule:
+  #   # Instagram paused (Meta under review). Keep ONE daily run for the LinkedIn carousel only.
+  #   - cron: "20 6 * * *" # morning — INSIGHT (-> LinkedIn carousel; Instagram post gated off below)
   workflow_dispatch:
     inputs:
       mode:

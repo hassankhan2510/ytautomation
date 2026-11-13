@@ -1,11 +1,12 @@
-name: "Equitier — Weekly (auto: 1 long + 1 short, Mon/Wed/Fri)"
+name: "Equitier — Weekly (STOPPED — manual only)"
 
 # Fully autonomous: the scout picks a trending finance topic, the machine builds ONE long + ONE short
 # in YOUR cloned voice and uploads both to @equitier as PRIVATE for review. Runs 3 days a week
 # (Mon/Wed/Fri) = 3 longs + 3 shorts/week. Blank topic on manual runs = auto-pick.
+# STOPPED 2026-11-13 at the creator's request (no results after 2 months). Uncomment to restart.
 on:
-  schedule:
-    - cron: "0 16 * * 1,3,5" # Mon/Wed/Fri ~11:00 US-Eastern — finance audience most active midday
+  # schedule:
+  #   - cron: "0 16 * * 1,3,5" # Mon/Wed/Fri ~11:00 US-Eastern — finance audience most active midday
   workflow_dispatch:
     inputs:
       topic:
