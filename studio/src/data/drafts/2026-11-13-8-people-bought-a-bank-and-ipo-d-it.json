@@ -1,0 +1,253 @@
+{
+  "id": "2026-11-13-8-people-bought-a-bank-and-ipo-d-it",
+  "title": "8 people bought a bank and IPO'd it.",
+  "subject": "ABHI fintech bank IPO",
+  "theme": "ocean",
+  "seed": 9092,
+  "handle": "",
+  "language": "english",
+  "hooks": [
+    "8 people bought a bank and IPO'd it.",
+    "Stop scrolling, this fintech story is wild.",
+    "They didn't just launch an app, they bought a bank."
+  ],
+  "caption": "From 8 people to a bank IPO. 🚀\nWould you invest in this?\n\n#Fintech #Banking #Startup #Pakistan #IPO\n🎵 Music: \"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-undaunted.mp3",
+  "musicCredit": "\"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 7.5,
+    "unique": 15,
+    "total": 15,
+    "families": 5,
+    "plain": 4,
+    "doc": 3,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "0.1",
+    "0.8",
+    "0.9",
+    "0.2"
+  ],
+  "beats": [
+    {
+      "text": "This duo started with 8 people, then bought a bank.",
+      "primitive": "flip3d",
+      "energy": 3,
+      "emphasis": [
+        "8 people",
+        "bank"
+      ],
+      "why": "Visualizes 8 people vs bank scale"
+    },
+    {
+      "text": "It started in 2021 with Omair and Ali.",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "emphasis": [
+        "2021",
+        "Omair and Ali"
+      ],
+      "props": {
+        "to": 2021,
+        "label": "Origin"
+      },
+      "why": "Time travel to 2021 origin",
+      "bg": "vintage calendar pages flipping rapidly"
+    },
+    {
+      "text": "They saw workers stuck waiting for payday.",
+      "primitive": "loading",
+      "energy": 2,
+      "emphasis": [
+        "stuck",
+        "payday"
+      ],
+      "props": {
+        "label": "Waiting for payday",
+        "done": "Salary Pending"
+      },
+      "why": "Shows waiting for payday stress",
+      "bg": "office worker checking wristwatch close up"
+    },
+    {
+      "text": "So they launched ABHI for early salary access.",
+      "primitive": "code",
+      "energy": 2,
+      "emphasis": [
+        "ABHI",
+        "salary access"
+      ],
+      "props": {
+        "file": "abhi_launch.js",
+        "lines": [
+          "const abhi = new Fintech();",
+          "abhi.enable('early_salary');",
+          "abhi.deploy();",
+          "✓ Early salary unlocked"
+        ]
+      },
+      "why": "Shows tech launch of ABHI",
+      "bg": "developer typing on laptop screen"
+    },
+    {
+      "text": "No office.",
+      "primitive": "strike",
+      "energy": 1,
+      "emphasis": [
+        "No office"
+      ],
+      "props": {
+        "wrong": "Corporate HQ",
+        "right": "No office"
+      },
+      "why": "Debunks office myth visually",
+      "bg": "empty minimalist room with single laptop"
+    },
+    {
+      "text": "Just 8 people and a YC bag.",
+      "primitive": "maskReveal",
+      "energy": 2,
+      "emphasis": [
+        "8 people",
+        "YC bag"
+      ],
+      "why": "Highlights 8 people and YC bag"
+    },
+    {
+      "text": "Then they expanded to UAE, Saudi, and Oman.",
+      "primitive": "factCard",
+      "energy": 3,
+      "emphasis": [
+        "UAE",
+        "Saudi"
+      ],
+      "props": {
+        "fact": "Then they expanded to UAE, Saudi, and Oman."
+      },
+      "why": "Shows regional expansion arcs"
+    },
+    {
+      "text": "But here's the thing.",
+      "primitive": "spotlight",
+      "energy": 2,
+      "emphasis": [
+        "thing"
+      ],
+      "props": {
+        "word": "THE SECRET"
+      },
+      "why": "Dramatic reveal of the secret",
+      "bg": "dark stage with single spotlight beam"
+    },
+    {
+      "text": "They bought a bank.",
+      "primitive": "burst",
+      "energy": 3,
+      "emphasis": [
+        "bought",
+        "bank"
+      ],
+      "props": {
+        "word": "BANK",
+        "glyphs": [
+          "$",
+          "🏦",
+          "★"
+        ]
+      },
+      "why": "Impactful bank acquisition moment",
+      "bg": "bank vault door opening slowly"
+    },
+    {
+      "text": "They fixed it and relaunched as ABHI Microfinance.",
+      "primitive": "beforeAfter",
+      "energy": 2,
+      "emphasis": [
+        "ABHI Microfinance"
+      ],
+      "props": {
+        "beforeLabel": "Old Bank",
+        "afterLabel": "ABHI Microfinance"
+      },
+      "why": "Shows rebrand to Microfinance",
+      "bg": "abstract corporate logo on white wall"
+    },
+    {
+      "text": "Now it's going public on the stock exchange.",
+      "primitive": "newsBanner",
+      "energy": 3,
+      "emphasis": [
+        "going public",
+        "stock exchange"
+      ],
+      "props": {
+        "headline": "ABHI Goes Public",
+        "label": "BREAKING",
+        "ticker": "IPO LIVE • STOCK EXCHANGE"
+      },
+      "why": "Announces public listing news",
+      "bg": "stock market trading floor screens"
+    },
+    {
+      "text": "This is Pakistan's first fintech-led bank IPO.",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "first",
+        "fintech-led"
+      ],
+      "props": {},
+      "why": "Emphasizes first fintech IPO",
+      "bg": "green stock market chart rising"
+    },
+    {
+      "text": "From shared room to stock market.",
+      "primitive": "mapRoute",
+      "energy": 2,
+      "emphasis": [
+        "shared room",
+        "stock market"
+      ],
+      "props": {
+        "points": [
+          {
+            "name": "Shared Room",
+            "x": 0.1,
+            "y": 0.8
+          },
+          {
+            "name": "Stock Market",
+            "x": 0.9,
+            "y": 0.2
+          }
+        ],
+        "title": "The Journey"
+      },
+      "why": "Traces journey to stock market",
+      "bg": "city street transitioning to office"
+    },
+    {
+      "text": "Absolute cinema.",
+      "primitive": "auroraType",
+      "energy": 3,
+      "emphasis": [
+        "cinema"
+      ],
+      "props": {
+        "word": "CINEMA"
+      },
+      "why": "Cinematic closing statement",
+      "bg": "colorful aurora borealis sky"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
