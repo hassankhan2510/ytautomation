@@ -1,0 +1,167 @@
+{
+  "id": "2026-11-13-20-000-slaves-built-a-tomb-for-love",
+  "title": "20,000 slaves built a tomb for love.",
+  "theme": "sunrise",
+  "seed": 8025,
+  "handle": "@cohort_zero",
+  "language": "english",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "20,000 slaves built a tomb for love.",
+    "This white marble monument took 20 years.",
+    "Shah Jahan built this for his wife."
+  ],
+  "caption": "Love has a price tag. 💔\nHow long would you spend building a monument for someone?\n\n#TajMahal #History #ShahJahan #MughalEmpire #Travel\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-stay-the-course.mp3",
+  "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 11,
+    "total": 11,
+    "families": 5,
+    "plain": 3,
+    "doc": 3,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "2026"
+  ],
+  "beats": [
+    {
+      "text": "20,000 workers built a tomb for love.",
+      "primitive": "counter",
+      "energy": 3,
+      "emphasis": [
+        "20,000"
+      ],
+      "props": {
+        "from": 0,
+        "to": 20000,
+        "label": "Workers"
+      },
+      "why": "Visualizes the massive workforce number",
+      "bg": "Taj Mahal sunset silhouette"
+    },
+    {
+      "text": "But it wasn't just a simple building.",
+      "primitive": "iceberg",
+      "energy": 2,
+      "emphasis": [
+        "not simple"
+      ],
+      "props": {
+        "top": "Beautiful Building",
+        "below": [
+          "Complex Engineering",
+          "Political Tension",
+          "Massive Labor"
+        ]
+      },
+      "why": "Reveals hidden complexity behind simple view",
+      "bg": "Intricate marble inlay close-up"
+    },
+    {
+      "text": "Shah Jahan started construction in 1632.",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "emphasis": [
+        "1632"
+      ],
+      "props": {
+        "from": 2026,
+        "to": 1632,
+        "label": "Construction Begins"
+      },
+      "why": "Time travel to specific start date",
+      "bg": "Agra old map texture"
+    },
+    {
+      "text": "He built it in India for Mumtaz Mahal.",
+      "primitive": "locate",
+      "energy": 2,
+      "emphasis": [
+        "India"
+      ],
+      "props": {
+        "place": "Agra, India",
+        "lat": 27.1751,
+        "lon": 78.0421
+      },
+      "why": "Pinpoints the specific location",
+      "bg": "Aerial view of Agra city"
+    },
+    {
+      "text": "It took twenty years to finish.",
+      "primitive": "maskReveal",
+      "energy": 2,
+      "emphasis": [
+        "twenty years"
+      ],
+      "why": "Shows duration as a filling cycle"
+    },
+    {
+      "text": "They used white marble to build it.",
+      "primitive": "tape",
+      "energy": 2,
+      "emphasis": [
+        "white marble"
+      ],
+      "props": {
+        "tape": "WHITE MARBLE • ",
+        "word": "MATERIAL"
+      },
+      "why": "Highlights the material with style",
+      "bg": "White marble texture macro"
+    },
+    {
+      "text": "But here's the thing: it was massive.",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "massive"
+      ],
+      "why": "Visualizes the massive scale"
+    },
+    {
+      "text": "Twenty thousand workers were involved in the process.",
+      "primitive": "flip3d",
+      "energy": 3,
+      "emphasis": [
+        "Twenty thousand"
+      ],
+      "why": "Reinforces the workforce statistic"
+    },
+    {
+      "text": "Now it's one of the most visited monuments.",
+      "primitive": "factCard",
+      "energy": 2,
+      "emphasis": [
+        "most visited"
+      ],
+      "props": {
+        "fact": "One of the most visited monuments.",
+        "n": 1
+      },
+      "why": "Presents the current popularity fact",
+      "bg": "Tourists at Taj Mahal"
+    },
+    {
+      "text": "A monument to love, built at a huge cost.",
+      "primitive": "quote",
+      "energy": 1,
+      "emphasis": [
+        "love"
+      ],
+      "why": "Clean editorial closing statement"
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
