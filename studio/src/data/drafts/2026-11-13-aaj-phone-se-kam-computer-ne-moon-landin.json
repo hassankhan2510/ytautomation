@@ -1,0 +1,182 @@
+{
+  "id": "2026-11-13-aaj-phone-se-kam-computer-ne-moon-landin",
+  "title": "Aaj phone se kam computer ne Moon landing ki",
+  "theme": "grape",
+  "seed": 5539,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "Aaj phone se kam computer ne Moon landing ki",
+    "1969 mein computer ke sirf 4 kilobytes RAM the",
+    "Roop se wire mein software tha, aaj phone mein"
+  ],
+  "caption": "Kya aapka phone itna efficient ho sakta? 🌙\nComment mein apna daily data usage likho! #Apollo11 #TechHistory #SpaceExploration #MoonLanding #CohortZero\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-stay-the-course.mp3",
+  "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 11,
+    "total": 11,
+    "families": 6,
+    "plain": 4,
+    "doc": 3,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Phone se kam RAM wala computer ne Moon landing ki",
+      "primitive": "stomp",
+      "energy": 3,
+      "speak": "Phone se kam RAM wala computer ne Moon landing ki",
+      "emphasis": [
+        "Moon landing"
+      ],
+      "props": {},
+      "why": "Hook slam, high energy",
+      "bg": "modern smartphone screen closeup"
+    },
+    {
+      "text": "1969 mein Apollo 11 ne do humans ko Moon par utara",
+      "primitive": "archiveFilm",
+      "energy": 2,
+      "speak": "1969 میں Apollo 11 نے دو humans کو Moon پر اتارا",
+      "emphasis": [
+        "Moon"
+      ],
+      "props": {
+        "search": "Apollo 11 lunar module landing",
+        "prompt": "Retro film footage of a spacecraft landing on the grey, dusty surface of the moon, 1960s aesthetic, grainy, sepia tones",
+        "year": "1969",
+        "place": "MOON"
+      },
+      "why": "Historical event, visual proof",
+      "bg": "lunar surface dust texture"
+    },
+    {
+      "text": "Uska navigation computer sirf 4 kilobytes RAM rakhta tha",
+      "primitive": "counter",
+      "energy": 2,
+      "speak": "Uska navigation computer صرف 4 kilobytes RAM رکھتا تھا",
+      "emphasis": [
+        "4 kilobytes"
+      ],
+      "props": {
+        "from": 0,
+        "to": 4,
+        "suffix": " KB",
+        "label": "TOTAL RAM"
+      },
+      "why": "Big number reveal",
+      "bg": "vintage computer circuit board macro"
+    },
+    {
+      "text": "Software copper wire mein haath se banda tha",
+      "primitive": "circuitBoard",
+      "energy": 2,
+      "speak": "Software copper wire میں ہاتھ سے بندھا تھا",
+      "emphasis": [
+        "copper wire"
+      ],
+      "props": {
+        "label": "ROPE MEMORY"
+      },
+      "why": "Hardware focus, copper wire",
+      "bg": "intricate copper wiring closeup"
+    },
+    {
+      "text": "Is technique ko rope memory kehte hain",
+      "primitive": "factCard",
+      "energy": 1,
+      "speak": "Is technique کو rope memory کہتے ہیں",
+      "emphasis": [
+        "rope memory"
+      ],
+      "props": {
+        "fact": "Rope Memory",
+        "n": 1
+      },
+      "why": "Defining a specific term",
+      "bg": "woven wire storage texture"
+    },
+    {
+      "text": "Landing se seconds pehle alarms sirf overload ke liye",
+      "primitive": "flip3d",
+      "energy": 3,
+      "speak": "Landing سے seconds پہلے alarms صرف overload کے لیے",
+      "emphasis": [
+        "alarms"
+      ],
+      "why": "Chaos, alarms, overload"
+    },
+    {
+      "text": "Computer ne low priority tasks ko drop kar diya",
+      "primitive": "checklist",
+      "energy": 2,
+      "speak": "Computer نے low priority tasks کو drop کر دیا",
+      "emphasis": [
+        "drop"
+      ],
+      "props": {
+        "title": "TASKS",
+        "items": [
+          "Low Priority",
+          "Non-Critical",
+          "Background"
+        ]
+      },
+      "why": "Tasks being removed",
+      "bg": "digital interface grid lines"
+    },
+    {
+      "text": "Sirf important tasks chalate rehne diye",
+      "primitive": "highlight",
+      "energy": 2,
+      "speak": "صرف important tasks چلاتے رہنے دیے",
+      "emphasis": [
+        "important tasks"
+      ],
+      "why": "Remaining critical tasks"
+    },
+    {
+      "text": "Isi logic se landing safely complete ho gayi",
+      "primitive": "redString",
+      "energy": 3,
+      "speak": "اسی logic سے landing safely complete ہو گئی",
+      "emphasis": [
+        "safely complete"
+      ],
+      "props": {
+        "cards": [
+          "Prioritize",
+          "Drop Low",
+          "Safe Landing"
+        ]
+      },
+      "why": "Cause leads to effect",
+      "bg": "astronaut boot on moon dust"
+    },
+    {
+      "text": "Limited resources, but smart priority saved the mission",
+      "primitive": "auroraType",
+      "energy": 1,
+      "emphasis": [
+        "smart priority"
+      ],
+      "props": {
+        "word": "PRIORITY"
+      },
+      "why": "Premium closing statement",
+      "bg": "abstract light ribbons motion"
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
