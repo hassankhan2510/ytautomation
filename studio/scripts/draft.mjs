@@ -77,6 +77,8 @@ SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
 - ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, spoken casual English (contractions, 'you'), no emojis/markdown."}
 - ${verbatim ? "" : "Structure: hook (open loop) → context → 3-6 escalating facts/turns (a pattern interrupt every ~3 lines: question, myth, 'but here's the thing') → payoff → takeaway. Do NOT write a follow/CTA line; it is added automatically."}
 - intent = what the line IS: a date → "date", a location → "place", a person → "person", a big number → "bigNumber", two things side by side → "comparison", steps → "process", A causes B → "causeEffect", a study → "research", a misconception → "myth", hidden info → "secret", a ranking/set → "list", how it changed → "change", a tech mechanism → "tech". Use "fact"/"lesson" only when nothing more specific fits. Vary intents.
+- Every line must ADD something new (a fact, a turn, a consequence). Never restate or paraphrase an earlier line.
+- The hook leads with the single most surprising fact or tension in the SOURCE.
 - energy: 3 hook/reveals/wins, 2 explanation, 1 reflective. Never three 1s in a row.
 FACTS (strict): every number, date, name and place in the script must come from the SOURCE. Never invent statistics, quotes, studies or sources.
 STYLE: ${STYLES[style] || STYLES.explainer}`;
@@ -111,7 +113,8 @@ const directorSystem = `You are the DIRECTOR / motion editor of a premium Gen-Z 
 Return ONLY JSON: {"beats":[{"i":line number,"primitive":id,"why":"max 8 words","emphasis":[1-2 words from the line],"props":{…}}]} — exactly one per line, in order.
 CHOOSING: the scene must SHOW what the line SAYS (a date → time travel, a place → map lock, a comparison → true-scale or versus…). Prefer the richest, most cinematic option that fits; never pick the same id twice in the whole reel; avoid two plain-text scenes in a row.
 PROPS: follow the schema exactly; on-screen strings are SHORT (titles ≤ 5 words, list items ≤ 4 words). Use ONLY facts from FACTS — never invent numbers, quotes, sources or names.
-IMAGES: for media scenes give "search": 2-5 words naming a REAL subject to find an archival/public-domain photo (e.g. "Apollo Guidance Computer", "Saturn V launch") AND a "prompt" fallback describing the scene visually (era, place, lighting; no text, no logos, no real living person's likeness). thenNow uses search/prompt for THEN and search2/prompt2 for NOW.
+IMAGES (REQUIRED for archiveFilm, museumFrame, photo, thenNow, beforeAfter): always give "search": 2-5 words naming a REAL subject to find an archival/public-domain photo (e.g. "Apollo Guidance Computer", "Saturn V launch") AND a "prompt" fallback describing the scene visually (era, place, lighting; no text, no logos, no real living person's likeness). thenNow uses search/prompt for THEN and search2/prompt2 for NOW.
+museumFrame is for a person, artifact or creature portrait (the subject itself), not for diagrams or processes. Never invent years, dates, sources or citations for any scene — leave those props out unless the FACTS contain them.
 locate needs REAL coordinates (lat/lon numbers with sign). scaleCompare needs REAL relative sizes. Citations only if the source names them.`;
 const scenesDoc = allCands.map((id) => { const m = byId.get(id); return `- ${id} [${m.category}]: ${m.description} PROPS: ${m.props}`; }).join("\n");
 const directorUser = `FACTS:\n${(written.facts || []).map((f) => `- ${clean(f)}`).join("\n") || "- (none beyond the script)"}
@@ -153,6 +156,17 @@ const sourceNums = new Set(nums(paragraph));
 if (day) { sourceNums.add(String(day)); sourceNums.add(String(day + 1)); }
 const flagged = new Set();
 const places = [];
+const removed = [];
+const SENSITIVE = ["source", "citation", "dates", "year", "author"];
+for (const b of beats) {
+  for (const k of SENSITIVE) {
+    const v = b.props?.[k];
+    if (v === undefined || v === null || v === "") continue;
+    const bad = nums(v).filter((n) => !sourceNums.has(n));
+    const nameless = (k === "source" || k === "citation" || k === "author") && !paragraph.toLowerCase().includes(String(v).toLowerCase().split(/[,(]/)[0].trim());
+    if (bad.length || nameless) { removed.push(`${b.primitive}.${k}="${v}"`); delete b.props[k]; }
+  }
+}
 for (const b of beats) {
   const { prompt, prompt2, search, search2, lat, lon, ...shown } = b.props || {};
   if (lat !== undefined || lon !== undefined) places.push(`${shown.place || "?"} (${lat}, ${lon})`);
@@ -193,6 +207,7 @@ const report = [
   "",
   flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
+  ...(removed.length ? ["", `🧹 **Removed invented attribution (not in your paragraph):** ${removed.join("; ")}`] : []),
   "",
   "**Caption:**",
   "```",

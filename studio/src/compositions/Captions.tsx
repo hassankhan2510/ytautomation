@@ -50,7 +50,7 @@ export const Captions: React.FC = () => {
           const said = frame >= w.from;
           const hot = active || (w.emphasis && said);
           return (
-            <span key={i} style={{ fontFamily: theme.body, fontWeight: 900, fontSize: 88, lineHeight: 1.12, textTransform: "uppercase", letterSpacing: -1, padding: "2px 16px", borderRadius: 14, color: hot ? theme.onAccent : said ? theme.ink : alpha(theme.ink, 0.55), background: hot ? (w.emphasis ? theme.accent : alpha(theme.accent, 0.9)) : "transparent", transform: active ? "scale(1.08) rotate(-1.5deg)" : "none", textShadow: hot ? "none" : "0 4px 0 rgba(0,0,0,0.55), 0 0 24px rgba(0,0,0,0.6)", WebkitTextStroke: hot ? "0" : `2px ${alpha("#000000", 0.5)}` }}>
+            <span key={i} style={{ fontFamily: theme.body, fontWeight: 900, fontSize: 88, lineHeight: 1.12, textTransform: "uppercase", letterSpacing: -1, padding: "2px 16px", borderRadius: 14, color: hot ? theme.onAccent : said ? theme.ink : alpha(theme.ink, 0.55), background: hot ? (w.emphasis ? theme.accent : alpha(theme.accent, 0.9)) : "transparent", transform: active ? "scale(1.08) rotate(-1.5deg)" : "none", textShadow: hot ? "none" : theme.dark ? "0 4px 0 rgba(0,0,0,0.55), 0 0 24px rgba(0,0,0,0.6)" : "0 3px 0 rgba(255,255,255,0.8), 0 0 22px rgba(255,255,255,0.75)", WebkitTextStroke: hot || !theme.dark ? "0" : `2px ${alpha("#000000", 0.5)}` }}>
               {w.w.replace(/[*_#]/g, "")}
             </span>
           );

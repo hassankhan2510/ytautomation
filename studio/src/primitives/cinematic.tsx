@@ -100,7 +100,7 @@ export const Orbit: React.FC<PrimitiveProps> = ({ beat }) => {
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center" }}>
       <div style={{ position: "absolute", width: 820, height: 280, borderRadius: "50%", border: `3px solid ${alpha(theme.accent, 0.35)}`, transform: `scale(${s})` }} />
       {nodes.filter((n) => n.z < 0).map((n) => <OrbitNode key={n.i} {...n} />)}
-      <div style={{ fontFamily: theme.display, fontWeight: 900, fontSize: 170, color: theme.ink, textTransform: "uppercase", transform: `scale(${cs})`, textShadow: `0 0 60px ${alpha(theme.accent, 0.6)}`, zIndex: 5 }}>{center}</div>
+      <div style={{ fontFamily: theme.display, fontWeight: 900, fontSize: fitSize([center], 560, 170, 64, 0.62), color: theme.ink, textTransform: "uppercase", transform: `scale(${cs})`, textShadow: `0 0 60px ${alpha(theme.accent, 0.6)}`, zIndex: 5 }}>{center}</div>
       {nodes.filter((n) => n.z >= 0).map((n) => <OrbitNode key={n.i} {...n} />)}
     </AbsoluteFill>
   );
@@ -135,7 +135,7 @@ export const CardFan: React.FC<PrimitiveProps> = ({ beat }) => {
         const x = off * 120 * fan;
         const y = Math.abs(off) * 26 * fan - (chosen ? lift * 260 : 0);
         return (
-          <div key={i} style={{ position: "absolute", width: 360, height: 520, borderRadius: 30, transform: `translate(${x}px, ${y + (1 - deal) * 900}px) rotate(${chosen ? rot * (1 - lift) : rot}deg) scale(${chosen ? 1 + lift * 0.25 : 1}) rotateY(${chosen ? lift * 360 : 0}deg)`, transformOrigin: "50% 120%", background: chosen && lift > 0.5 ? theme.accent : theme.dark ? "#16161A" : "#FFFFFF", border: `3px solid ${chosen && lift > 0.5 ? theme.accent : alpha(theme.ink, 0.15)}`, boxShadow: "0 30px 70px rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", padding: 34, zIndex: chosen ? 50 : i, fontFamily: theme.body, fontWeight: 900, fontSize: 52, color: chosen && lift > 0.5 ? theme.onAccent : theme.ink }}>
+          <div key={i} style={{ position: "absolute", width: 360, height: 520, borderRadius: 30, transform: `translate(${x}px, ${y + (1 - deal) * 900}px) rotate(${chosen ? rot * (1 - lift) : rot}deg) scale(${chosen ? 1 + lift * 0.25 : 1}) rotateY(${chosen ? lift * 360 : 0}deg)`, transformOrigin: "50% 120%", background: chosen && lift > 0.5 ? theme.accent : theme.surface, border: `3px solid ${chosen && lift > 0.5 ? theme.accent : alpha(theme.ink, 0.15)}`, boxShadow: "0 30px 70px rgba(0,0,0,0.5)", display: "flex", alignItems: "flex-end", padding: 34, zIndex: chosen ? 50 : i, fontFamily: theme.body, fontWeight: 900, fontSize: 52, color: chosen && lift > 0.5 ? theme.onAccent : theme.ink }}>
             <div>
               <div style={{ fontFamily: theme.mono, fontSize: 26, opacity: 0.6, marginBottom: 8 }}>{String(i + 1).padStart(2, "0")}</div>
               {c}

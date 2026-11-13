@@ -59,7 +59,7 @@ export const Backdrop: React.FC<{ kind: BackdropKind; seed: number }> = ({ kind,
   const { width, height } = useVideoConfig();
   const { theme } = useRender();
   const base = (
-    <AbsoluteFill style={{ background: `radial-gradient(130% 90% at 50% 18%, ${theme.bg2} 0%, ${theme.bg} 62%)` }} />
+    <AbsoluteFill style={{ background: theme.bgGradient ? `radial-gradient(70% 45% at 50% 22%, rgba(255,255,255,0.18), transparent 70%), ${theme.bgGradient}` : `radial-gradient(130% 90% at 50% 18%, ${theme.bg2} 0%, ${theme.bg} 62%)` }} />
   );
   const a = theme.dark ? 0.11 : 0.09;
   let layer: React.ReactNode = null;
@@ -112,7 +112,7 @@ export const Vignette: React.FC<{ strength?: number }> = ({ strength = 0.55 }) =
 export const LightLeak: React.FC<{ seed: number }> = ({ seed }) => {
   const frame = useCurrentFrame();
   const { theme } = useRender();
-  if (!theme.dark) return null;
+  if (!theme.dark || theme.vivid) return null;
   const x = 20 + (noise2D(`lx${seed}`, frame / 160, 0) + 1) * 30;
   const y = 10 + (noise2D(`ly${seed}`, frame / 180, 1) + 1) * 20;
   const o = 0.12 + (noise2D(`lo${seed}`, frame / 90, 2) + 1) * 0.06;

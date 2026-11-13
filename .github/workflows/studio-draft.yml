@@ -28,7 +28,7 @@ on:
       theme:
         description: "Theme"
         type: choice
-        options: [crimson, acid, electric, paper, taxi]
+        options: [crimson, ocean, grape, sunrise, lagoon, mango, mint, neon, acid, electric, paper, taxi]
         default: crimson
       preview:
         description: "Also render a preview MP4 (~5 min)?"

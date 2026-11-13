@@ -13,7 +13,7 @@ on:
       theme:
         description: "Theme override"
         type: choice
-        options: [job, crimson, acid, electric, paper, taxi]
+        options: [job, crimson, ocean, grape, sunrise, lagoon, mango, mint, neon, acid, electric, paper, taxi]
         default: job
       seed:
         description: "Variation seed (blank = job's seed). Same script + new seed = a different edit."

@@ -158,7 +158,7 @@ export const MindMap: React.FC<PrimitiveProps> = ({ beat }) => {
         const a = (i / n) * Math.PI * 2 - Math.PI / 2 + (hash01(seed) - 0.5) * 0.4;
         const x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * 1.25;
         const s = pop(frame, fps, 12 + i * 3, "snap");
-        return <div key={i} style={{ position: "absolute", left: x, top: y, transform: `translate(-50%, -50%) scale(${s})`, padding: "16px 28px", borderRadius: 999, background: theme.dark ? "#18181C" : "#FFF", border: `4px solid ${theme.accent}`, fontFamily: theme.body, fontWeight: 900, fontSize: 40, color: theme.ink, whiteSpace: "nowrap" }}>{b}</div>;
+        return <div key={i} style={{ position: "absolute", left: x, top: y, transform: `translate(-50%, -50%) scale(${s})`, padding: "16px 28px", borderRadius: 999, background: theme.surface, border: `4px solid ${theme.accent}`, fontFamily: theme.body, fontWeight: 900, fontSize: 40, color: theme.ink, whiteSpace: "nowrap" }}>{b}</div>;
       })}
       <div style={{ position: "absolute", left: cx, top: cy, transform: `translate(-50%, -50%) scale(${cs})`, width: 300, height: 300, borderRadius: 150, background: theme.accent, display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", fontFamily: theme.display, fontWeight: 900, fontSize: 64, color: theme.onAccent, boxShadow: `0 0 0 16px ${alpha(theme.accent, 0.25)}` }}>{center}</div>
     </AbsoluteFill>
@@ -369,7 +369,7 @@ export const StatGrid: React.FC<PrimitiveProps> = ({ beat }) => {
           const v = s.value * easeOut(frame, 3 + i * 4, 18);
           const txt = Number.isInteger(s.value) ? Math.round(v).toLocaleString("en-US") : v.toFixed(1);
           return (
-            <div key={i} style={{ height: 380, borderRadius: 34, padding: 36, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: i === 0 ? theme.accent : theme.dark ? "#141418" : "#FFF", border: `2px solid ${alpha(theme.ink, 0.1)}`, transform: `rotateX(${(1 - f) * 90}deg)`, transformOrigin: "50% 100%" }}>
+            <div key={i} style={{ height: 380, borderRadius: 34, padding: 36, display: "flex", flexDirection: "column", justifyContent: "flex-end", background: i === 0 ? theme.accent : theme.surface, border: `2px solid ${alpha(theme.ink, 0.1)}`, transform: `rotateX(${(1 - f) * 90}deg)`, transformOrigin: "50% 100%" }}>
               <div style={{ fontFamily: theme.display, fontWeight: 900, fontSize: 110, lineHeight: 1, color: i === 0 ? theme.onAccent : theme.ink }}>{s.prefix || ""}{txt}{s.suffix || ""}</div>
               <div style={{ fontFamily: theme.body, fontWeight: 700, fontSize: 36, color: i === 0 ? alpha(theme.onAccent, 0.85) : theme.dim, marginTop: 10 }}>{s.label}</div>
             </div>

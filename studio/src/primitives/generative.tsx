@@ -302,7 +302,7 @@ export const Prism: React.FC<PrimitiveProps> = ({ beat }) => {
     <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", perspective: 2200 }}>
       <div style={{ width: S, height: S, position: "relative", transformStyle: "preserve-3d", transform: `translateY(-80px) rotateX(-14deg) rotateY(${-rot + Math.sin(frame / 30) * 6}deg)` }}>
         {faces.map((f, i) => (
-          <div key={i} style={{ position: "absolute", inset: 0, transform: `rotateY(${i * 90}deg) translateZ(${S / 2}px)`, background: i % 2 ? theme.accent : theme.dark ? "#141417" : "#FFFFFF", border: `4px solid ${alpha(theme.ink, 0.15)}`, display: "flex", alignItems: "center", justifyContent: "center", backfaceVisibility: "hidden", fontFamily: theme.display, fontWeight: 900, fontSize: fitSize([f], 480, 130, 60, 0.6), color: i % 2 ? theme.onAccent : theme.ink, textTransform: "uppercase", boxShadow: `inset 0 0 120px ${alpha("#000000", 0.35)}` }}>{f}</div>
+          <div key={i} style={{ position: "absolute", inset: 0, transform: `rotateY(${i * 90}deg) translateZ(${S / 2}px)`, background: i % 2 ? theme.accent : theme.surface, border: `4px solid ${alpha(theme.ink, 0.15)}`, display: "flex", alignItems: "center", justifyContent: "center", backfaceVisibility: "hidden", fontFamily: theme.display, fontWeight: 900, fontSize: fitSize([f], 480, 130, 60, 0.6), color: i % 2 ? theme.onAccent : theme.ink, textTransform: "uppercase", boxShadow: `inset 0 0 120px ${alpha("#000000", 0.35)}` }}>{f}</div>
         ))}
       </div>
     </AbsoluteFill>

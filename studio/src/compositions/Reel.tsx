@@ -91,8 +91,8 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = false }) => {
         </TransitionSeries>
         <Captions />
         <LightLeak seed={job.seed} />
-        <Grain opacity={theme.dark ? 0.09 : 0.06} />
-        <Vignette strength={theme.dark ? 0.55 : 0.25} />
+        <Grain opacity={theme.vivid ? 0.05 : theme.dark ? 0.09 : 0.06} />
+        <Vignette strength={theme.vivid ? 0.18 : theme.dark ? 0.55 : 0.25} />
         <ProgressBar />
         {job.audio ? <Audio src={staticFile(job.audio)} /> : null}
         {job.music ? <Audio src={staticFile(job.music)} volume={job.audio ? 0.12 : 0.5} loop /> : null}

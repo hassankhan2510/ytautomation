@@ -79,7 +79,7 @@ export const ErrorPopups: React.FC<PrimitiveProps> = ({ beat }) => {
         const x = 70 + hash01(i, seed) * 220 + i * 26;
         const y = 290 + i * 165 + hash01(i, seed, 2) * 30;
         return (
-          <div key={i} style={{ position: "absolute", left: x, top: y, width: 760, transform: `scale(${interpolate(s, [0, 1], [0.5, 1])})`, opacity: Math.min(1, s * 2), boxShadow: "8px 8px 0 rgba(0,0,0,0.6)", border: `3px solid ${theme.ink}`, background: theme.dark ? "#1B1B1F" : "#ECECEC", fontFamily: theme.mono }}>
+          <div key={i} style={{ position: "absolute", left: x, top: y, width: 760, transform: `scale(${interpolate(s, [0, 1], [0.5, 1])})`, opacity: Math.min(1, s * 2), boxShadow: "8px 8px 0 rgba(0,0,0,0.6)", border: `3px solid ${theme.ink}`, background: theme.surface, fontFamily: theme.mono }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 16px", background: theme.accent, color: theme.onAccent, fontWeight: 700, fontSize: 28 }}>
               <span>⚠ Error</span><span style={{ border: `2px solid ${theme.onAccent}`, padding: "0 10px" }}>✕</span>
             </div>
@@ -171,7 +171,7 @@ export const SlotMachine: React.FC<PrimitiveProps> = ({ beat }) => {
   const jackpot = all.every((a) => a.landed);
   return (
     <Safe>
-      <div style={{ display: "flex", gap: 18, padding: 26, borderRadius: 34, background: theme.dark ? "#141417" : "#FFF", border: `6px solid ${jackpot ? theme.accent : alpha(theme.ink, 0.2)}`, boxShadow: jackpot ? `0 0 70px ${alpha(theme.accent, 0.6)}` : "0 30px 70px rgba(0,0,0,0.5)" }}>
+      <div style={{ display: "flex", gap: 18, padding: 26, borderRadius: 34, background: theme.surface, border: `6px solid ${jackpot ? theme.accent : alpha(theme.ink, 0.2)}`, boxShadow: jackpot ? `0 0 70px ${alpha(theme.accent, 0.6)}` : "0 30px 70px rgba(0,0,0,0.5)" }}>
         {result.map((res, r) => {
           const { prog, spins } = all[r];
           const strip = [...Array.from({ length: spins }, (_, k) => symbols[Math.floor(hash01(r, k) * symbols.length)]), res];
@@ -315,7 +315,7 @@ export const Keyboard: React.FC<PrimitiveProps> = ({ beat }) => {
   };
   const key = (k: string, w = 82) => {
     const p = pressed(k);
-    return <div key={k} style={{ width: w, height: 82, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: theme.mono, fontWeight: 700, fontSize: k.length > 1 ? 22 : 32, background: p ? theme.accent : theme.dark ? "#1C1C20" : "#FFF", color: p ? theme.onAccent : theme.ink, boxShadow: p ? `0 2px 0 ${alpha("#000", 0.6)}, 0 0 30px ${theme.accent}` : `0 8px 0 ${alpha("#000", 0.6)}`, transform: `translateY(${p ? 6 : 0}px)` }}>{k}</div>;
+    return <div key={k} style={{ width: w, height: 82, borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: theme.mono, fontWeight: 700, fontSize: k.length > 1 ? 22 : 32, background: p ? theme.accent : theme.surface, color: p ? theme.onAccent : theme.ink, boxShadow: p ? `0 2px 0 ${alpha("#000", 0.6)}, 0 0 30px ${theme.accent}` : `0 8px 0 ${alpha("#000", 0.6)}`, transform: `translateY(${p ? 6 : 0}px)` }}>{k}</div>;
   };
   return (
     <Safe>

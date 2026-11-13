@@ -187,7 +187,7 @@ export const Chat: React.FC<PrimitiveProps> = ({ beat }) => {
   const name = prop(beat, "name", "founder");
   const step = Math.max(10, Math.floor((beat.frames * 0.8) / Math.max(1, msgs.length)));
   const typingFor = Math.min(10, Math.floor(step * 0.45));
-  const other = theme.dark ? "#26262B" : "#E9E9EC";
+  const other = theme.surface;
   return (
     <Safe>
       <div style={{ width: 900, fontFamily: theme.body }}>

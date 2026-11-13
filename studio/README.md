@@ -11,7 +11,7 @@ beat sheet (JSON) → timeline (word-synced) → primitive per beat + camera rig
 ## Render (GitHub Actions)
 Actions → **Studio — Render Reel** → Run workflow. Download the MP4 from the run's artifacts.
 - `job`: beat-sheet path inside `studio/` (default `src/data/job.json`, the Day 1 hero)
-- `theme`: crimson (Cohort Zero) · acid · electric · paper · taxi
+- `theme`: crimson (Cohort Zero) · vivid: ocean · grape · sunrise · lagoon · mango · mint · neon · classic: acid · electric · paper · taxi
 - `seed`: same script + new seed = a visibly different edit
 - `shaders`: `off` (default, ~4 min) = CSS cuts incl. echo zoom-blur · `on` = real WebGL shader cuts (~18 min on CPU runners)
 

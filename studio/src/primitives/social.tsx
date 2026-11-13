@@ -66,7 +66,7 @@ export const CommentCta: React.FC<PrimitiveProps> = ({ beat }) => {
   return (
     <Safe>
       <div style={{ fontFamily: theme.display, fontWeight: theme.displayWeight, fontSize: 150, lineHeight: 0.9, color: theme.accent, textTransform: "uppercase", transform: `scale(${interpolate(kw, [0, 1], [2.2, 1]) * pulse}) rotate(-4deg)`, opacity: Math.min(1, kw * 1.4), textShadow: `0 0 50px ${alpha(theme.accent, 0.55)}`, marginBottom: 70 }}>{keyword}</div>
-      <div style={{ width: 920, display: "flex", gap: 24, padding: "30px 34px", borderRadius: 30, background: theme.dark ? "#16171B" : "#FFFFFF", boxShadow: "0 30px 80px rgba(0,0,0,0.4)", transform: `translateY(${(1 - s) * 300}px)`, opacity: s, fontFamily: theme.body }}>
+      <div style={{ width: 920, display: "flex", gap: 24, padding: "30px 34px", borderRadius: 30, background: theme.surface, boxShadow: "0 30px 80px rgba(0,0,0,0.4)", transform: `translateY(${(1 - s) * 300}px)`, opacity: s, fontFamily: theme.body }}>
         <div style={{ width: 80, height: 80, borderRadius: 40, flexShrink: 0, background: `linear-gradient(45deg, ${theme.accent}, ${theme.accent2})`, padding: 4 }}>
           <div style={{ width: "100%", height: "100%", borderRadius: 40, background: theme.bg2 }} />
         </div>
