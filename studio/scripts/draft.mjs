@@ -82,7 +82,7 @@ Return ONLY JSON:
  "caption":"1-2 short lines + a question that drives comments + 5 hashtags"}
 ${language === "urdu" ? `LANGUAGE: Urdu for a Pakistani Gen-Z audience — natural spoken Urdu/Hindustani, code-switching to English for tech and modern words the way young Pakistanis really talk (e.g. "Aaj hum AI ke baare mein baat karenge, aur ye technology sab kuch change kar degi."). "text" is Roman Urdu; "speak" is the identical sentence in Urdu script with the English words left in English. Hooks, caption and visuals are in Roman Urdu/English.
 ` : ""}SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
-- ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, spoken casual English (contractions, 'you'), no emojis/markdown."}
+- ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, " + (language === "urdu" ? "spoken casual Urdu with English tech words (Roman Urdu in text, Urdu script in speak)" : "spoken casual English (contractions, 'you')") + ", no emojis/markdown."}
 - ${verbatim ? "" : "Structure: hook (open loop) → context → 3-6 escalating facts/turns (a pattern interrupt every ~3 lines: question, myth, 'but here's the thing') → payoff → takeaway. Do NOT write a follow/CTA line; it is added automatically."}
 - intent = what the line IS: a date → "date", a location → "place", a person → "person", a big number → "bigNumber", two things side by side → "comparison", steps → "process", A causes B → "causeEffect", a study → "research", a misconception → "myth", hidden info → "secret", a ranking/set → "list", how it changed → "change", a tech mechanism → "tech". Use "fact"/"lesson" only when nothing more specific fits. Vary intents.
 - Every line must ADD something new (a fact, a turn, a consequence). Never restate or paraphrase an earlier line.
@@ -94,8 +94,24 @@ const segments = verbatim ? segment(paragraph).slice(0, 24) : [];
 const writerUser = verbatim ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
 
 console.log("① WRITER…");
-const written = await groqJSON(writerSystem, writerUser, { maxTokens: 3000, temperature: 0.8 });
+let written = await groqJSON(writerSystem, writerUser, { maxTokens: 3500, temperature: 0.8 });
 if (!written || !Array.isArray(written.lines) || !written.lines.length) throw new Error("Writer returned no script lines.");
+// Urdu reels: every line needs an Urdu-script "speak" (that's what the voice reads). Models sometimes
+// drift back to English — send it back once with a firm correction, then fail loudly rather than
+// silently producing an English reel.
+const urduShare = (w) => (w?.lines || []).filter((l) => /[؀-ۿ]/.test(String(l?.speak || ""))).length / Math.max(1, (w?.lines || []).length);
+if (language === "urdu" && urduShare(written) < 0.8) {
+  console.log(`  ! writer returned ${Math.round(urduShare(written) * 100)}% Urdu lines — asking again`);
+  const retry = await groqJSON(
+    writerSystem + `
+
+IMPORTANT: your previous answer was in English. This reel MUST be in URDU: every line needs "text" in Roman Urdu (e.g. "Aaj hum baat karenge…") AND "speak" in Urdu script (e.g. "آج ہم بات کریں گے…"), English only for tech words.`,
+    writerUser,
+    { maxTokens: 3500, temperature: 0.6 },
+  );
+  if (retry?.lines?.length && urduShare(retry) >= urduShare(written)) written = retry;
+  if (urduShare(written) < 0.6) throw new Error(`Writer did not produce Urdu (only ${Math.round(urduShare(written) * 100)}% of lines have Urdu script) — stopping instead of making an English reel.`);
+}
 let lines = written.lines.slice(0, verbatim ? 24 : 14).map((l) => ({
   text: clean(l?.text),
   ...(language === "urdu" && clean(l?.speak) ? { speak: clean(l.speak) } : {}),
@@ -153,7 +169,7 @@ Return ONLY JSON: {"beats":[{"i":line number,"primitive":id,"why":"max 8 words",
 BACKGROUND ("bg"): every line gets a real stock video behind it. Give a concrete, FILMABLE search a stock library will have (objects, places, textures, actions, moods) that matches the line — e.g. "pyramid desert sunset", "ancient stone blocks", "server room lights", "city night timelapse". Never names of people, brands or specific events; vary it every line.
 Backgrounds must stay ON the reel's SUBJECT — never show a different place, landmark, era or object than the source is about (no Colosseum in a pyramid reel, no modern skyline in an ancient-history reel). For abstract lines, use a fresh angle of the main subject (close-up, texture, aerial, night, time-lapse).
 CHOOSING: the scene must SHOW what the line SAYS (a date → time travel, a place → map lock, a comparison → true-scale or versus…). Prefer the richest, most cinematic option that fits; never pick the same id twice in the whole reel; avoid two plain-text scenes in a row.
-PROPS: follow the schema exactly; on-screen strings are SHORT (titles ≤ 5 words, list items ≤ 4 words). Use ONLY facts from FACTS — never invent numbers, quotes, sources or names.
+PROPS: follow the schema exactly; on-screen strings are SHORT (titles ≤ 5 words, list items ≤ 4 words).${language === "urdu" ? " On-screen strings are in ROMAN Urdu (Latin letters) mixed with English, matching the script lines — never Urdu script on screen." : ""} Use ONLY facts from FACTS — never invent numbers, quotes, sources or names.
 IMAGES (REQUIRED for archiveFilm, museumFrame, photo, thenNow, beforeAfter): always give "search": 2-5 words naming a REAL subject to find an archival/public-domain photo (e.g. "Apollo Guidance Computer", "Saturn V launch") AND a "prompt" fallback describing the scene visually (era, place, lighting; no text, no logos, no real living person's likeness). thenNow uses search/prompt for THEN and search2/prompt2 for NOW.
 museumFrame is for a person, artifact or creature portrait (the subject itself), not for diagrams or processes. Never invent years, dates, sources or citations for any scene — leave those props out unless the FACTS contain them.
 locate needs REAL coordinates (lat/lon numbers with sign). scaleCompare needs REAL relative sizes. Citations only if the source names them.`;
