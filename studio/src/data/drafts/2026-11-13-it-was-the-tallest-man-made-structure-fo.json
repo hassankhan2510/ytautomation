@@ -1,0 +1,204 @@
+{
+  "id": "2026-11-13-it-was-the-tallest-man-made-structure-fo",
+  "title": "It was the tallest man-made structure for 3,800 years.",
+  "theme": "sunrise",
+  "seed": 4209,
+  "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "It was the tallest man-made structure for 3,800 years.",
+    "No one really knows how 2.3 million stones were moved.",
+    "The only ancient wonder still standing—yeah, it’s still alive."
+  ],
+  "caption": "The tallest tower for 3,800 years still hides its secrets. What do you think moved those stones? #GreatPyramid #AncientEngineering #HistoryMystery #SevenWonders #CohortZero\n🎵 Music: \"Infinite Perspective\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-infinite-perspective.mp3",
+  "musicCredit": "\"Infinite Perspective\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 10,
+    "unique": 11,
+    "total": 11,
+    "families": 6,
+    "plain": 0,
+    "doc": 3,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "2300000"
+  ],
+  "beats": [
+    {
+      "text": "It was the tallest man-made structure for 3,800 years.",
+      "primitive": "counter",
+      "energy": 3,
+      "emphasis": [
+        "tallest",
+        "3800"
+      ],
+      "props": {
+        "from": 0,
+        "to": 3800,
+        "suffix": " years",
+        "label": "Tallest"
+      },
+      "why": "Shows 3,800‑year span"
+    },
+    {
+      "text": "Built around 2560 BC, the Great Pyramid crowns Giza’s desert.",
+      "primitive": "archiveFilm",
+      "energy": 2,
+      "emphasis": [
+        "2560",
+        "Giza"
+      ],
+      "props": {
+        "prompt": "Ancient Egyptian desert at sunrise with the Great Pyramid, 2560 BC",
+        "year": "2560 BC",
+        "place": "Giza"
+      },
+      "why": "Maps date and place visually"
+    },
+    {
+      "text": "Pharaoh Khufu commissioned it as his eternal tomb.",
+      "primitive": "museumFrame",
+      "energy": 1,
+      "emphasis": [
+        "Khufu",
+        "tomb"
+      ],
+      "props": {
+        "prompt": "Stone statue of Pharaoh Khufu standing before the Great Pyramid, Egyptian style",
+        "name": "Pharaoh Khufu"
+      },
+      "why": "Portrait of commissioning pharaoh"
+    },
+    {
+      "text": "It’s made of roughly 2.3 million limestone blocks.",
+      "primitive": "factCard",
+      "energy": 2,
+      "emphasis": [
+        "2.3",
+        "million"
+      ],
+      "props": {
+        "fact": "≈2.3 million limestone blocks",
+        "n": 1
+      },
+      "why": "States block count factually"
+    },
+    {
+      "text": "Each block weighs over a ton, yet no cranes existed.",
+      "primitive": "isoBuild",
+      "energy": 1,
+      "emphasis": [
+        "block",
+        "ton"
+      ],
+      "props": {
+        "layers": [
+          "Stone block",
+          "Workers lift",
+          "Placed on pyramid"
+        ]
+      },
+      "why": "Visualizes lifting heavy block"
+    },
+    {
+      "text": "So how did they actually move them?",
+      "primitive": "search",
+      "energy": 3,
+      "emphasis": [
+        "how"
+      ],
+      "props": {
+        "query": "how were pyramid stones moved",
+        "suggestions": [
+          "how were stones moved",
+          "pyramid construction methods"
+        ],
+        "pick": 0
+      },
+      "why": "Shows audience query"
+    },
+    {
+      "text": "The ramp theory dominates, but many still debate alternatives.",
+      "primitive": "iceberg",
+      "energy": 2,
+      "emphasis": [
+        "ramps"
+      ],
+      "props": {
+        "top": "Ramp theory",
+        "below": [
+          "Lever theory",
+          "Water shaft theory",
+          "Internal spiral ramp"
+        ]
+      },
+      "why": "Depicts ramp theory vs alternatives"
+    },
+    {
+      "text": "Even with ramps, coordinating 2.3 million stones is a logistics nightmare.",
+      "primitive": "bars",
+      "energy": 2,
+      "emphasis": [
+        "logistics",
+        "nightmare"
+      ],
+      "props": {
+        "data": [
+          {
+            "label": "Blocks moved",
+            "value": 2300000
+          }
+        ],
+        "unit": "blocks",
+        "title": "Logistics"
+      },
+      "why": "Illustrates massive logistics effort"
+    },
+    {
+      "text": "That’s why it’s the only ancient wonder still standing today.",
+      "primitive": "headlines",
+      "energy": 3,
+      "emphasis": [
+        "only",
+        "standing"
+      ],
+      "props": {
+        "clips": [
+          {
+            "source": "WorldNews",
+            "title": "Only Pyramid Still Stands"
+          },
+          {
+            "source": "AncientWonders",
+            "title": "Seven Wonders Overview"
+          }
+        ]
+      },
+      "why": "Highlights pyramid as sole survivor"
+    },
+    {
+      "text": "Its mystery reminds us: big dreams need bold engineering.",
+      "primitive": "flowField",
+      "energy": 1,
+      "emphasis": [
+        "dreams",
+        "engineering"
+      ],
+      "props": {
+        "word": "Engineering"
+      },
+      "why": "Calm backdrop for lesson"
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
