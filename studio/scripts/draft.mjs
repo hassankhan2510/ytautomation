@@ -183,6 +183,62 @@ if (style === "buildInPublic" && day) {
 const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow for more";
 beats.push({ text: style === "buildInPublic" ? `${cta}.` : "Follow for more stories like this.", primitive: "outro", energy: 1, props: { cta }, hold: 1.0 });
 
+/* ═════════════ SCENE GUARD — no demo data, no outside facts on screen ═════════════
+ * (a) A data scene whose required props are missing would show its built-in DEMO content (e.g.
+ *     scaleCompare's Earth/Jupiter) — that is invented content, so it's swapped for a safe text scene.
+ * (b) Every string shown on screen is fact-checked against the source (the director once added a
+ *     Burj Khalifa comparison and the other six wonders); failing scenes are swapped too.
+ * Required props are read from the registry docs: a prop listed without "?" is required. */
+const SAFE = ["factCard", "highlight", "flip3d", "maskReveal", "quote", "typewriter", "decode", "auroraType"];
+const NOT_SHOWN = new Set(["prompt", "prompt2", "search", "search2", "src", "src2", "lat", "lon", "backdrop", "energy"]);
+const requiredOf = (id) => {
+  // Top-level props only: drop nested {...} shapes and (...) notes first.
+  const doc = (byId.get(id)?.props || "").replace(/\{[^}]*\}/g, "{}").replace(/\([^)]*\)/g, "");
+  if (/^none/i.test(doc)) return [];
+  const req = [...doc.matchAll(/(?:^|,\s*)([a-zA-Z0-9]+)(\??):/g)].filter((m) => !m[2]).map((m) => m[1]);
+  // globe's optional pins default to demo cities — for a factual reel they must be real.
+  if (id === "globe") req.push("pins");
+  return req;
+};
+const isEmpty = (v) => v === undefined || v === null || v === "" || (Array.isArray(v) && v.length === 0);
+const swaps = [];
+const swapSafe = (b, reason) => {
+  const usedNow = new Set(beats.map((x) => x.primitive));
+  const pick = SAFE.find((s) => !usedNow.has(s)) || "flip3d";
+  swaps.push({ from: b.primitive, to: pick, reason, text: b.text });
+  b.primitive = pick;
+  b.props = pick === "factCard" ? { fact: b.text } : undefined;
+  if (!b.props) delete b.props;
+};
+for (const b of beats) {
+  if (b.primitive === "outro" || b.primitive === "dayStamp") continue;
+  const missing = requiredOf(b.primitive).filter((k) => isEmpty(b.props?.[k]));
+  if (missing.length) swapSafe(b, `missing ${missing.join(", ")} (would show demo data)`);
+}
+const flatten = (v, out = []) => {
+  if (typeof v === "string") out.push(v);
+  else if (typeof v === "number") out.push(String(v));
+  else if (Array.isArray(v)) v.forEach((x) => flatten(x, out));
+  else if (v && typeof v === "object") for (const [k, x] of Object.entries(v)) if (!NOT_SHOWN.has(k)) flatten(x, out);
+  return out;
+};
+const shown = beats
+  .map((b, i) => ({ i, primitive: b.primitive, text: flatten(Object.fromEntries(Object.entries(b.props || {}).filter(([k]) => !NOT_SHOWN.has(k)))).join(" | ").slice(0, 320) }))
+  .filter((x) => x.text && x.primitive !== "outro");
+if (shown.length) {
+  console.log("⑤ ON-SCREEN CHECK…");
+  const screenCheck = await groqJSON(
+    `You are a strict FACT-CHECKER for text shown ON SCREEN in a factual short video. For each numbered ITEM decide if it states any fact NOT supported by the SOURCE: an extra name, place, number, entity, comparison or claim the source does not contain (even if true in the real world). Generic UI words, labels, questions, simple restatements and arithmetic directly derived from source numbers are fine.
+Return ONLY JSON: {"bad":[{"i":item number,"why":"max 8 words"}]} (empty list if all items are fine).`,
+    `SOURCE:\n"""${paragraph.slice(0, 6000)}"""\n\nITEMS:\n${shown.map((x, k) => `${k + 1}. [${x.primitive}] ${x.text}`).join("\n")}`,
+    { maxTokens: 1200, temperature: 0.1 },
+  );
+  for (const bad of screenCheck?.bad || []) {
+    const item = shown[Number(bad?.i) - 1];
+    if (item && beats[item.i] && beats[item.i].primitive === item.primitive) swapSafe(beats[item.i], `on-screen: ${clean(bad.why) || "unsupported"}`);
+  }
+}
+
 /* ═════════════ FACT GUARD — numbers must come from the source ═════════════ */
 const nums = (s) => (String(s).match(/\d[\d,.]*/g) || []).map((n) => n.replace(/[,.]+$/, "").replace(/,/g, ""));
 const sourceNums = new Set(nums(paragraph));
@@ -263,6 +319,7 @@ ${factFixes.map((f) => `  - ~~${f.before}~~ → ${f.after || "**check this line*
   "",
   flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
+  ...(swaps.length ? ["", `🛡️ **Scene guard:** ${swaps.length} scene(s) swapped for safe text scenes:`, ...swaps.map((w) => `  - \`${w.from}\` → \`${w.to}\` _(${w.reason})_`)] : []),
   ...(removed.length ? ["", `🧹 **Removed invented attribution (not in your paragraph):** ${removed.join("; ")}`] : []),
   "",
   ...(music ? [`🎵 **Music:** ${music.title} (${music.category}, ${music.moods.join("/")}) — mood "${clean(written.mood || "auto")}". Credit is already in the caption.`, ""] : []),

@@ -101,9 +101,10 @@ export const YearRewind: React.FC<PrimitiveProps> = ({ beat }) => {
       <Safe>
         <div style={{ fontFamily: theme.mono, fontWeight: 700, fontSize: 36, letterSpacing: 10, color: theme.accent, marginBottom: 20, opacity: 0.9 }}>{t < 1 ? "◀◀ REWINDING" : "ARRIVED"}</div>
         <div style={{ position: "relative", fontFamily: theme.display, fontWeight: 900, fontSize: 300, lineHeight: 1, letterSpacing: -10, color: sep > 0.6 ? "#F2E6CC" : theme.ink, transform: `scale(${1 + land * 0.06 - (land > 0 ? Math.sin(land * Math.PI) * 0.06 : 0)})` }}>
-          <span style={{ position: "absolute", inset: 0, transform: `translateY(${speed * -40}px)`, opacity: speed * 0.25 }}>{year + 1}</span>
-          <span style={{ position: "absolute", inset: 0, transform: `translateY(${speed * 40}px)`, opacity: speed * 0.25 }}>{year - 1}</span>
-          {year}
+          <span style={{ position: "absolute", inset: 0, transform: `translateY(${speed * -40}px)`, opacity: speed * 0.25 }}>{Math.abs(year + 1)}</span>
+          <span style={{ position: "absolute", inset: 0, transform: `translateY(${speed * 40}px)`, opacity: speed * 0.25 }}>{Math.abs(year - 1)}</span>
+          {Math.abs(year)}
+          {year < 0 ? <span style={{ fontSize: 110, letterSpacing: 0, marginLeft: 18, color: theme.accent }}>BC</span> : null}
         </div>
         {label ? <div style={{ marginTop: 30, fontFamily: serif, fontStyle: "italic", fontSize: 54, color: theme.ink, opacity: land }}>{label}</div> : null}
       </Safe>
