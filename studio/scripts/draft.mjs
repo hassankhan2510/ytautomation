@@ -77,12 +77,12 @@ Return ONLY JSON:
 {"facts":[every concrete fact in the SOURCE: numbers, dates, names, places — copied, not invented],
  "hooks":[{"text":"…","type":"curiosity|contrarian|pov|number|stakes","score":1-10}] (exactly 3, max 12 words each, different types),
  "chosen": index of the best hook,
- "lines":[{"text":"${language === "urdu" ? "the line in ROMAN Urdu (Latin letters) mixed with English, as shown on screen" : "spoken line"}",${language === "urdu" ? '"speak":"the SAME line in Urdu script (Nastaliq/Arabic letters) for the voice — keep English/tech words (AI, technology, startup...) in English Latin letters",' : ""}"intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
+ "lines":[{"text":"${language === "urdu" ? "the line in ROMAN Urdu (Latin letters) mixed with English, as shown on screen" : "spoken line"}","intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
  "mood": one of [mystery, ancient, reflective, science, tension, awe, epic, future, modern, sci-fi, calm, uplifting] — the music mood of the whole reel,
  "caption":"1-2 short lines + a question that drives comments + 5 hashtags"}
-${language === "urdu" ? `LANGUAGE: Urdu for a Pakistani Gen-Z audience — natural spoken Urdu/Hindustani, code-switching to English for tech and modern words the way young Pakistanis really talk (e.g. "Aaj hum AI ke baare mein baat karenge, aur ye technology sab kuch change kar degi."). "text" is Roman Urdu; "speak" is the identical sentence in Urdu script with the English words left in English. Hooks, caption and visuals are in Roman Urdu/English.
+${language === "urdu" ? `LANGUAGE: Urdu for a Pakistani Gen-Z audience — natural spoken Urdu/Hindustani, code-switching to English for tech and modern words the way young Pakistanis really talk (e.g. "Aaj hum AI ke baare mein baat karenge, aur ye technology sab kuch change kar degi."). "text" is Roman Urdu (Latin letters) — the Urdu-script version for the voice is made in a later step. Hooks, caption and visuals are in Roman Urdu/English.
 ` : ""}SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
-- ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, " + (language === "urdu" ? "spoken casual Urdu with English tech words (Roman Urdu in text, Urdu script in speak)" : "spoken casual English (contractions, 'you')") + ", no emojis/markdown."}
+- ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, " + (language === "urdu" ? "spoken casual Roman Urdu with English tech words" : "spoken casual English (contractions, 'you')") + ", no emojis/markdown."}
 - ${verbatim ? "" : "Structure: hook (open loop) → context → 3-6 escalating facts/turns (a pattern interrupt every ~3 lines: question, myth, 'but here's the thing') → payoff → takeaway. Do NOT write a follow/CTA line; it is added automatically."}
 - intent = what the line IS: a date → "date", a location → "place", a person → "person", a big number → "bigNumber", two things side by side → "comparison", steps → "process", A causes B → "causeEffect", a study → "research", a misconception → "myth", hidden info → "secret", a ranking/set → "list", how it changed → "change", a tech mechanism → "tech". Use "fact"/"lesson" only when nothing more specific fits. Vary intents.
 - Every line must ADD something new (a fact, a turn, a consequence). Never restate or paraphrase an earlier line.
@@ -96,22 +96,6 @@ const writerUser = verbatim ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i +
 console.log("① WRITER…");
 let written = await groqJSON(writerSystem, writerUser, { maxTokens: 3500, temperature: 0.8 });
 if (!written || !Array.isArray(written.lines) || !written.lines.length) throw new Error("Writer returned no script lines.");
-// Urdu reels: every line needs an Urdu-script "speak" (that's what the voice reads). Models sometimes
-// drift back to English — send it back once with a firm correction, then fail loudly rather than
-// silently producing an English reel.
-const urduShare = (w) => (w?.lines || []).filter((l) => /[؀-ۿ]/.test(String(l?.speak || ""))).length / Math.max(1, (w?.lines || []).length);
-if (language === "urdu" && urduShare(written) < 0.8) {
-  console.log(`  ! writer returned ${Math.round(urduShare(written) * 100)}% Urdu lines — asking again`);
-  const retry = await groqJSON(
-    writerSystem + `
-
-IMPORTANT: your previous answer was in English. This reel MUST be in URDU: every line needs "text" in Roman Urdu (e.g. "Aaj hum baat karenge…") AND "speak" in Urdu script (e.g. "آج ہم بات کریں گے…"), English only for tech words.`,
-    writerUser,
-    { maxTokens: 3500, temperature: 0.6 },
-  );
-  if (retry?.lines?.length && urduShare(retry) >= urduShare(written)) written = retry;
-  if (urduShare(written) < 0.6) throw new Error(`Writer did not produce Urdu (only ${Math.round(urduShare(written) * 100)}% of lines have Urdu script) — stopping instead of making an English reel.`);
-}
 let lines = written.lines.slice(0, verbatim ? 24 : 14).map((l) => ({
   text: clean(l?.text),
   ...(language === "urdu" && clean(l?.speak) ? { speak: clean(l.speak) } : {}),
@@ -156,6 +140,54 @@ for (const c of checked?.lines || []) {
   }
 }
 if (factFixes.length) console.log(factFixes.map((f) => `  ✎ "${f.claim}" → ${f.after ? `"${f.after}"` : "(flagged)"}`).join("\n"));
+
+/* ═════════════ STAGE 1c — URDU (language=urdu only) ═════════════
+ * One big writer call won't reliably produce Urdu script alongside everything else, so Urdu is done
+ * as two small focused passes on the already fact-checked lines:
+ *   (a) make sure the on-screen text is casual ROMAN Urdu (translate if the writer drifted to English)
+ *   (b) transliterate each line to Urdu SCRIPT for the voice ("speak"), English tech words kept in English.
+ * If (b) still fails, the voice reads the Roman Urdu (OmniVoice handles it) — never an English reel. */
+const URDU_LETTERS = /[؀-ۿ]/;
+const ROMAN_URDU_WORDS = /\b(hai|hain|ka|ki|ke|aur|ye|yeh|woh|nahi|nahin|kya|mein|main|hum|aap|tha|thi|thay|se|ko|par|bhi|ek|jo|sab|kuch|kaise|kyun|liye|wala|wali|gaya|gayi|raha|rahi|karna|karte|kar|diya|hota|hoti)\b/gi;
+const romanScore = (t) => (String(t).match(ROMAN_URDU_WORDS) || []).length;
+const urduReport = [];
+if (language === "urdu") {
+  const englishLines = lines.map((l, i) => ({ i, t: l.text })).filter((x) => romanScore(x.t) < 1);
+  if (englishLines.length > lines.length * 0.3) {
+    console.log(`  ! ${englishLines.length}/${lines.length} lines are not Roman Urdu — translating`);
+    const tr = await groqJSON(
+      `Translate each numbered line into casual spoken ROMAN Urdu (Latin letters) the way young Pakistanis talk, keeping tech/modern words in English (AI, technology, startup, computer, software, data…). Keep the meaning and every fact exactly; do not add facts. 5-14 words each.
+Return ONLY JSON: {"lines":[{"i":n,"text":"..."}]}`,
+      englishLines.map((x) => `${x.i + 1}. ${x.t}`).join("\n"),
+      { maxTokens: 2000, temperature: 0.3 },
+    );
+    for (const r of tr?.lines || []) {
+      const k = Number(r?.i) - 1;
+      if (lines[k] && romanScore(r?.text) >= 1) lines[k].text = clean(r.text);
+    }
+    urduReport.push(`translated ${englishLines.length} English line(s) to Roman Urdu`);
+  }
+  const transliterate = async (todo, temperature) => {
+    const out = await groqJSON(
+      `Write each numbered Roman-Urdu line in proper URDU SCRIPT (Nastaliq/Arabic letters) for a text-to-speech voice. Keep English/tech words (AI, technology, startup, computer, RAM, software…) in English Latin letters. Same words, same meaning — transliterate, don't rewrite.
+Example: "Aaj hum AI ke baare mein baat karenge" → "آج ہم AI کے بارے میں بات کریں گے"
+Return ONLY JSON: {"lines":[{"i":n,"urdu":"..."}]}`,
+      todo.map((k) => `${k + 1}. ${lines[k].text}`).join("\n"),
+      { maxTokens: 2500, temperature },
+    );
+    for (const r of out?.lines || []) {
+      const k = Number(r?.i) - 1;
+      if (lines[k] && URDU_LETTERS.test(String(r?.urdu || ""))) lines[k].speak = clean(r.urdu);
+    }
+  };
+  console.log("③ URDU SCRIPT (voice)…");
+  await transliterate(lines.map((_, k) => k), 0.2);
+  let missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
+  if (missing.length) await transliterate(missing, 0.1);
+  missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
+  urduReport.push(`${lines.length - missing.length}/${lines.length} lines voiced from Urdu script${missing.length ? ` (${missing.length} read from Roman Urdu)` : ""}`);
+  console.log(`  ${urduReport.join(" · ")}`);
+}
 
 /* ═════════════ STAGE 2 — CASTING ═════════════ */
 const cast = castCandidates({ lines, menu, docBias: style === "explainer", seed: Number(process.env.SEED) || paragraph.length });
@@ -356,6 +388,7 @@ ${factFixes.map((f) => `  - ~~${f.before}~~ → ${f.after || "**check this line*
   "",
   flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
+  ...(urduReport.length ? ["", `🇵🇰 **Urdu:** ${urduReport.join(" · ")}`] : []),
   ...(swaps.length ? ["", `🛡️ **Scene guard:** ${swaps.length} scene(s) swapped for safe text scenes:`, ...swaps.map((w) => `  - \`${w.from}\` → \`${w.to}\` _(${w.reason})_`)] : []),
   ...(removed.length ? ["", `🧹 **Removed invented attribution (not in your paragraph):** ${removed.join("; ")}`] : []),
   "",
