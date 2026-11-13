@@ -18,7 +18,7 @@ const INK = "#1B1712";
 const serif = "Georgia, 'Times New Roman', serif";
 
 /** Old-film frame: sepia image, gate weave, flicker, scratches, dust. */
-const FilmImage: React.FC<{ file: string; w: number; h: number; seed: number; tone?: "sepia" | "bw" }> = ({ file, w, h, seed, tone = "sepia" }) => {
+const FilmImage: React.FC<{ file: string; w: number; h: number; seed: number; tone?: "sepia" | "bw"; label?: string }> = ({ file, w, h, seed, tone = "sepia", label = "" }) => {
   const frame = useCurrentFrame();
   const weaveX = (hash01(frame, seed) - 0.5) * 4, weaveY = (hash01(frame, seed, 1) - 0.5) * 3;
   const flicker = 0.9 + hash01(frame, seed, 2) * 0.12;
@@ -28,7 +28,15 @@ const FilmImage: React.FC<{ file: string; w: number; h: number; seed: number; to
       {file ? (
         <Img src={src(file)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `translate(${weaveX}px, ${weaveY}px) scale(${1.04 + frame * 0.0006})`, filter: `${tone === "bw" ? "grayscale(1)" : "sepia(0.85) saturate(0.9)"} contrast(1.12) brightness(${flicker})` }} />
       ) : (
-        <div style={{ position: "absolute", inset: 0, background: `radial-gradient(70% 60% at 50% 40%, #6B5A45, #2A2420)`, opacity: flicker }} />
+        // No image → an intentional archival TITLE CARD (engraved border, ornaments, serif label), never an empty box.
+        <div style={{ position: "absolute", inset: 0, background: `radial-gradient(70% 60% at 50% 40%, #5E4E3B, #231E1A)`, opacity: flicker, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ position: "absolute", inset: Math.min(w, h) * 0.06, border: "3px solid rgba(233,217,176,0.55)", outline: "1px solid rgba(233,217,176,0.3)", outlineOffset: -12 }} />
+          <div style={{ textAlign: "center", color: "#E9D9B0", fontFamily: serif, padding: "0 12%" }}>
+            <div style={{ fontSize: Math.min(w, h) * 0.05, letterSpacing: 10, opacity: 0.7 }}>✦ ✦ ✦</div>
+            <div style={{ fontSize: Math.min(w, h) * (label.length > 14 ? 0.085 : 0.12), fontStyle: "italic", lineHeight: 1.1, margin: "18px 0" }}>{label || "Archive"}</div>
+            <div style={{ fontSize: Math.min(w, h) * 0.04, letterSpacing: 8, opacity: 0.65 }}>— ARCHIVE —</div>
+          </div>
+        </div>
       )}
       {scratches.map((k) => <div key={k} style={{ position: "absolute", top: 0, bottom: 0, left: `${hash01(Math.floor(frame / 3), k, seed, 9) * 100}%`, width: 2, background: "rgba(255,250,235,0.55)" }} />)}
       {Array.from({ length: 5 }, (_, k) => <div key={`d${k}`} style={{ position: "absolute", left: `${hash01(frame, k, 3) * 100}%`, top: `${hash01(frame, k, 4) * 100}%`, width: 3 + hash01(frame, k) * 5, height: 3 + hash01(frame, k, 5) * 4, borderRadius: 4, background: hash01(k, frame) > 0.5 ? "rgba(0,0,0,0.7)" : "rgba(255,250,235,0.6)" }} />)}
@@ -57,7 +65,7 @@ export const ArchiveFilm: React.FC<PrimitiveProps> = ({ beat }) => {
     <Safe>
       <div style={{ position: "relative", padding: "0 70px", background: "#0B0A09", transform: `rotate(${(1 - s) * -6 - 1.5}deg) scale(${interpolate(s, [0, 1], [0.86, 1])})`, opacity: s, boxShadow: "0 40px 100px rgba(0,0,0,0.6)", overflow: "hidden" }}>
         {holes("left")}{holes("right")}
-        <div style={{ padding: "26px 0" }}><FilmImage file={file} w={780} h={940} seed={seed + beat.index} /></div>
+        <div style={{ padding: "26px 0" }}><FilmImage file={file} w={780} h={940} seed={seed + beat.index} label={[place, year].filter(Boolean).join(", ") || beat.text.split(/\s+/).slice(0, 4).join(" ")} /></div>
       </div>
       {year || place ? (
         <div style={{ position: "absolute", left: 110, top: 300, transform: `rotate(-6deg) scale(${interpolate(tag, [0, 1], [2.2, 1])})`, opacity: Math.min(1, tag * 1.5), border: `6px solid ${theme.accent}`, color: theme.accent, background: alpha("#0B0A09", 0.75), padding: "8px 26px", fontFamily: theme.mono, fontWeight: 700, fontSize: 52, letterSpacing: 4 }}>
@@ -376,7 +384,7 @@ export const MuseumFrame: React.FC<PrimitiveProps> = ({ beat }) => {
       <Safe>
         <div style={{ padding: 34, background: "linear-gradient(135deg, #8A6A2F, #E8C877 30%, #7A5A22 55%, #D9B866 80%, #6E4F1D)", boxShadow: "0 50px 100px rgba(0,0,0,0.7), inset 0 0 0 6px rgba(0,0,0,0.25)", transform: `scale(${interpolate(s, [0, 1], [0.9, 1])})`, opacity: s }}>
           <div style={{ padding: 14, background: "#120E0B" }}>
-            <FilmImage file={file} w={640} h={800} seed={seed + beat.index} tone="sepia" />
+            <FilmImage file={file} w={640} h={800} seed={seed + beat.index} tone="sepia" label={name || dates} />
           </div>
         </div>
         {name ? (
@@ -428,10 +436,14 @@ export const ThenNow: React.FC<PrimitiveProps> = ({ beat }) => {
   return (
     <Safe>
       <div style={{ position: "relative", width: 860, height: 1100, overflow: "hidden", boxShadow: "0 40px 90px rgba(0,0,0,0.6)" }}>
-        <div style={{ position: "absolute", left: 0, top: 0 }}><FilmImage file={then} w={860} h={545} seed={seed + beat.index} /></div>
+        <div style={{ position: "absolute", left: 0, top: 0 }}><FilmImage file={then} w={860} h={545} seed={seed + beat.index} label={thenLabel} /></div>
         {label(thenLabel, 24, true)}
         <div style={{ position: "absolute", left: 0, top: 555, width: 860, height: 545, background: theme.bg2, clipPath: `inset(0 ${(1 - wipe) * 100}% 0 0)` }}>
-          {now ? <Img src={src(now)} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <div style={{ position: "absolute", inset: 0, background: `radial-gradient(70% 60% at 50% 40%, ${theme.accent}, ${theme.bg2})` }} />}
+          {now ? <Img src={src(now)} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : (
+            <div style={{ position: "absolute", inset: 0, background: `radial-gradient(70% 60% at 50% 40%, ${theme.accent}, ${theme.bg2})`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              <div style={{ fontFamily: theme.display, fontWeight: 900, fontSize: 130, color: theme.onAccent, letterSpacing: -2 }}>{nowLabel}</div>
+            </div>
+          )}
           {label(nowLabel, 24, false)}
         </div>
         <div style={{ position: "absolute", left: 0, right: 0, top: 545, height: 10, background: theme.ink }} />
