@@ -181,8 +181,8 @@ export const Funnel: React.FC<PrimitiveProps> = ({ beat }) => {
           const w = 940 - i * (560 / Math.max(1, n - 1));
           return (
             <div key={i} style={{ width: w * t, height: 170, clipPath: "polygon(0 0, 100% 0, 94% 100%, 6% 100%)", background: i === n - 1 ? theme.accent : alpha(theme.accent, 0.25 + (i / n) * 0.5), display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
-              <div style={{ fontFamily: theme.mono, fontWeight: 700, fontSize: 56, color: theme.ink, opacity: t }}>{s.value}</div>
-              <div style={{ fontFamily: theme.body, fontWeight: 700, fontSize: 30, color: alpha(theme.ink, 0.8), opacity: t }}>{s.label}</div>
+              <div style={{ fontFamily: theme.mono, fontWeight: 700, fontSize: 56, color: i === n - 1 ? theme.onAccent : theme.ink, opacity: t }}>{s.value}</div>
+              <div style={{ fontFamily: theme.body, fontWeight: 700, fontSize: 30, color: i === n - 1 ? theme.onAccent : alpha(theme.ink, 0.8), opacity: t }}>{s.label}</div>
             </div>
           );
         })}
