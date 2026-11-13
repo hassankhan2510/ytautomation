@@ -77,7 +77,7 @@ export const ErrorPopups: React.FC<PrimitiveProps> = ({ beat }) => {
         if (frame < at) return null;
         const s = pop(frame, fps, at, "snap");
         const x = 70 + hash01(i, seed) * 220 + i * 26;
-        const y = 330 + i * 190 + hash01(i, seed, 2) * 40;
+        const y = 290 + i * 165 + hash01(i, seed, 2) * 30;
         return (
           <div key={i} style={{ position: "absolute", left: x, top: y, width: 760, transform: `scale(${interpolate(s, [0, 1], [0.5, 1])})`, opacity: Math.min(1, s * 2), boxShadow: "8px 8px 0 rgba(0,0,0,0.6)", border: `3px solid ${theme.ink}`, background: theme.dark ? "#1B1B1F" : "#ECECEC", fontFamily: theme.mono }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 16px", background: theme.accent, color: theme.onAccent, fontWeight: 700, fontSize: 28 }}>
@@ -209,7 +209,7 @@ export const Verdict: React.FC<PrimitiveProps> = ({ beat }) => {
         <div style={{ fontFamily: theme.mono, fontSize: 28, color: "#666", letterSpacing: 3, marginBottom: 20 }}>CLAIM #{String(beat.index + 1).padStart(3, "0")}</div>
         <div style={{ fontFamily: theme.body, fontWeight: 900, fontSize: 64, lineHeight: 1.15, color: "#111" }}>{claim}</div>
         {s > 0 ? (
-          <div style={{ position: "absolute", right: 30, bottom: -40, transform: `rotate(-12deg) scale(${interpolate(s, [0, 1], [3, 1])})`, opacity: Math.min(1, s * 1.6), border: `10px solid ${color}`, borderRadius: 14, padding: "4px 30px", color, fontFamily: theme.display, fontWeight: 900, fontSize: 96, letterSpacing: 4, background: alpha("#F4F1EA", 0.6) }}>{verdict}</div>
+          <div style={{ position: "absolute", right: 20, bottom: -150, transform: `rotate(-10deg) scale(${interpolate(s, [0, 1], [3, 1])})`, opacity: Math.min(1, s * 1.6), border: `10px solid ${color}`, borderRadius: 14, padding: "4px 30px", color, fontFamily: theme.display, fontWeight: 900, fontSize: 96, letterSpacing: 4, background: alpha("#F4F1EA", 0.6) }}>{verdict}</div>
         ) : null}
       </div>
     </Safe>

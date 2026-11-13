@@ -139,7 +139,7 @@ export const MindMap: React.FC<PrimitiveProps> = ({ beat }) => {
   const { theme, seed } = useRender();
   const center = prop(beat, "center", "IDEA");
   const branches = prop<string[]>(beat, "branches", ["Audience", "Offer", "Content", "Distribution", "Systems", "Money"]);
-  const cx = 540, cy = 900, R = 360;
+  const cx = 540, cy = 820, R = 320;
   const n = branches.length;
   const cs = pop(frame, fps, 0, "slam");
   return (
@@ -255,7 +255,7 @@ export const Quadrant: React.FC<PrimitiveProps> = ({ beat }) => {
   const yLabel = prop(beat, "yLabel", "Impact →");
   const dots = prop<QDot[]>(beat, "dots", [{ label: "Agency", x: 0.85, y: 0.35 }, { label: "Freelancer", x: 0.6, y: 0.3 }, { label: "Templates", x: 0.2, y: 0.2 }]);
   const hero = prop(beat, "hero", "This system");
-  const S = 860, ox = 110, oy = 520;
+  const S = 820, ox = 130, oy = 400;
   const ht = easeInOut(frame, Math.floor(beat.frames * 0.4), Math.floor(beat.frames * 0.35));
   const hx = interpolate(ht, [0, 1], [0.5, 0.15]), hy = interpolate(ht, [0, 1], [0.5, 0.9]);
   const pt = (x: number, y: number) => ({ left: ox + x * S, top: oy + (1 - y) * S });
@@ -323,7 +323,7 @@ export const Pie: React.FC<PrimitiveProps> = ({ beat }) => {
   const sweep = easeInOut(frame, 3, Math.max(14, beat.frames * 0.45));
   const big = data.reduce((m, d, i) => (d.value > data[m].value ? i : m), 0);
   const popOut = frame > beat.frames * 0.5 ? pop(frame, fps, Math.floor(beat.frames * 0.5), "snap") : 0;
-  const cx = 540, cy = 860, R = 360;
+  const cx = 540, cy = 860, R = 330; // legend sits ABOVE the pie (captions own the band below)
   let acc = 0;
   const shades = [theme.accent, alpha(theme.ink, 0.55), alpha(theme.ink, 0.3), alpha(theme.ink, 0.18), alpha(theme.accent, 0.5)];
   return (
@@ -346,7 +346,7 @@ export const Pie: React.FC<PrimitiveProps> = ({ beat }) => {
           );
         })}
       </svg>
-      <div style={{ position: "absolute", left: 80, right: 80, top: cy + R + 70, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "14px 36px" }}>
+      <div style={{ position: "absolute", left: 80, right: 80, top: cy - R - 150, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "14px 36px" }}>
         {data.map((d, i) => <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, fontFamily: theme.body, fontWeight: 800, fontSize: 38, color: i === big ? theme.ink : theme.dim, opacity: easeOut(frame, 8 + i * 3, 6) }}><div style={{ width: 26, height: 26, borderRadius: 6, background: i === big ? theme.accent : shades[(i % (shades.length - 1)) + 1] }} />{d.label}</div>)}
       </div>
     </AbsoluteFill>

@@ -129,7 +129,7 @@ export const Photo: React.FC<PrimitiveProps> = ({ beat, rng }) => {
       </AbsoluteFill>
       <Safe>
         <div style={{ position: "relative", transform: `perspective(1600px) rotateY(${(1 - s) * dir * 24}deg) rotateZ(${dir * -2 * s}deg) scale(${interpolate(s, [0, 1], [0.8, 1])})`, opacity: s }}>
-          <div style={{ width: 860, height: 1080, borderRadius: 36, overflow: "hidden", boxShadow: `0 50px 120px rgba(0,0,0,0.6), 0 0 0 3px ${alpha(theme.ink, 0.1)}` }}>
+          <div style={{ width: 800, height: 1000, borderRadius: 36, overflow: "hidden", boxShadow: `0 50px 120px rgba(0,0,0,0.6), 0 0 0 3px ${alpha(theme.ink, 0.1)}` }}>
             <Img src={src(file)} style={{ width: "100%", height: "100%", objectFit: "cover", transform: `scale(${kb}) translateX(${panX}px)` }} />
           </div>
           {caption ? (

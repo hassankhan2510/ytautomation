@@ -220,7 +220,7 @@ export const IsoBuild: React.FC<PrimitiveProps> = ({ beat }) => {
   const layers = prop<string[]>(beat, "layers", ["Idea", "Script", "Voice", "Motion", "Audience"]);
   const n = layers.length;
   const step = Math.max(6, Math.floor((beat.frames * 0.7) / Math.max(1, n)));
-  const cx = 470, base = 1330, bw = 250, bh = 120;
+  const cx = 470, base = 1180, bw = 250, bh = 110;
   const block = (y: number, lit: boolean, w: number) => {
     const top = `${cx},${y - w * 0.5} ${cx + w},${y} ${cx},${y + w * 0.5} ${cx - w},${y}`;
     const left = `${cx - w},${y} ${cx},${y + w * 0.5} ${cx},${y + w * 0.5 + bh} ${cx - w},${y + bh}`;

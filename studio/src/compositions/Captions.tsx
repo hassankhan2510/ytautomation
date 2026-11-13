@@ -43,7 +43,7 @@ export const Captions: React.FC = () => {
   if (beat.primitive === "photo" && !beat.props?.src) return null;
   const s = spring({ frame: frame - chunk.from, fps, config: { damping: 14, stiffness: 260, mass: 0.6 } });
   return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 470, pointerEvents: "none" }}>
+    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 400, pointerEvents: "none" }}>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 18px", maxWidth: 940, transform: `scale(${interpolate(s, [0, 1], [0.7, 1])}) translateY(${(1 - s) * 30}px)`, opacity: Math.min(1, s * 2) }}>
         {chunk.words.map((w, i) => {
           const active = frame >= w.from && frame < (chunk.words[i + 1]?.from ?? chunk.to);

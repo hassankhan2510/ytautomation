@@ -126,7 +126,7 @@ export const CardFan: React.FC<PrimitiveProps> = ({ beat }) => {
   const liftAt = Math.floor(beat.frames * 0.5);
   const lift = frame >= liftAt ? pop(frame, fps, liftAt, "snap") : 0;
   return (
-    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", perspective: 1600 }}>
+    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", paddingBottom: 240, perspective: 1600 }}>
       {cards.map((c, i) => {
         const deal = pop(frame, fps, i * 2, "snap");
         const off = i - (n - 1) / 2;
@@ -157,7 +157,7 @@ export const BeforeAfter: React.FC<PrimitiveProps> = ({ beat }) => {
   const beforeLabel = prop(beat, "beforeLabel", "BEFORE");
   const afterLabel = prop(beat, "afterLabel", "AFTER");
   const p = interpolate(easeInOut(frame, 6, Math.max(16, beat.frames * 0.6)), [0, 1], [0.92, 0.08]);
-  const W = 900, H = 1200;
+  const W = 820, H = 1080;
   const panel = (img: string, label: string, lit: boolean) => (
     <AbsoluteFill style={{ background: lit ? `linear-gradient(160deg, ${theme.accent}, ${theme.bg2})` : `linear-gradient(160deg, #3A3A40, #151518)`, alignItems: "center", justifyContent: "center" }}>
       {img ? <Img src={src(img)} style={{ width: "100%", height: "100%", objectFit: "cover", filter: lit ? "none" : "grayscale(1) contrast(0.9)" }} /> : null}

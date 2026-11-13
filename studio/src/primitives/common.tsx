@@ -26,9 +26,9 @@ export const localWords = (beat: TimedBeat): (TimedWord & { at: number })[] =>
 /** Strip punctuation for display matching. */
 export const bare = (s: string) => s.toLowerCase().replace(/[^a-z0-9$%]/g, "");
 
-/** Content area inside Instagram's safe zone (UI covers top ~10%, bottom ~20%, right rail). */
+/** Content area inside Instagram's safe zone (UI covers top ~10%, bottom ~20%, right rail), ending ABOVE the caption band (~1320-1520px) so content and karaoke captions never collide. */
 export const Safe: React.FC<{ children: React.ReactNode; align?: "center" | "start"; style?: React.CSSProperties }> = ({ children, align = "center", style }) => (
-  <AbsoluteFill style={{ padding: "230px 84px 430px 84px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: align === "center" ? "center" : "flex-start", ...style }}>
+  <AbsoluteFill style={{ padding: "220px 84px 560px 84px", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: align === "center" ? "center" : "flex-start", ...style }}>
     {children}
   </AbsoluteFill>
 );
