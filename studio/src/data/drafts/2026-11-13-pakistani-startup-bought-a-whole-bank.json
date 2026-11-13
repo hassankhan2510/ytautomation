@@ -1,0 +1,244 @@
+{
+  "id": "2026-11-13-pakistani-startup-bought-a-whole-bank",
+  "title": "Pakistani startup bought a whole bank.",
+  "subject": "ABHI startup bank IPO",
+  "theme": "crimson",
+  "seed": 517,
+  "handle": "",
+  "language": "urdu",
+  "hooks": [
+    "Pakistani startup bought a whole bank.",
+    "Your salary is not yours yet?"
+  ],
+  "caption": "From 8 people in a room to a bank IPO. 🚀\nWould you use a salary advance app?\n#ABHI #PakistaniStartup #Fintech #IPO #GenZ\n🎵 Music: \"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-inspired.mp3",
+  "musicCredit": "\"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 14,
+    "total": 14,
+    "families": 5,
+    "plain": 3,
+    "doc": 2,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Bro, ye Pakistani startup story actually insane hai.",
+      "primitive": "glitchTitle",
+      "energy": 3,
+      "speak": "Bro، ye Pakistani startup story actually insane hai.",
+      "emphasis": [
+        "Pakistani",
+        "startup"
+      ],
+      "props": {
+        "title": "Pakistani Startup Story"
+      },
+      "why": "captures chaotic office vibe",
+      "bg": "chaotic office montage"
+    },
+    {
+      "text": "2021 mein, Omair aur Ali ne mid problem notice kiya.",
+      "primitive": "photo",
+      "energy": 2,
+      "speak": "twenty twenty one mein، Omair aur Ali ne mid problem notice kiya.",
+      "emphasis": [
+        "Omair",
+        "Ali"
+      ],
+      "props": {
+        "prompt": "two Pakistani entrepreneurs pointing at a whiteboard problem",
+        "caption": "Omair & Ali, 2021"
+      },
+      "why": "shows founders at whiteboard",
+      "bg": "office whiteboard discussion"
+    },
+    {
+      "text": "Aap month bhar grind karte ho, par payday tak money nahi milta.",
+      "primitive": "errorPopups",
+      "energy": 2,
+      "speak": "Aap month bhar grind karte ho، par payday tak money nahi milta.",
+      "emphasis": [
+        "month",
+        "payday"
+      ],
+      "props": {
+        "errors": [
+          "No funds",
+          "Payday pending",
+          "Wallet empty"
+        ]
+      },
+      "why": "visualizes financial frustration",
+      "bg": "empty wallet closeup"
+    },
+    {
+      "text": "Log emergencies ke liye high-interest loans lete hain, normal hai.",
+      "primitive": "factCard",
+      "energy": 2,
+      "speak": "Log emergencies ke liye high-interest loans lete hain، normal hai.",
+      "emphasis": [
+        "high-interest",
+        "loans"
+      ],
+      "props": {
+        "fact": "High‑interest loans common in emergencies"
+      },
+      "why": "presents stark loan fact",
+      "bg": "loan documents red stamp"
+    },
+    {
+      "text": "Unhone ABHI start kiya, sirf one simple idea ke saath.",
+      "primitive": "roadmap",
+      "energy": 2,
+      "speak": "Unhone Abhi start kiya، sirf one simple idea ke saath.",
+      "emphasis": [
+        "ABHI",
+        "simple"
+      ],
+      "props": {
+        "steps": [
+          "Idea",
+          "Found ABHI",
+          "Build product",
+          "Launch"
+        ]
+      },
+      "why": "maps startup journey",
+      "bg": "startup timeline illustration"
+    },
+    {
+      "text": "Workers apni earned salary anytime withdraw kar sakte hain, company ke through.",
+      "primitive": "codeRain",
+      "energy": 3,
+      "speak": "Workers apni earned salary anytime withdraw kar sakte hain، company ke through.",
+      "emphasis": [
+        "salary",
+        "withdraw"
+      ],
+      "props": {
+        "word": "Salary"
+      },
+      "why": "shows instant salary withdrawal",
+      "bg": "mobile banking app UI"
+    },
+    {
+      "text": "Koi fancy office nahi, sirf 8 log shared room mein the.",
+      "primitive": "highlight",
+      "energy": 2,
+      "speak": "Koi fancy office nahi، sirf eight log shared room mein the.",
+      "emphasis": [
+        "8 people",
+        "shared room"
+      ],
+      "why": "pins exact office location"
+    },
+    {
+      "text": "Phir unhone payroll aur business loans expand kiye, UAE Saudi Oman mein.",
+      "primitive": "thenNow",
+      "energy": 3,
+      "speak": "Phir unhone payroll aur business loans expand kiye، یو اے ای Saudi Oman mein.",
+      "emphasis": [
+        "UAE",
+        "Saudi"
+      ],
+      "props": {
+        "prompt": "grayscale map of Gulf region with pins on UAE, Saudi Arabia, Oman",
+        "prompt2": "color map of Gulf region showing expansion",
+        "then": "Then",
+        "now": "Now"
+      },
+      "why": "highlights regional expansion",
+      "bg": "Gulf region map animation"
+    },
+    {
+      "text": "then did the most unhinged move ever — bought a whole microfinance bank,",
+      "primitive": "burst",
+      "energy": 3,
+      "speak": "then did the most unhinged move ever — bought a whole microfinance bank،",
+      "emphasis": [
+        "microfinance",
+        "bank"
+      ],
+      "props": {
+        "word": "Microfinance Bank"
+      },
+      "why": "dramatic purchase reveal",
+      "bg": "bank building shaking"
+    },
+    {
+      "text": "Unhone fix kiya, ab ABHI Microfinance Bank stock exchange pe IPO kar raha hai.",
+      "primitive": "newsBanner",
+      "energy": 3,
+      "speak": "Unhone fix kiya، ab Abhi Microfinance Bank stock exchange pe آئی پی او kar raha hai.",
+      "emphasis": [
+        "stock exchange",
+        "IPO"
+      ],
+      "props": {
+        "headline": "ABHI Microfinance Bank IPO on Stock Exchange",
+        "label": "BREAKING"
+      },
+      "why": "announces IPO news",
+      "bg": "stock ticker screen"
+    },
+    {
+      "text": "Se 'kyun main apni money early access nahi kar sakta?'",
+      "primitive": "search",
+      "energy": 2,
+      "speak": "Se 'kyun main apni money early access nahi kar sakta?'",
+      "emphasis": [
+        "money",
+        "early"
+      ],
+      "props": {
+        "query": "why can't I access money early",
+        "suggestions": [
+          "early salary access",
+          "payday loan"
+        ],
+        "pick": 0
+      },
+      "why": "visualizes user query",
+      "bg": "mobile search UI"
+    },
+    {
+      "text": "” to Pakistan’s first fintech-led bank IPO.",
+      "primitive": "flip3d",
+      "energy": 3,
+      "speak": "” to Pakistan’s first fintech-led bank آئی پی او.",
+      "emphasis": [
+        "first",
+        "fintech"
+      ],
+      "props": {},
+      "why": "celebrates historic fintech IPO",
+      "bg": "confetti celebration footage"
+    },
+    {
+      "text": "Ye absolute cinema hai.",
+      "primitive": "auroraType",
+      "energy": 3,
+      "speak": "Ye absolute cinema hai.",
+      "emphasis": [
+        "absolute",
+        "cinema"
+      ],
+      "props": {
+        "word": "CINEMA"
+      },
+      "why": "ends with cinematic flair",
+      "bg": "clapperboard closing shot"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
