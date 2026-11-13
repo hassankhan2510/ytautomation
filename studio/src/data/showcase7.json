@@ -1,0 +1,22 @@
+{
+  "id": "showcase7",
+  "title": "The computer that landed on the Moon",
+  "theme": "crimson",
+  "seed": 97,
+  "handle": "@cohort_zero",
+  "beats": [
+    { "text": "Let's go back to 1969.", "primitive": "yearRewind", "energy": 3, "props": { "from": 2026, "to": 1969, "label": "The year we left Earth" } },
+    { "text": "A rocket stands on the launch pad in Florida.", "primitive": "archiveFilm", "energy": 1, "props": { "prompt": "Saturn V rocket on the launch pad at dawn, 1969, steam and floodlights, wide shot", "place": "Florida", "year": "1969" } },
+    { "text": "This is where it all happened.", "primitive": "locate", "energy": 2, "props": { "place": "Cape Canaveral", "lat": 28.39, "lon": -80.6, "year": "July 16, 1969" } },
+    { "text": "Chapter one: the brain on board.", "primitive": "bookChapter", "energy": 1, "props": { "chapter": "I", "title": "The brain on board", "cover": "APOLLO" } },
+    { "text": "The guidance computer had about four kilobytes of memory.", "primitive": "factCard", "energy": 2, "props": { "n": 1, "fact": "The Apollo Guidance Computer had about 4 KB of RAM." } },
+    { "text": "Your phone has millions of times more.", "primitive": "scaleCompare", "energy": 3, "props": { "items": [{ "label": "Apollo", "size": 1 }, { "label": "Laptop", "size": 40 }, { "label": "Phone", "size": 160 }], "unit": "×" } },
+    { "text": "Its software was literally woven by hand.", "primitive": "museumFrame", "energy": 1, "props": { "prompt": "1960s factory, women weaving copper wire through tiny magnetic cores, rope memory, warm tungsten light, close up hands", "name": "Rope memory", "dates": "1960s" } },
+    { "text": "Then, seconds before landing, the alarms went off.", "primitive": "declassified", "energy": 2, "props": { "title": "MISSION LOG", "lines": ["Altitude: 30,000 ft", "Program alarm 1202 — computer overloaded", "Decision: GO for landing"], "reveal": 1 } },
+    { "text": "The software dropped everything except what mattered.", "primitive": "redString", "energy": 2, "props": { "cards": ["Alarm 1202", "Overload", "Drop low-priority tasks", "Land"] } },
+    { "text": "Engineers later wrote about it in the history books.", "primitive": "typewriter", "energy": 1, "props": { "heading": "HOUSTON, 1969" } },
+    { "text": "Then and now, the same idea runs the world.", "primitive": "thenNow", "energy": 2, "props": { "prompt": "1960s mission control room, rows of consoles, engineers in white shirts", "prompt2": "modern data center, rows of glowing server racks, cinematic", "then": "1969", "now": "2026" } },
+    { "text": "Simple systems beat powerful ones.", "primitive": "researchPaper", "energy": 2, "props": { "title": "Lessons from the Apollo Guidance Computer", "finding": "Priority scheduling let a tiny computer survive an overload." } },
+    { "text": "Follow for more stories like this.", "primitive": "outro", "energy": 1, "props": { "cta": "Follow for more" }, "hold": 1.0 }
+  ]
+}

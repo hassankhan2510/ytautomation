@@ -13,6 +13,7 @@
   "dependencies": {
     "@remotion/cli": "4.0.543",
     "@remotion/google-fonts": "4.0.543",
+    "@remotion/install-whisper-cpp": "4.0.543",
     "@remotion/motion-blur": "4.0.543",
     "@remotion/noise": "4.0.543",
     "@remotion/paths": "4.0.543",

@@ -7,14 +7,19 @@ on:
   workflow_dispatch:
     inputs:
       paragraph:
-        description: "What is this video about? (paste a paragraph — facts/numbers you include are the ONLY ones it may use)"
+        description: "Your script or topic paragraph (facts/numbers you include are the ONLY ones it may use)"
         required: true
         type: string
       style:
         description: "Format"
         type: choice
-        options: [buildInPublic, techNews, breakdown, story]
-        default: buildInPublic
+        options: [explainer, buildInPublic, techNews, breakdown, story]
+        default: explainer
+      verbatim:
+        description: "Use my script WORD-FOR-WORD (AI only picks the visuals). 'no' = AI rewrites it into a hooky reel."
+        type: choice
+        options: ["yes", "no"]
+        default: "yes"
       day:
         description: "Day number (build-in-public only)"
         required: false
@@ -49,6 +54,7 @@ jobs:
         env:
           PARAGRAPH: ${{ github.event.inputs.paragraph }}
           STYLE: ${{ github.event.inputs.style }}
+          VERBATIM: ${{ github.event.inputs.verbatim }}
           DAY: ${{ github.event.inputs.day }}
           THEME: ${{ github.event.inputs.theme }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

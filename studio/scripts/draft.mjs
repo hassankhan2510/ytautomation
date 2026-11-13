@@ -17,6 +17,30 @@ const style = process.env.STYLE || "buildInPublic";
 const day = Number(process.env.DAY || 0) || null;
 const theme = process.env.THEME && process.env.THEME !== "job" ? process.env.THEME : "crimson";
 const handle = process.env.HANDLE || "@cohort_zero";
+// VERBATIM: the paragraph IS the narration script — split it into beats word-for-word; the LLM only
+// chooses the visual for each beat (it may not rewrite a single word).
+const verbatim = /^(yes|true|1)$/i.test(process.env.VERBATIM || "");
+
+/** Split a script into spoken beats: whole sentences up to 18 words; longer ones split at the most
+ *  natural point near the middle (punctuation first, then connectors like "and/but/which"). */
+const CONNECT = /^(and|but|or|so|because|which|who|that|when|while|where|with|without|until|after|before|then|by|to|into|from|on|in)$/i;
+function splitLong(words) {
+  if (words.length <= 18) return [words.join(" ")];
+  const parts = Math.ceil(words.length / 14);
+  const target = Math.round(words.length / parts);
+  let best = target, bestScore = Infinity;
+  for (let k = 4; k <= words.length - 4; k++) {
+    let score = Math.abs(k - target);
+    if (/[,;:—–]$/.test(words[k - 1])) score -= 3.5;
+    else if (CONNECT.test(words[k])) score -= 1.5;
+    if (score < bestScore) { bestScore = score; best = k; }
+  }
+  return [...splitLong(words.slice(0, best)), ...splitLong(words.slice(best))];
+}
+function segment(script) {
+  const sentences = script.replace(/\s+/g, " ").match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || [script];
+  return sentences.map((x) => x.trim()).filter(Boolean).flatMap((x) => splitLong(x.split(" ")));
+}
 
 /* ── 1. The menu, parsed straight from the registry (single source of truth) ── */
 const reg = fs.readFileSync(path.join(ROOT, "src/engine/registry.ts"), "utf8");
@@ -33,6 +57,9 @@ const STYLES = {
   techNews: `Fast tech-news report. Beat 1 MUST be "newsBanner". Use headlines/history/globe/neuralNet/quadrant where they fit. Neutral, factual tone.`,
   breakdown: `Project/concept breakdown ("how X works"). Open on a strong hook primitive; use explainers (mindMap, roadmap, funnel, pyramid, isoBuild, neuralNet).`,
   story: `Personal story arc: hook → struggle → turning point → result → lesson. Use meme formats (pov, errorPopups, loading, iceberg, verdict) where they fit.`,
+  explainer: `Gen-Z explainer of history / facts / research — cinematic, never a textbook. Lean on the DOC primitives (yearRewind, archiveFilm, museumFrame, locate, declassified, redString, researchPaper, factCard, scaleCompare, bookChapter, typewriter, thenNow) and cut them with modern kinetic/generative/meme ones (stomp, flip3d, warp, globe, iceberg, verdict) for pace. Open with a curiosity hook (yearRewind / declassified / stomp work well).
+AI image prompts (props.prompt/prompt2): describe the SCENE visually — era, place, objects, lighting, camera angle — no text in the image, no logos, never a real living person's likeness. Historical figures only as an atmospheric period portrait.
+locate needs REAL coordinates; scaleCompare needs REAL relative sizes; researchPaper/factCard citations ONLY if the source names them.`,
 };
 const system = `You are the EDITOR of a premium Instagram Reels studio (Gen-Z audience, founder/tech niche, brand ${handle}).
 You turn a source paragraph into a 25-40 second vertical reel by choosing MOTION PRIMITIVES from a fixed menu and filling their props.
@@ -52,27 +79,41 @@ STYLE: ${STYLES[style] || STYLES.buildInPublic}
 
 MENU:
 ${menuText}`;
-const user = `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
+const segments = verbatim ? segment(paragraph).slice(0, 24) : [];
+const verbatimRules = `
+VERBATIM MODE — the creator wrote the script; you are ONLY the visual editor.
+The script is pre-split into ${segments.length} numbered segments. Return "beats" with EXACTLY ${segments.length} items, in order, one per segment,
+each {"i": segment number, "primitive", "energy", "emphasis": [1-2 words that appear in that segment], "props"} — do NOT include "text"; never rewrite, merge, drop or reorder segments.
+"hooks": 3 alternative opening lines the creator could record instead of segment 1 (suggestions only). Do not add an outro; it is appended automatically.`;
+const user = verbatim
+  ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}`
+  : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
 
 /* ── 3. Call + validate (never trust the LLM shape) ── */
-const out = await groqJSON(system, user, { maxTokens: 4000, temperature: 0.7 });
+const out = await groqJSON(verbatim ? system + "\n" + verbatimRules : system, user, { maxTokens: 4500, temperature: 0.7 });
 if (!out || !Array.isArray(out.beats) || !out.beats.length) throw new Error("Groq returned no usable beats (see log above).");
+if (verbatim) {
+  // Re-attach the creator's exact words; any segment the LLM skipped still gets a beat.
+  const byIdx = new Map(out.beats.map((b, k) => [Number(b?.i) || k + 1, b]));
+  out.beats = segments.map((text, k) => ({ ...(byIdx.get(k + 1) || { primitive: k % 2 ? "flip3d" : "stomp", energy: 2 }), text }));
+}
 
 const clean = (s) => String(s ?? "").replace(/[*_#`]/g, "").replace(/\s+/g, " ").trim();
 let prev = "";
-const beats = out.beats.slice(0, 14).map((b, i) => {
+const beats = out.beats.slice(0, verbatim ? 24 : 14).map((b, i) => {
   let primitive = ids.has(b?.primitive) ? b.primitive : "stomp";
   if (primitive === prev && primitive !== "outro") primitive = prev === "stomp" ? "flip3d" : "stomp";
   prev = primitive;
   const energy = [1, 2, 3].includes(Number(b?.energy)) ? Number(b.energy) : 2;
-  const text = clean(b?.text).split(" ").slice(0, 18).join(" ") || "…";
+  const text = clean(b?.text).split(" ").slice(0, verbatim ? 40 : 18).join(" ") || "…";
   const beat = { text, primitive, energy };
   if (Array.isArray(b?.emphasis) && b.emphasis.length) beat.emphasis = b.emphasis.slice(0, 2).map(clean);
   if (b?.props && typeof b.props === "object" && !Array.isArray(b.props)) beat.props = b.props;
   if (i === 0) beat.energy = 3;
   return beat;
 });
-if (beats[beats.length - 1].primitive !== "outro") beats.push({ text: `Follow for Day ${(day ?? 1) + 1}.`, primitive: "outro", energy: 1, props: { cta: `Follow for Day ${(day ?? 1) + 1}` } });
+const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow for more";
+if (beats[beats.length - 1].primitive !== "outro") beats.push({ text: style === "buildInPublic" ? `${cta}.` : "Follow for more stories like this.", primitive: "outro", energy: 1, props: { cta } });
 beats[beats.length - 1].hold = 1.0;
 if (style === "buildInPublic" && day) {
   const first = beats.find((b) => b.primitive === "dayStamp");

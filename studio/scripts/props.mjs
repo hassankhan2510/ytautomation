@@ -37,16 +37,19 @@ async function fetchImage(prompt, file, seed) {
   return false;
 }
 
+// prompt → src, prompt2 → src2 (e.g. thenNow's second image).
 for (const [i, b] of job.beats.entries()) {
-  const p = b.props || {};
-  if (!p.prompt || p.src) continue;
-  const rel = `gen/${job.id || "job"}-${i}.jpg`;
-  console.log(`beat ${i}: AI image for "${p.prompt}"`);
-  if (await fetchImage(p.prompt, path.join("public", rel), (job.seed || 1) * 100 + i)) {
-    b.props = { ...p, src: rel };
-    console.log(`  → public/${rel}`);
-  } else {
-    console.log("  → no image; the beat will render a generative scene");
+  for (const [pk, sk, tag] of [["prompt", "src", ""], ["prompt2", "src2", "b"]]) {
+    const p = b.props || {};
+    if (!p[pk] || p[sk]) continue;
+    const rel = `gen/${job.id || "job"}-${i}${tag}.jpg`;
+    console.log(`beat ${i}: AI image for "${p[pk]}"`);
+    if (await fetchImage(p[pk], path.join("public", rel), (job.seed || 1) * 100 + i * 2 + (tag ? 1 : 0))) {
+      b.props = { ...p, [sk]: rel };
+      console.log(`  → public/${rel}`);
+    } else {
+      console.log("  → no image; the primitive renders its no-image look");
+    }
   }
 }
 
