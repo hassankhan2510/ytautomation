@@ -153,7 +153,7 @@ const romanScore = (t) => (String(t).match(ROMAN_URDU_WORDS) || []).length;
 const urduReport = [];
 if (language === "urdu") {
   const englishLines = lines.map((l, i) => ({ i, t: l.text })).filter((x) => romanScore(x.t) < 1);
-  if (englishLines.length > lines.length * 0.3) {
+  if (englishLines.length) {
     console.log(`  ! ${englishLines.length}/${lines.length} lines are not Roman Urdu — translating`);
     const tr = await groqJSON(
       `Translate each numbered line into casual spoken ROMAN Urdu (Latin letters) the way young Pakistanis talk, keeping tech/modern words in English (AI, technology, startup, computer, software, data…). Keep the meaning and every fact exactly; do not add facts. 5-14 words each.
@@ -239,7 +239,11 @@ if (style === "buildInPublic" && day) {
   if (ds) ds.props = { ...(ds.props || {}), day };
 }
 const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow for more";
-beats.push({ text: style === "buildInPublic" ? `${cta}.` : "Follow for more stories like this.", primitive: "outro", energy: 1, props: { cta }, hold: 1.0 });
+beats.push(
+  language === "urdu"
+    ? { text: "Aisi aur stories ke liye follow karo.", speak: "ایسی اور stories کے لیے follow کرو۔", primitive: "outro", energy: 1, props: { cta: "Follow karo" }, hold: 1.0 }
+    : { text: style === "buildInPublic" ? `${cta}.` : "Follow for more stories like this.", primitive: "outro", energy: 1, props: { cta }, hold: 1.0 },
+);
 
 /* ═════════════ SCENE GUARD — no demo data, no outside facts on screen ═════════════
  * (a) A data scene whose required props are missing would show its built-in DEMO content (e.g.
