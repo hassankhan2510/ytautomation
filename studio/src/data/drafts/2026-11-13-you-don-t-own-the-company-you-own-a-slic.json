@@ -1,0 +1,162 @@
+{
+  "id": "2026-11-13-you-don-t-own-the-company-you-own-a-slic",
+  "title": "You don't own the company. You own a slice.",
+  "subject": "stock market shares",
+  "theme": "ocean",
+  "seed": 1673,
+  "handle": "",
+  "language": "english",
+  "hooks": [
+    "You don't own the company. You own a slice.",
+    "Stop watching the chart. Start watching the business."
+  ],
+  "caption": "Stop staring at the chart. Start understanding the business. 📉📈 What's your biggest investing fear?\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-stay-the-course.mp3",
+  "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8.5,
+    "unique": 10,
+    "total": 10,
+    "families": 5,
+    "plain": 2,
+    "doc": 2,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "You don't own the company. You own a slice.",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "slice"
+      ],
+      "props": {},
+      "why": "High energy hook with emphasis",
+      "bg": "abstract geometric grid dark"
+    },
+    {
+      "text": "A stock market is just a place to buy those slices.",
+      "primitive": "parallax",
+      "energy": 2,
+      "emphasis": [
+        "place"
+      ],
+      "props": {
+        "search": "stock market trading floor",
+        "prompt": "busy stock trading floor with multiple monitors showing green charts, cinematic lighting, depth of field"
+      },
+      "why": "Shows the trading floor place",
+      "bg": "stock trading floor screens"
+    },
+    {
+      "text": "These slices are officially called shares.",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "shares"
+      ],
+      "props": {},
+      "why": "Calm definition of key term",
+      "bg": "close up paper texture"
+    },
+    {
+      "text": "When the company grows and earns more, your slice gets pricier.",
+      "primitive": "redString",
+      "energy": 2,
+      "emphasis": [
+        "grows"
+      ],
+      "props": {
+        "cards": [
+          "Company Grows",
+          "Earns More",
+          "Price Rises"
+        ]
+      },
+      "why": "Visualizes cause and effect chain",
+      "bg": "green rising stock chart lines"
+    },
+    {
+      "text": "Panic makes prices fall quickly, not necessarily instantly.",
+      "primitive": "strike",
+      "energy": 3,
+      "emphasis": [
+        "Panic"
+      ],
+      "props": {
+        "wrong": "Prices fall instantly",
+        "right": "Prices fall quickly"
+      },
+      "why": "Corrects the panic myth",
+      "bg": "red falling stock chart lines"
+    },
+    {
+      "text": "Daily price moves are chaotic noise for many investors.",
+      "primitive": "errorPopups",
+      "energy": 1,
+      "emphasis": [
+        "chaotic"
+      ],
+      "props": {
+        "errors": [
+          "Price Drop",
+          "Market Volatility",
+          "Daily Noise"
+        ]
+      },
+      "why": "Represents chaotic noise visually",
+      "bg": "blurred fast moving data streams"
+    },
+    {
+      "text": "Long-term investors usually focus on strong businesses instead.",
+      "primitive": "photo",
+      "energy": 2,
+      "emphasis": [
+        "investors"
+      ],
+      "props": {
+        "prompt": "calm person looking at laptop screen, ignoring red background screens, soft lighting, focus on face"
+      },
+      "why": "Shows the calm investor",
+      "bg": "calm person working on laptop"
+    },
+    {
+      "text": "They focus only on strong underlying businesses.",
+      "primitive": "isoBuild",
+      "energy": 2,
+      "emphasis": [
+        "strong"
+      ],
+      "props": {
+        "layers": [
+          "Strong Business",
+          "Stable Earnings",
+          "Long Term Value"
+        ]
+      },
+      "why": "Builds the foundation metaphor",
+      "bg": "solid concrete building foundation"
+    },
+    {
+      "text": "Long-term focus on strong businesses is the usual strategy.",
+      "primitive": "factCard",
+      "energy": 3,
+      "emphasis": [
+        "Long-term"
+      ],
+      "props": {
+        "fact": "Long-term focus on strong businesses is the usual strategy."
+      },
+      "why": "Compares long vs short term"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
