@@ -75,6 +75,7 @@ Return ONLY JSON:
  "hooks":[{"text":"…","type":"curiosity|contrarian|pov|number|stakes","score":1-10}] (exactly 3, max 12 words each, different types),
  "chosen": index of the best hook,
  "lines":[{"text":"spoken line","intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
+ "mood": one of [mystery, ancient, reflective, science, tension, awe, epic, future, modern, sci-fi, calm, uplifting] — the music mood of the whole reel,
  "caption":"1-2 short lines + a question that drives comments + 5 hashtags"}
 SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
 - ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, spoken casual English (contractions, 'you'), no emojis/markdown."}
@@ -176,6 +177,21 @@ for (const b of beats) {
   for (const n of nums(JSON.stringify({ t: b.text, p: shown }))) if (!sourceNums.has(n) && !/^0?[0-9]$/.test(n)) flagged.add(n);
 }
 
+/* ═════════════ MUSIC — pick a bed from the tracked library by style + mood ═════════════ */
+let music = null;
+try {
+  const cat = JSON.parse(fs.readFileSync(path.join(ROOT, "public/music/catalog.json"), "utf8"));
+  const wantCat = ["explainer", "story"].includes(style) ? "documentary" : "tech";
+  const mood = clean(written.mood || "").toLowerCase();
+  const MOOD_MAP = { mystery: ["mystery", "suspense"], ancient: ["ancient", "solemn", "history"], reflective: ["reflective", "emotional", "calm"], science: ["science", "future"], tension: ["tension", "investigation", "dark", "suspense"], awe: ["awe", "wonder", "space"], epic: ["epic", "triumph", "driving"], future: ["future", "driving"], modern: ["modern", "dark"], "sci-fi": ["sci-fi", "eerie"], calm: ["calm", "minimal", "light"], uplifting: ["uplifting", "bright", "light"] };
+  const tags = MOOD_MAP[mood] || [];
+  const avgEnergy = beats.reduce((a, b) => a + (b.energy || 2), 0) / beats.length;
+  const scored = cat.tracks.map((t) => ({ t, score: (t.category === wantCat ? 3 : 0) + t.moods.filter((m) => tags.includes(m)).length * 2 - Math.abs(t.energy - avgEnergy) + ((Number(process.env.SEED) || paragraph.length) % 7) * 0.01 * (t.id.length % 5) }));
+  music = scored.sort((a, b) => b.score - a.score)[0]?.t || null;
+} catch (e) {
+  console.warn("music catalog unavailable:", e.message);
+}
+
 /* ═════════════ WRITE + REPORT ═════════════ */
 const quality = scoreEdit(beats, menu);
 const hookText = clean(hooks[chosen]?.text || lines[0].text);
@@ -189,7 +205,9 @@ const job = {
   handle,
   ...(logo ? { logo } : {}),
   hooks: hooks.map((h) => clean(h.text)),
-  caption: String(written.caption || "").trim(),
+  caption: [String(written.caption || "").trim(), music ? `
+🎵 Music: ${music.attribution}` : ""].join("").trim(),
+  ...(music ? { music: music.file, musicCredit: music.attribution } : {}),
   quality,
   ...(flagged.size ? { unverifiedNumbers: [...flagged] } : {}),
   beats,
@@ -213,6 +231,7 @@ const report = [
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
   ...(removed.length ? ["", `🧹 **Removed invented attribution (not in your paragraph):** ${removed.join("; ")}`] : []),
   "",
+  ...(music ? [`🎵 **Music:** ${music.title} (${music.category}, ${music.moods.join("/")}) — mood "${clean(written.mood || "auto")}". Credit is already in the caption.`, ""] : []),
   "**Caption:**",
   "```",
   job.caption,

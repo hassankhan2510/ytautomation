@@ -93,8 +93,17 @@ for (const [i, b] of job.beats.entries()) {
     else console.log("  → no image; the primitive renders its no-image look");
   }
 }
+// Music credit (CC BY tracks require it in the caption/description).
+if (job.music) {
+  try {
+    const cat = JSON.parse(fs.readFileSync("public/music/catalog.json", "utf8"));
+    const t = cat.tracks.find((x) => x.file === job.music);
+    if (t) job.credits.push({ beat: "music", title: t.title, artist: t.artist, license: t.license, url: t.sourceUrl });
+    if (!fs.existsSync(path.join("public", job.music))) { console.warn(`music ${job.music} not found — rendering without music`); delete job.music; }
+  } catch (e) { console.warn("music catalog:", e.message); }
+}
 if (job.credits.length) {
-  const lines = ["### Image credits (put CC BY / BY-SA ones in the caption)", ...job.credits.map((c) => `- ${c.title} — ${c.artist} · ${c.license} · ${c.url}`)];
+  const lines = ["### Credits — images + music (put CC BY / BY-SA ones in the caption)", ...job.credits.map((c) => `- ${c.title} — ${c.artist} · ${c.license} · ${c.url}`)];
   console.log(lines.join("\n"));
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, lines.join("\n") + "\n");
 }

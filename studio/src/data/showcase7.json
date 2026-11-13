@@ -5,6 +5,7 @@
   "seed": 97,
   "handle": "@cohort_zero",
   "logo": "brand/cohortzero-mark.png",
+  "music": "music/doc-lost-frontier.mp3",
   "beats": [
     {
       "text": "Let's go back to 1969.",
