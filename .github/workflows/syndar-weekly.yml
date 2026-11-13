@@ -1,11 +1,13 @@
-name: "Syndar — Weekly (auto: 1 long + 2 shorts, Sat)"
+name: "Syndar — Weekly (STOPPED — manual only)"
 
 # Fully autonomous: the scout picks a trending deep-tech / physical-AI topic, the machine builds ONE
 # long + TWO shorts in YOUR cloned voice and uploads all as PRIVATE for review. Runs once a week (Sat)
 # = 1 long + 2 shorts/week. Blank topic on manual runs = auto-pick.
+# STOPPED 2026-11-13 at the creator's request: all Syndar automation is off (no YouTube, no Buffer/LinkedIn).
+# To restart, uncomment the schedule below.
 on:
-  schedule:
-    - cron: "0 23 * * 6" # Saturday ~18:00 US-Eastern — tech/dev audience most active in the evening
+  # schedule:
+  #   - cron: "0 23 * * 6" # Saturday ~18:00 US-Eastern
   workflow_dispatch:
     inputs:
       topic:
