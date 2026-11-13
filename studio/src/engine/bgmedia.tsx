@@ -20,9 +20,10 @@ export const BgMedia: React.FC<{ beat: TimedBeat; seed: number }> = ({ beat, see
   const kb = beat.bgKind === "image"
     ? `scale(${interpolate(t, [0, 1], [1.08, 1.2])}) translate(${dir * interpolate(t, [0, 1], [-1.5, 1.5])}%, ${interpolate(t, [0, 1], [1, -1])}%)`
     : `scale(${interpolate(t, [0, 1], [1.04, 1.1])})`;
-  // Scrim strength: text-heavy and calm beats get more, so the words always win over the footage.
-  const base = theme.vivid ? 0.5 : theme.dark ? 0.52 : 0.58;
-  const mid = base - 0.12;
+  // Neutral scrim (dark on dark themes, light on light themes) so the FOOTAGE keeps its real colours;
+  // heavier at the top and bottom where titles + captions sit, light in the middle. Brand colour is only
+  // a faint wash — a full theme-colour scrim made every clip look orange/purple.
+  const shade = theme.dark ? "#000000" : "#FFFFFF";
   return (
     <AbsoluteFill style={{ overflow: "hidden", background: theme.bg }}>
       <AbsoluteFill style={{ transform: kb }}>
@@ -34,10 +35,10 @@ export const BgMedia: React.FC<{ beat: TimedBeat; seed: number }> = ({ beat, see
       </AbsoluteFill>
       <AbsoluteFill
         style={{
-          background: `linear-gradient(180deg, ${alpha(theme.bg, base + 0.18)} 0%, ${alpha(theme.bg, mid)} 30%, ${alpha(theme.bg, mid)} 58%, ${alpha(theme.bg, base + 0.28)} 100%)`,
+          background: `linear-gradient(180deg, ${alpha(shade, 0.62)} 0%, ${alpha(shade, 0.3)} 26%, ${alpha(shade, 0.26)} 55%, ${alpha(shade, 0.72)} 100%)`,
         }}
       />
-      {theme.vivid ? <AbsoluteFill style={{ background: alpha(theme.accent, 0.1) }} /> : null}
+      <AbsoluteFill style={{ background: alpha(theme.vivid ? theme.accent : theme.bg2, theme.vivid ? 0.07 : 0.12) }} />
     </AbsoluteFill>
   );
 };

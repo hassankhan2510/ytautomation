@@ -3,7 +3,9 @@ STUDIO — NARRATE: speak every beat of a render-props job and lock the timeline
 
   python scripts/narrate.py out/props.json            (edits the props in place)
 
-Env: VOICE = mine (Chatterbox clone of voice/voice_ref.wav, default) | kokoro | edge | none
+Env: VOICE = mine (Chatterbox clone, English) | omnivoice (OmniVoice clone — Urdu + English, Apache-2.0)
+          | kokoro | edge | none
+Urdu reels: each beat may carry `speak` (Urdu script) — the voice reads that while the screen shows `text`.
 
 Each beat is synthesized separately, trimmed of dead air, then joined with natural pauses
 (longer after a full stop). Because every beat's audio is measured, each scene starts exactly
@@ -30,6 +32,9 @@ OUT = os.path.join(ROOT, "public", OUT_REL)
 
 _chatter = None
 _kokoro = None
+_omni = None
+_omni_prompt = None
+_omni_lang_arg = None
 
 
 def load_chatterbox():
@@ -79,6 +84,40 @@ def synth_mine(text):
     # Slightly more expressive + a touch faster than default = Gen-Z explainer pacing.
     wav = m.generate(text, audio_prompt_path=REF, exaggeration=0.6, cfg_weight=0.4)
     return to_mono_24k(wav.squeeze().cpu().numpy(), m.sr)
+
+
+def load_omnivoice():
+    """OmniVoice (k2-fsa) on CPU. One voice-clone prompt from an 8 s clip of the reference (3-10 s is
+    what OmniVoice recommends), reused for every beat."""
+    global _omni, _omni_prompt, _omni_lang_arg
+    if _omni is None:
+        import inspect
+        import subprocess
+        import tempfile
+
+        import torch
+        from omnivoice import OmniVoice
+
+        torch.set_num_threads(os.cpu_count() or 4)
+        _omni = OmniVoice.from_pretrained("k2-fsa/OmniVoice", device_map="cpu", dtype=torch.float32)
+        params = inspect.signature(_omni.generate).parameters
+        _omni_lang_arg = next((p for p in ("language", "language_id", "lang") if p in params), None)
+        clip = os.path.join(tempfile.gettempdir(), "omni_ref_clip.wav")
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", "0.5", "-t", "8", "-i", REF, clip], check=True)
+        _omni_prompt = _omni.create_voice_clone_prompt(ref_audio=clip) if hasattr(_omni, "create_voice_clone_prompt") else clip
+        print(f"  OmniVoice ready (language arg: {_omni_lang_arg})")
+    return _omni
+
+
+def synth_omnivoice(text):
+    m = load_omnivoice()
+    lang = "ur" if re.search("[؀-ۿ]", text) else "en"  # Urdu/Arabic-script letters → Urdu
+    kw = {"text": text}
+    kw.update({"ref_audio": _omni_prompt} if isinstance(_omni_prompt, str) else {"voice_clone_prompt": _omni_prompt})
+    if _omni_lang_arg:
+        kw[_omni_lang_arg] = lang
+    audio = m.generate(**kw)
+    return to_mono_24k(audio[0], 24000)
 
 
 def synth_kokoro(text):
@@ -136,15 +175,20 @@ def main():
         print("VOICE=none — rendering without narration")
         return
 
-    engines = {"mine": [synth_mine, synth_kokoro, synth_edge], "kokoro": [synth_kokoro, synth_edge], "edge": [synth_edge]}[mode if mode in ("mine", "kokoro", "edge") else "mine"]
-    if engines[0] is synth_mine and not os.path.exists(REF):
+    engines = {
+        "mine": [synth_mine, synth_kokoro, synth_edge],
+        "omnivoice": [synth_omnivoice, synth_mine, synth_kokoro, synth_edge],
+        "kokoro": [synth_kokoro, synth_edge],
+        "edge": [synth_edge],
+    }[mode if mode in ("mine", "omnivoice", "kokoro", "edge") else "mine"]
+    if engines[0] in (synth_mine, synth_omnivoice) and not os.path.exists(REF):
         print(f"! {REF} missing — falling back to Kokoro")
         engines = engines[1:]
 
     used = None
     segments = []
     for i, beat in enumerate(job["beats"]):
-        text = speakable(beat.get("text", ""))
+        text = speakable(beat.get("speak") or beat.get("text", ""))
         if not text:
             segments.append(np.zeros(int(0.4 * SR), dtype=np.float32))
             continue

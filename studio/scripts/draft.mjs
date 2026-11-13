@@ -29,6 +29,9 @@ const handle = process.env.HANDLE || "@cohort_zero";
 // and is copied to public/brand/cohortzero-mark.png; other channels pass LOGO.
 const logo = process.env.LOGO || (handle === "@cohort_zero" ? "brand/cohortzero-mark.png" : "");
 const verbatim = /^(yes|true|1)$/i.test(process.env.VERBATIM || "");
+// LANGUAGE: english (default) | urdu. Urdu reels: the voice reads Urdu SCRIPT (English tech words kept
+// in English) while the screen + captions show ROMAN Urdu — how Pakistani Gen-Z actually types.
+const language = (process.env.LANGUAGE || "english").toLowerCase() === "urdu" ? "urdu" : "english";
 const clean = (s) => String(s ?? "").replace(/[*_#`]/g, "").replace(/\s+/g, " ").trim();
 
 /* ───────────── Script splitting (verbatim mode) ───────────── */
@@ -74,10 +77,11 @@ Return ONLY JSON:
 {"facts":[every concrete fact in the SOURCE: numbers, dates, names, places — copied, not invented],
  "hooks":[{"text":"…","type":"curiosity|contrarian|pov|number|stakes","score":1-10}] (exactly 3, max 12 words each, different types),
  "chosen": index of the best hook,
- "lines":[{"text":"spoken line","intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
+ "lines":[{"text":"${language === "urdu" ? "the line in ROMAN Urdu (Latin letters) mixed with English, as shown on screen" : "spoken line"}",${language === "urdu" ? '"speak":"the SAME line in Urdu script (Nastaliq/Arabic letters) for the voice — keep English/tech words (AI, technology, startup...) in English Latin letters",' : ""}"intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
  "mood": one of [mystery, ancient, reflective, science, tension, awe, epic, future, modern, sci-fi, calm, uplifting] — the music mood of the whole reel,
  "caption":"1-2 short lines + a question that drives comments + 5 hashtags"}
-SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
+${language === "urdu" ? `LANGUAGE: Urdu for a Pakistani Gen-Z audience — natural spoken Urdu/Hindustani, code-switching to English for tech and modern words the way young Pakistanis really talk (e.g. "Aaj hum AI ke baare mein baat karenge, aur ye technology sab kuch change kar degi."). "text" is Roman Urdu; "speak" is the identical sentence in Urdu script with the English words left in English. Hooks, caption and visuals are in Roman Urdu/English.
+` : ""}SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
 - ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, spoken casual English (contractions, 'you'), no emojis/markdown."}
 - ${verbatim ? "" : "Structure: hook (open loop) → context → 3-6 escalating facts/turns (a pattern interrupt every ~3 lines: question, myth, 'but here's the thing') → payoff → takeaway. Do NOT write a follow/CTA line; it is added automatically."}
 - intent = what the line IS: a date → "date", a location → "place", a person → "person", a big number → "bigNumber", two things side by side → "comparison", steps → "process", A causes B → "causeEffect", a study → "research", a misconception → "myth", hidden info → "secret", a ranking/set → "list", how it changed → "change", a tech mechanism → "tech". Use "fact"/"lesson" only when nothing more specific fits. Vary intents.
@@ -94,6 +98,7 @@ const written = await groqJSON(writerSystem, writerUser, { maxTokens: 3000, temp
 if (!written || !Array.isArray(written.lines) || !written.lines.length) throw new Error("Writer returned no script lines.");
 let lines = written.lines.slice(0, verbatim ? 24 : 14).map((l) => ({
   text: clean(l?.text),
+  ...(language === "urdu" && clean(l?.speak) ? { speak: clean(l.speak) } : {}),
   intent: INTENT_LIST.includes(l?.intent) ? l.intent : "fact",
   energy: [1, 2, 3].includes(Number(l?.energy)) ? Number(l.energy) : 2,
   visual: clean(l?.visual).slice(0, 120),
@@ -113,7 +118,7 @@ console.log(lines.map((l, i) => `  ${i + 1}. [${l.intent}] ${l.text}`).join("\n"
 const checkerSystem = `You are a strict FACT-CHECKER for a factual short-video channel. For each numbered script line,
 decide if every factual claim in it (numbers, dates, names, materials, causes, superlatives, "that's why" reasons)
 is directly supported by the SOURCE. Style, questions, hooks and opinions without facts are fine.
-Return ONLY JSON: {"lines":[{"i":n,"ok":true|false,"claim":"the unsupported part","fix":"the line rewritten using ONLY source facts, same tone, 5-14 words"}]} — one entry per line.`;
+Return ONLY JSON: {"lines":[{"i":n,"ok":true|false,"claim":"the unsupported part","fix":"the line rewritten using ONLY source facts, same tone and language, 5-14 words"${language === "urdu" ? ',"fix_speak":"the same fixed line in Urdu script, English words kept in English"' : ""}}]} — one entry per line.`;
 const checkerUser = `SOURCE:
 """${paragraph.slice(0, 6000)}"""
 
@@ -129,6 +134,7 @@ for (const c of checked?.lines || []) {
   if (!verbatim && fix && fix.split(" ").length >= 3) {
     factFixes.push({ before: lines[k].text, after: fix, claim: clean(c.claim) });
     lines[k].text = fix;
+    if (language === "urdu") { if (clean(c.fix_speak)) lines[k].speak = clean(c.fix_speak); else delete lines[k].speak; }
   } else {
     factFixes.push({ before: lines[k].text, after: null, claim: clean(c.claim) });
   }
@@ -145,6 +151,7 @@ const allCands = [...new Set(cast.flatMap((c) => c.candidates))];
 const directorSystem = `You are the DIRECTOR / motion editor of a premium Gen-Z Instagram studio. For EACH script line choose the single best scene from THAT LINE'S candidates and fill its props.
 Return ONLY JSON: {"beats":[{"i":line number,"primitive":id,"why":"max 8 words","emphasis":[1-2 words from the line],"bg":"2-4 word stock-footage search","props":{…}}]} — exactly one per line, in order.
 BACKGROUND ("bg"): every line gets a real stock video behind it. Give a concrete, FILMABLE search a stock library will have (objects, places, textures, actions, moods) that matches the line — e.g. "pyramid desert sunset", "ancient stone blocks", "server room lights", "city night timelapse". Never names of people, brands or specific events; vary it every line.
+Backgrounds must stay ON the reel's SUBJECT — never show a different place, landmark, era or object than the source is about (no Colosseum in a pyramid reel, no modern skyline in an ancient-history reel). For abstract lines, use a fresh angle of the main subject (close-up, texture, aerial, night, time-lapse).
 CHOOSING: the scene must SHOW what the line SAYS (a date → time travel, a place → map lock, a comparison → true-scale or versus…). Prefer the richest, most cinematic option that fits; never pick the same id twice in the whole reel; avoid two plain-text scenes in a row.
 PROPS: follow the schema exactly; on-screen strings are SHORT (titles ≤ 5 words, list items ≤ 4 words). Use ONLY facts from FACTS — never invent numbers, quotes, sources or names.
 IMAGES (REQUIRED for archiveFilm, museumFrame, photo, thenNow, beforeAfter): always give "search": 2-5 words naming a REAL subject to find an archival/public-domain photo (e.g. "Apollo Guidance Computer", "Saturn V launch") AND a "prompt" fallback describing the scene visually (era, place, lighting; no text, no logos, no real living person's likeness). thenNow uses search/prompt for THEN and search2/prompt2 for NOW.
@@ -172,6 +179,7 @@ const beats = lines.map((l, k) => {
   if (!primitive) primitive = cands.find((c) => !used.has(c)) || menu.find((m) => !used.has(m.id) && m.id !== "outro")?.id || "stomp";
   used.add(primitive);
   const beat = { text: l.text, primitive, energy: l.energy };
+  if (l.speak) beat.speak = l.speak;
   if (Array.isArray(d.emphasis) && d.emphasis.length) beat.emphasis = d.emphasis.slice(0, 2).map(clean);
   if (d.props && typeof d.props === "object" && !Array.isArray(d.props) && primitive === d.primitive) beat.props = d.props;
   if (d.why) beat.why = clean(d.why);
@@ -208,6 +216,7 @@ const swapSafe = (b, reason) => {
   const usedNow = new Set(beats.map((x) => x.primitive));
   const pick = SAFE.find((s) => !usedNow.has(s)) || "flip3d";
   swaps.push({ from: b.primitive, to: pick, reason, text: b.text });
+  delete b.bg; // its footage search was written for the rejected content (e.g. a Colosseum comparison)
   b.primitive = pick;
   b.props = pick === "factCard" ? { fact: b.text } : undefined;
   if (!b.props) delete b.props;
@@ -299,6 +308,7 @@ const job = {
   theme,
   seed: Number(process.env.SEED) || Math.floor(Math.random() * 9000) + 100,
   handle,
+  language,
   ...(logo ? { logo } : {}),
   hooks: hooks.map((h) => clean(h.text)),
   caption: [String(written.caption || "").trim(), music ? `

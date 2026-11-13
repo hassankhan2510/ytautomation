@@ -11,6 +11,9 @@ export type Energy = 1 | 2 | 3;
 export type Beat = {
   /** What is SAID during this beat (narration). Drives timing + captions. */
   text: string;
+  /** Optional voice-only version of the line (e.g. Urdu script) when the screen shows a different
+   *  spelling (Roman Urdu). narrate.py reads this; captions/scenes use `text`. */
+  speak?: string;
   /** Primitive id from the registry (e.g. "stomp", "terminal", "notifs"). */
   primitive: string;
   /** Primitive-specific props (see each primitive's `props` doc in the registry). */

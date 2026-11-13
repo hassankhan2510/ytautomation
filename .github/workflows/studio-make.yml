@@ -22,10 +22,15 @@ on:
         type: choice
         options: [crimson, ocean, grape, sunrise, lagoon, mango, mint, neon, acid, electric, paper, taxi]
         default: crimson
-      voice:
-        description: "Narration: mine = your cloned voice · kokoro / edge = AI voices · none = silent"
+      language:
+        description: "Language: english · urdu (your voice speaks Urdu + English; captions in Roman Urdu)"
         type: choice
-        options: [mine, kokoro, edge, none]
+        options: [english, urdu]
+        default: english
+      voice:
+        description: "Narration: mine = your clone (English) · omnivoice = your clone (Urdu+English, slower) · kokoro / edge = AI voices · none"
+        type: choice
+        options: [mine, omnivoice, kokoro, edge, none]
         default: mine
       verbatim:
         description: "no = AI writes the script (default) · yes = read my text word-for-word"
@@ -51,7 +56,7 @@ on:
 jobs:
   make:
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    timeout-minutes: 120
     permissions:
       contents: write
     defaults:
@@ -77,7 +82,12 @@ jobs:
         run: |
           pip install numpy soundfile edge-tts
           pip install kokoro
-          if [ "${{ github.event.inputs.voice }}" = "mine" ]; then pip install chatterbox-tts peft resemble-perth; fi
+          if [ "${{ github.event.inputs.language }}" = "urdu" ] || [ "${{ github.event.inputs.voice }}" = "omnivoice" ]; then
+            pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+            pip install omnivoice
+          elif [ "${{ github.event.inputs.voice }}" = "mine" ]; then
+            pip install chatterbox-tts peft resemble-perth
+          fi
 
       - name: ① Write hook + script + cast scenes (AI director)
         id: draft
@@ -85,6 +95,7 @@ jobs:
           PARAGRAPH: ${{ github.event.inputs.paragraph }}
           STYLE: ${{ github.event.inputs.style }}
           VERBATIM: ${{ github.event.inputs.verbatim }}
+          LANGUAGE: ${{ github.event.inputs.language }}
           THEME: ${{ github.event.inputs.theme }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
@@ -105,7 +116,8 @@ jobs:
 
       - name: ③ Narrate (your voice) + lock timing to the speech
         env:
-          VOICE: ${{ github.event.inputs.voice }}
+          # Urdu reels always use OmniVoice (the Chatterbox clone is English-only).
+          VOICE: ${{ (github.event.inputs.language == 'urdu' && github.event.inputs.voice != 'none') && 'omnivoice' || github.event.inputs.voice }}
         run: python scripts/narrate.py out/props.json
 
       - name: ④ Render the reel

@@ -109,7 +109,8 @@ const bgQuery = (b) => {
   if (b.bg) return String(b.bg);
   const words = String(b.text || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
   const topic = String(job.title || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
-  return [...new Set([...words.sort((x, y) => y.length - x.length).slice(0, 2), ...topic.slice(0, 1)])].join(" ") || "abstract light";
+  // No director query (e.g. the scene was swapped by the fact guard) → anchor on the reel's subject.
+  return [...new Set([...topic.slice(0, 2), ...words.sort((x, y) => y.length - x.length).slice(0, 1)])].join(" ") || "abstract light";
 };
 async function pexels(url) {
   const r = await fetch(url, { headers: { Authorization: PEXELS }, signal: AbortSignal.timeout(30_000) });
