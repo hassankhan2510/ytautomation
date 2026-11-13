@@ -58,6 +58,7 @@ def main():
     # B knobs: direct samples per frame, final spp, temporal half-window, cache cell size, cache samples
     ap.add_argument("--b", default="2,2,4,0.06,256;1,1,6,0.06,256;4,4,4,0.04,512")
     ap.add_argument("--vis-stride", type=int, default=4)
+    ap.add_argument("--denoise", action="store_true", help="also score both methods after Intel OIDN (pip install pyoidn)")
     args = ap.parse_args()
     W, H, F = args.W, args.H, args.F
     os.makedirs(args.out, exist_ok=True)
@@ -97,6 +98,21 @@ def main():
         np.savez_compressed(ref_file, **{str(k): v for k, v in REF.items()})
     # how noisy is the reference itself? (two halves would be better; report its expected floor)
 
+    AUX = {}
+    dn = None
+    if args.denoise:
+        import pyoidn
+        T.aux_buffers(tc, 0, 8, 8, 1, SPH, BOX, MAT)  # compile (excluded)
+        t1 = time.time()
+        for f in ev:
+            AUX[f] = T.aux_buffers(CAM, f, W, H, 8, SPH, BOX, MAT)
+        aux_sec = (time.time() - t1) / len(ev)  # charged to BOTH methods, per frame
+        def dn(img, f):
+            a, n = AUX[f]
+            return pyoidn.denoise(np.ascontiguousarray(img, np.float32), albedo=a, normal=n, hdr=True)
+        dn(REF[ev[0]], ev[0])  # initialise the device once (excluded)
+        log("denoiser: Intel OIDN via pyoidn (albedo + normal guides)")
+
     res = {"shot": {"W": W, "H": H, "F": F, "eval_frames": ev, "ref_spp": args.ref_spp}, "A0": [], "A1": [], "B": []}
 
     # ── A0: per-frame path tracing ──
@@ -106,6 +122,15 @@ def main():
         per_frame = (time.time() - t0) / len(ev)
         e = np.array([errors(imgs[f], REF[f]) for f in ev])
         row = {"spp": spp, "sec_per_frame": per_frame, "shot_sec": per_frame * F, "relmse": float(e[:, 0].mean()), "psnr": psnr(e[:, 1].mean())}
+        if dn:
+            t1 = time.time()
+            dimg = {f: dn(imgs[f], f) for f in ev}
+            dsec = (time.time() - t1) / len(ev) + aux_sec
+            de = np.array([errors(dimg[f], REF[f]) for f in ev])
+            row["dn"] = {"shot_sec": (per_frame + dsec) * F, "relmse": float(de[:, 0].mean()), "psnr": psnr(de[:, 1].mean())}
+            log(f"   +OIDN: shot {row['dn']['shot_sec']:7.1f}s  relMSE {row['dn']['relmse']:.5f}  PSNR {row['dn']['psnr']:.2f}")
+            if spp in (1, 4):
+                save_png(dimg[ev[len(ev) // 2]], os.path.join(args.out, f"A0_spp{spp}_oidn.png"))
         res["A0"].append(row)
         log(f"A0 spp={spp:3d}  {per_frame:6.2f}s/frame  shot {row['shot_sec']:7.1f}s  relMSE {row['relmse']:.5f}  PSNR {row['psnr']:.2f}")
         if spp in (4, 16):
@@ -168,6 +193,14 @@ def main():
         e = np.array([errors(outs[f], REF[f]) for f in ev])
         row = {"cfg": {"direct_spp": nd, "spp": spp, "K": K, "cell": h, "cache_spp": ns, "filter": filt}, "cells": int(len(ukeys)), "cache_misses": int(miss),
                "shot_sec": sec, "stages": tm, "relmse": float(e[:, 0].mean()), "psnr": psnr(e[:, 1].mean()), "per_eval": [psnr(x) for x in e[:, 1]]}
+        if dn:
+            t1 = time.time()
+            dimg = {f: dn(outs[f], f) for f in ev}
+            dsec = (time.time() - t1) / len(ev) + aux_sec
+            de = np.array([errors(dimg[f], REF[f]) for f in ev])
+            row["dn"] = {"shot_sec": sec + dsec * F, "relmse": float(de[:, 0].mean()), "psnr": psnr(de[:, 1].mean())}
+            log(f"   +OIDN: shot {row['dn']['shot_sec']:7.1f}s  relMSE {row['dn']['relmse']:.5f}  PSNR {row['dn']['psnr']:.2f}")
+            save_png(dimg[ev[len(ev) // 2]], os.path.join(args.out, f"B_{cfg.replace(',', '_')}_oidn.png"))
         res["B"].append(row)
         log(f"B {cfg}: cells {len(ukeys)} misses {miss}  shot {sec:7.1f}s {({k: round(v, 1) for k, v in tm.items()})}  relMSE {row['relmse']:.5f}  PSNR {row['psnr']:.2f}  per-frame {[round(x, 1) for x in row['per_eval']]}")
         save_png(outs[ev[len(ev) // 2]], os.path.join(args.out, f"B_{cfg.replace(',', '_').replace(';', '')}.png"))
@@ -175,24 +208,25 @@ def main():
 
     save_png(REF[ev[len(ev) // 2]], os.path.join(args.out, "REF.png"))
 
-    # ── equal-quality compute ratio ──
-    a = res["A0"]
-    s = np.log([r["spp"] for r in a])
-    sec_per_spp = float(np.polyfit([r["spp"] for r in a], [r["sec_per_frame"] for r in a], 1)[0])
-    fits = {}
-    for metric, val in (("relmse", lambda r: math.log(r["relmse"])), ("psnr", lambda r: -r["psnr"] / 10 * math.log(10))):
-        slope, icpt = np.polyfit(s, [val(r) for r in a], 1)
-        fits[metric] = (slope, icpt)
+    # ── equal-quality compute: interpolate A0's MEASURED cost-vs-quality curve (log space) ──
+    def a0_cost_at(target_psnr, key):
+        pts = [(r[key]["psnr"] if key else r["psnr"], r[key]["shot_sec"] if key else r["shot_sec"]) for r in res["A0"]]
+        pts.sort()
+        if target_psnr <= pts[0][0]:
+            return pts[0][1], "<=", True
+        for (q0, c0), (q1, c1) in zip(pts, pts[1:]):
+            if q0 <= target_psnr <= q1:
+                u = (target_psnr - q0) / max(q1 - q0, 1e-9)
+                return math.exp(math.log(c0) + u * (math.log(c1) - math.log(c0))), "=", False
+        # beyond the measured range: report the measured maximum as a LOWER bound
+        return pts[-1][1], ">=", True
     for row in res["B"]:
-        for metric, val in (("relmse", math.log(row["relmse"])), ("psnr", -row["psnr"] / 10 * math.log(10))):
-            slope, icpt = fits[metric]
-            spp_eq = math.exp((val - icpt) / slope)
-            a_sec = sec_per_spp * spp_eq * F
-            row[f"A0_equal_{metric}"] = {"spp": spp_eq, "shot_sec": a_sec, "ratio": a_sec / row["shot_sec"]}
-        log(f"B {row['cfg']}: A0 needs ~{row['A0_equal_psnr']['spp']:.0f} spp for the same PSNR -> {row['A0_equal_psnr']['ratio']:.1f}x more compute "
-            f"(relMSE-matched: {row['A0_equal_relmse']['spp']:.0f} spp, {row['A0_equal_relmse']['ratio']:.1f}x)")
-    res["fits"] = {k: {"slope": v[0], "intercept": v[1]} for k, v in fits.items()}
-    res["A0_sec_per_spp_frame"] = sec_per_spp
+        for key in ([None, "dn"] if dn else [None]):
+            b = row[key] if key else row
+            cost, rel, bound = a0_cost_at(b["psnr"], key)
+            b["A0_equal_psnr"] = {"shot_sec": cost, "ratio": cost / b["shot_sec"], "relation": rel}
+            tag = "denoised" if key else "raw"
+            log(f"B {row['cfg']} [{tag}] PSNR {b['psnr']:.2f}: per-frame needs {rel}{cost:.1f}s vs {b['shot_sec']:.1f}s -> {rel}{cost / b['shot_sec']:.1f}x")
     with open(os.path.join(args.out, "results.json"), "w") as fh:
         json.dump(res, fh, indent=1)
     log(f"wrote {args.out}/results.json")

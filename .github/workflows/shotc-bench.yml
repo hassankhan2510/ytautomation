@@ -16,6 +16,11 @@ on:
       ref_spp:
         description: "Reference samples per pixel"
         default: "1024"
+      denoise:
+        description: "Also score both methods after Intel OIDN denoising"
+        type: choice
+        options: ["yes", "no"]
+        default: "yes"
 
 jobs:
   bench:
@@ -29,15 +34,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install numba numpy pillow
+      - run: pip install numba numpy pillow pyoidn
       - name: Machine
         run: |
           nproc; lscpu | grep -E "Model name|^CPU\(s\)" || true
           { echo "### Machine"; echo '```'; lscpu | grep -E "Model name|^CPU\(s\)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Benchmark
+        env:
+          DENOISE: ${{ inputs.denoise == 'yes' && '--denoise' || '' }}
         run: |
           IFS=x read W H F <<< "${{ inputs.size }}"
-          python bench.py --W $W --H $H --F $F --ref-spp ${{ inputs.ref_spp }} --b "${{ inputs.b }}" --out runs/actions | tee bench.log
+          python bench.py --W $W --H $H --F $F --ref-spp ${{ inputs.ref_spp }} --b "${{ inputs.b }}" --out runs/actions $DENOISE | tee bench.log
           { echo "### Log"; echo '```'; grep -v "^  ref" bench.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:

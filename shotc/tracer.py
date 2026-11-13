@@ -636,3 +636,37 @@ def filter_cache(ckeys, C, clamp):
             r, g, b = 0.5 * r + 0.5 * mr, 0.5 * g + 0.5 * mg, 0.5 * b + 0.5 * mb
         out[i, 0], out[i, 1], out[i, 2] = r, g, b
     return out
+
+
+@nb.njit(parallel=True, fastmath=True, cache=True)
+def aux_buffers(CAM, f, W, H, spp, SPH, BOX, MAT):
+    """Anti-aliased first-hit albedo + normal: the guide images a production denoiser (OIDN) uses."""
+    A = np.zeros((H, W, 3), dtype=np.float32)
+    N = np.zeros((H, W, 3), dtype=np.float32)
+    for y in nb.prange(H):
+        for x in range(W):
+            s = seed(f * 13 + 1, y * W + x, 0xA0)
+            for q in range(spp):
+                s = nxt(s)
+                jx = u01(s)
+                s = nxt(s)
+                jy = u01(s)
+                ox, oy, oz, dx, dy, dz = cam_ray(CAM, f, x + jx, y + jy, W, H)
+                t, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
+                if m < 0:
+                    continue
+                if int(MAT[m, 3]) == LIGHT:
+                    A[y, x, 0] += 1.0
+                    A[y, x, 1] += 1.0
+                    A[y, x, 2] += 1.0
+                else:
+                    A[y, x, 0] += MAT[m, 0]
+                    A[y, x, 1] += MAT[m, 1]
+                    A[y, x, 2] += MAT[m, 2]
+                N[y, x, 0] += nx
+                N[y, x, 1] += ny
+                N[y, x, 2] += nz
+            for c in range(3):
+                A[y, x, c] /= spp
+                N[y, x, c] /= spp
+    return A, N
