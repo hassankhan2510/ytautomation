@@ -29,6 +29,8 @@ jobs:
   render:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    permissions:
+      contents: write
     defaults:
       run:
         working-directory: studio
@@ -81,3 +83,8 @@ jobs:
             studio/out/props.json
           retention-days: 30
           if-no-files-found: warn
+      - name: 📱 Phone link (plain .mp4 you can open + save on your phone)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_FILE: ${{ inputs.job }}
+        run: bash scripts/phone_link.sh "$(basename "$JOB_FILE" .json | cut -c12-)"

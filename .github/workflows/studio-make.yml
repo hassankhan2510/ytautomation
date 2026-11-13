@@ -172,6 +172,12 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
+      - name: 📱 Phone link (plain .mp4 you can open + save on your phone)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+        run: bash scripts/phone_link.sh "$(basename "$JOB_FILE" .json | cut -c12-)"
+
       - name: Save the draft (edit + re-render later with "Studio — Render Reel")
         if: always()
         working-directory: ${{ github.workspace }}
