@@ -17,7 +17,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { groqJSON } from "../../theranos-doc/scripts/lib_groq.mjs";
 import { castCandidates, INTENT_LIST, scoreEdit } from "./casting.mjs";
-import { speakFix } from "./speakfix.mjs";
+import { speakFix, urduGlue } from "./speakfix.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // The creator's input can mix FACTS with DIRECTIONS ("make the tone funny", "start with this hook",
@@ -55,8 +55,15 @@ function splitLong(words) {
   return [...splitLong(words.slice(0, best)), ...splitLong(words.slice(best))];
 }
 function segment(script) {
-  const sentences = script.replace(/\s+/g, " ").match(/[^.!?]+[.!?]+["')\]]*|[^.!?]+$/g) || [script];
-  return sentences.map((x) => x.trim()).filter(Boolean).flatMap((x) => splitLong(x.split(" ")));
+  // closing quotes (incl. curly ” ’ ») stay with their sentence — a line once started with a stray ”
+  const sentences = script.replace(/\s+/g, " ").match(/[^.!?]+[.!?]+["'”’»)\]]*|[^.!?]+$/g) || [script];
+  // a piece starting lowercase continues the previous sentence (e.g. after a quoted "...early?” to Pakistan's...")
+  const joined = [];
+  for (const x of sentences.map((x) => x.trim()).filter(Boolean)) {
+    if (joined.length && /^[a-z]/.test(x)) joined[joined.length - 1] += " " + x;
+    else joined.push(x);
+  }
+  return joined.flatMap((x) => splitLong(x.split(" ")));
 }
 
 /* ───────────── The library, parsed straight from the registry ───────────── */
@@ -230,7 +237,9 @@ if (factFixes.length) console.log(factFixes.map((f) => `  ✎ "${f.claim}" → $
  *   (a) make sure the on-screen text is casual ROMAN Urdu (translate if the writer drifted to English)
  *   (b) transliterate each line to Urdu SCRIPT for the voice ("speak"), English tech words kept in English.
  * If (b) still fails, the voice reads the Roman Urdu (OmniVoice handles it) — never an English reel. */
-const URDU_LETTERS = /[؀-ۿ]/;
+// Real Urdu LETTERS only — the Urdu comma "،" and full stop "۔" once let an all-Latin reply pass as "Urdu script".
+const URDU_LETTERS = /[ء-غف-يٹ-ۓ]/;
+const urduLetterCount = (t) => (String(t).match(/[ء-غف-يٹ-ۓ]/g) || []).length;
 const ROMAN_URDU_WORDS = /\b(hai|hain|ka|ki|ke|aur|ye|yeh|woh|nahi|nahin|kya|mein|main|hum|aap|tha|thi|thay|se|ko|par|bhi|ek|jo|sab|kuch|kaise|kyun|liye|wala|wali|gaya|gayi|raha|rahi|karna|karte|kar|diya|hota|hoti)\b/gi;
 const romanScore = (t) => (String(t).match(ROMAN_URDU_WORDS) || []).length;
 const urduReport = [];
@@ -248,7 +257,17 @@ Return ONLY JSON: {"lines":[{"i":n,"text":"..."}]}`,
       const k = Number(r?.i) - 1;
       if (lines[k] && romanScore(r?.text) >= 1) lines[k].text = clean(r.text);
     }
-    urduReport.push(`translated ${englishLines.length} English line(s) to Roman Urdu`);
+    // one retry, line by line, for anything still English
+    for (const x of englishLines.filter((x) => romanScore(lines[x.i].text) < 1)) {
+      const one = await groqJSON(
+        `Rewrite this ONE line in "Urdish": mostly English words in Latin letters, plus simple Urdu glue words (hai, tha, ye, aur, ke, ki, ka, ko, se, mein, pe, bhi, nahi, kya, phir, unhone). Same meaning and facts. Return ONLY JSON: {"text":"..."}`,
+        x.t,
+        { maxTokens: 300, temperature: 0.1 },
+      ).catch(() => null);
+      if (romanScore(one?.text) >= 1) lines[x.i].text = clean(one.text);
+    }
+    const still = lines.filter((l) => romanScore(l.text) < 1).length;
+    urduReport.push(`translated ${englishLines.length - still} English line(s) to Roman Urdu${still ? ` (${still} kept English)` : ""}`);
   }
   const transliterate = async (todo, temperature) => {
     const out = await groqJSON(
@@ -260,7 +279,9 @@ Return ONLY JSON: {"lines":[{"i":n,"urdu":"..."}]}`,
     );
     for (const r of out?.lines || []) {
       const k = Number(r?.i) - 1;
-      if (lines[k] && URDU_LETTERS.test(String(r?.urdu || ""))) lines[k].speak = clean(r.urdu);
+      const u = String(r?.urdu || "");
+      // accept only if the Roman glue words really became Urdu letters
+      if (lines[k] && urduLetterCount(u) >= 2 && (romanScore(lines[k].text) === 0 || romanScore(u) < romanScore(lines[k].text))) lines[k].speak = clean(u);
     }
   };
   console.log("③ URDU SCRIPT (voice)…");
@@ -268,9 +289,12 @@ Return ONLY JSON: {"lines":[{"i":n,"urdu":"..."}]}`,
   let missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
   if (missing.length) await transliterate(missing, 0.1);
   missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
-  // Voice-only pronunciation: acronyms + numbers said in English (screen keeps "RAM", "1969").
-  for (const l of lines) l.speak = speakFix(l.speak || l.text);
-  urduReport.push(`${lines.length - missing.length}/${lines.length} lines voiced from Urdu script${missing.length ? ` (${missing.length} read from Roman Urdu)` : ""}`);
+  // Deterministic safety net: any Roman glue word the LLM left (or a whole line it skipped) is
+  // written in Urdu script from a fixed dictionary, so the voice never reads "hai/mein" with English rules.
+  // Then voice-only pronunciation: acronyms + numbers said in English (screen keeps "RAM", "1969").
+  for (const l of lines) l.speak = speakFix(urduGlue(l.speak || l.text));
+  const latinOnly = lines.filter((l) => romanScore(l.text) >= 1 && !URDU_LETTERS.test(l.speak)).length;
+  urduReport.push(`${lines.length - missing.length}/${lines.length} lines voiced from AI Urdu script${missing.length ? ` (${missing.length} by the built-in glue-word dictionary)` : ""}${latinOnly ? ` · ${latinOnly} still Latin` : ""}`);
   console.log(`  ${urduReport.join(" · ")}`);
 }
 

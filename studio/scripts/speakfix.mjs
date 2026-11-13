@@ -34,6 +34,29 @@ export function speakFix(text) {
     .replace(/\b(\d[\d,]*(?:\.\d+)?)\b/g, (m) => numberWords(m))
     .replace(/\b[A-Z][A-Z0-9]{1,6}\b/g, (m) => WORD_ACRONYMS[m] || (pronounceable(m) ? m[0] + m.slice(1).toLowerCase() : /^[A-Z]+$/.test(m) ? m.split("").map((c) => LETTER[c]).join(" ") : m));
 }
+/* Roman-Urdu glue words -> Urdu script, from a fixed dictionary (the safety net when the LLM transliteration
+ * returns Latin). Only these everyday words; every English word stays Latin. Matches lowercase or
+ * Capitalised words only (never ALL-CAPS brands like ABHI), and skips words that are also common English
+ * ("the", "main", "to", "abhi" is skipped too because it is a brand name in our scripts). */
+const GLUE = {
+  hai: "ہے", hain: "ہیں", ho: "ہو", hota: "ہوتا", hoti: "ہوتی", hote: "ہوتے", hua: "ہوا", hui: "ہوئی", huay: "ہوئے", hue: "ہوئے",
+  tha: "تھا", thi: "تھی", thay: "تھے", ka: "کا", ki: "کی", ke: "کے", ko: "کو", se: "سے", ne: "نے", mein: "میں", pe: "پہ", par: "پر",
+  aur: "اور", ya: "یا", ye: "یہ", yeh: "یہ", wo: "وہ", woh: "وہ", bhi: "بھی", toh: "تو", nahi: "نہیں", nahin: "نہیں", na: "نہ",
+  kya: "کیا", kyun: "کیوں", kaise: "کیسے", kab: "کب", kahan: "کہاں", kaun: "کون", jo: "جو", jab: "جب", agar: "اگر", lekin: "لیکن", magar: "مگر",
+  sirf: "صرف", phir: "پھر", ab: "اب", sab: "سب", kuch: "کچھ", koi: "کوئی", ek: "ایک", bohot: "بہت", bahut: "بہت", sach: "سچ", matlab: "مطلب",
+  hum: "ہم", aap: "آپ", aapko: "آپ کو", unhone: "انہوں نے", unho: "انہوں", unka: "ان کا", unki: "ان کی", unke: "ان کے", iska: "اس کا", iski: "اس کی", iske: "اس کے",
+  apna: "اپنا", apni: "اپنی", apne: "اپنے", log: "لوگ", logon: "لوگوں", saath: "ساتھ", liye: "لیے", tak: "تک", bhar: "بھر", wala: "والا", wali: "والی", wale: "والے",
+  kar: "کر", karna: "کرنا", karte: "کرتے", karta: "کرتا", karti: "کرتی", kiya: "کیا", kiye: "کیے", diya: "دیا", di: "دی", diye: "دیے", liya: "لیا",
+  raha: "رہا", rahi: "رہی", rahe: "رہے", gaya: "گیا", gayi: "گئی", gaye: "گئے", sakte: "سکتے", sakta: "سکتا", sakti: "سکتی", milta: "ملتا", mili: "ملی", mila: "ملا",
+  lete: "لیتے", dete: "دیتے", pata: "پتا", hoon: "ہوں", hun: "ہوں", tum: "تم", mera: "میرا", meri: "میری", mere: "میرے", yahan: "یہاں", wahan: "وہاں",
+  aaj: "آج", kal: "کل", pehle: "پہلے", baad: "بعد", saal: "سال", din: "دن", waqt: "وقت", zyada: "زیادہ", kam: "کم", bilkul: "بالکل", yaar: "یار",
+};
+export function urduGlue(text) {
+  return String(text)
+    .replace(/\bthe(?=\s*(?:[.,!?،۔]|$))/g, "تھے") // sentence-final "the" = Urdu "thay"
+    .replace(/\b[A-Za-z][a-z]*\b/g, (w) => GLUE[w.toLowerCase()] || w);
+}
+
 /* ALL-CAPS words said as a WORD (ABHI, FIFA, NEVER), not spelled out like UAE / IPO / HTML.
  * Same rule as pronounceable() in narrate.py (English reels). */
 const SAY3 = new Set(["NOT", "YES", "WHY", "HOW", "BIG", "NEW", "OLD", "ALL", "NOW", "AND", "THE", "WOW", "BUT", "WHO", "ONE", "TWO", "TEN", "TOP", "WIN", "OUT", "BAD", "GOD"]);
