@@ -80,7 +80,9 @@ def main():
     T.gather_cache(np.zeros((1, 3)), np.array([[0.0, 1.0, 0.0]]), np.array([1], np.int64), np.array([0], np.int64), C0w, 0.1, SPH, BOX, MAT, LGT)
     T.filter_cache(np.array([0], np.int64), C0w, 2.0)
     Pd, Dd = T.direct_buffer(tc, 0, 8, 8, 1, SPH, BOX, MAT, LGT)
-    T.render_B(tc, 1, 3, 8, 8, 1, 1, 0.1, 0.1, np.stack([Pd] * 3), np.stack([Dd] * 3), np.array([0], np.int64), np.zeros((1, 3), np.float32), SPH, BOX, MAT, LGT)
+    ck, cz = np.array([0], np.int64), np.zeros((1, 3), np.float32)
+    Pmw, Smw = T.spec_buffer(tc, 0, 8, 8, 1, 0.1, ck, cz, SPH, BOX, MAT, LGT)
+    T.render_B(tc, 1, 3, 8, 8, 1, 1, 0.1, 0.1, np.stack([Pd] * 3), np.stack([Dd] * 3), ck, cz, SPH, BOX, MAT, LGT, 1, 0.05, np.stack([Pmw] * 3), np.stack([Smw] * 3))
     log(f"compiled kernels in {time.time() - t0:.1f}s (excluded)")
 
     # ── reference ──
@@ -154,6 +156,8 @@ def main():
         parts = cfg.split(",")
         nd, spp, K, h, ns = int(parts[0]), int(parts[1]), int(parts[2]), float(parts[3]), int(parts[4])
         filt = float(parts[5]) if len(parts) > 5 else 0.0  # cache de-speckle clamp (0 = off)
+        Ks = int(parts[6]) if len(parts) > 6 else 0  # view-dependent (metal) reuse half-window (0 = off)
+        nspec = int(parts[7]) if len(parts) > 7 else 4  # reflection samples per metal pixel per frame
         tm = {}
         t0 = time.time()
         keys, pts = T.visibility(CAM, F, W, H, args.vis_stride, 2, h, SPH, BOX, MAT)
@@ -183,15 +187,24 @@ def main():
         for f in range(F):
             Ps[f], Ds[f] = T.direct_buffer(CAM, f, W, H, nd, SPH, BOX, MAT, LGT)
         tm["direct_buffers"] = time.time() - t1
+        Pm = np.full((1, 1, 1, 3), np.inf, np.float32)
+        Sm = np.zeros((1, 1, 1, 3), np.float32)
+        if Ks > 0:
+            t1 = time.time()
+            Pm = np.empty((F, H, W, 3), np.float32)
+            Sm = np.empty((F, H, W, 3), np.float32)
+            for f in range(F):
+                Pm[f], Sm[f] = T.spec_buffer(CAM, f, W, H, nspec, h, ukeys, C, SPH, BOX, MAT, LGT)
+            tm["spec_buffers"] = time.time() - t1
         t1 = time.time()
         outs, miss = {}, 0
         for f in range(F):
-            outs[f], m = T.render_B(CAM, f, F, W, H, spp, K, tol, h, Ps, Ds, ukeys, C, SPH, BOX, MAT, LGT)
+            outs[f], m = T.render_B(CAM, f, F, W, H, spp, K, tol, h, Ps, Ds, ukeys, C, SPH, BOX, MAT, LGT, Ks, math.radians(3.0), Pm, Sm)
             miss += m
         tm["final_frames"] = time.time() - t1
         sec = time.time() - t0
         e = np.array([errors(outs[f], REF[f]) for f in ev])
-        row = {"cfg": {"direct_spp": nd, "spp": spp, "K": K, "cell": h, "cache_spp": ns, "filter": filt}, "cells": int(len(ukeys)), "cache_misses": int(miss),
+        row = {"cfg": {"direct_spp": nd, "spp": spp, "K": K, "cell": h, "cache_spp": ns, "filter": filt, "spec_K": Ks, "spec_spp": nspec}, "cells": int(len(ukeys)), "cache_misses": int(miss),
                "shot_sec": sec, "stages": tm, "relmse": float(e[:, 0].mean()), "psnr": psnr(e[:, 1].mean()), "per_eval": [psnr(x) for x in e[:, 1]]}
         if dn:
             t1 = time.time()
@@ -204,7 +217,7 @@ def main():
         res["B"].append(row)
         log(f"B {cfg}: cells {len(ukeys)} misses {miss}  shot {sec:7.1f}s {({k: round(v, 1) for k, v in tm.items()})}  relMSE {row['relmse']:.5f}  PSNR {row['psnr']:.2f}  per-frame {[round(x, 1) for x in row['per_eval']]}")
         save_png(outs[ev[len(ev) // 2]], os.path.join(args.out, f"B_{cfg.replace(',', '_').replace(';', '')}.png"))
-        del Ps, Ds
+        del Ps, Ds, Pm, Sm
 
     save_png(REF[ev[len(ev) // 2]], os.path.join(args.out, "REF.png"))
 

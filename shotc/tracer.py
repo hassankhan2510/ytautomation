@@ -531,8 +531,63 @@ def direct_buffer(CAM, f, W, H, nd, SPH, BOX, MAT, LGT):
     return P, D
 
 
+@nb.njit(inline="always")
+def shade_ray(ox, oy, oz, dx, dy, dz, s, h, ckeys, C, SPH, BOX, MAT, LGT):
+    """Radiance arriving along a ray, shaded the shot-compiler way: light -> emission, metal -> follow
+    the reflection, diffuse -> albedo * (1 NEE sample + cached indirect)."""
+    tr, tg, tb = 1.0, 1.0, 1.0
+    for bounce in range(4):
+        t, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
+        if m < 0:
+            return 0.0, 0.0, 0.0, s
+        typ = int(MAT[m, 3])
+        if typ == LIGHT:
+            return tr * LGT[5], tg * LGT[6], tb * LGT[7], s
+        px, py, pz = ox + t * dx, oy + t * dy, oz + t * dz
+        if typ == METAL:
+            tr, tg, tb = tr * MAT[m, 0], tg * MAT[m, 1], tb * MAT[m, 2]
+            dx, dy, dz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
+            if dx * nx + dy * ny + dz * nz <= 0.0:
+                return 0.0, 0.0, 0.0, s
+            ox, oy, oz = px + nx * EPS, py + ny * EPS, pz + nz * EPS
+            continue
+        er, eg, eb, s = direct(px, py, pz, nx, ny, nz, s, SPH, BOX, MAT, LGT)
+        cr, cg, cb, s, miss = cache_get(ckeys, C, px, py, pz, nx, ny, nz, h, s, SPH, BOX, MAT, LGT)
+        return tr * MAT[m, 0] * (er + cr), tg * MAT[m, 1] * (eg + cg), tb * MAT[m, 2] * (eb + cb), s
+    return 0.0, 0.0, 0.0, s
+
+
 @nb.njit(parallel=True, fastmath=True, cache=True)
-def render_B(CAM, t, F, W, H, spp, K, tol, h, Ps, Ds, ckeys, C, SPH, BOX, MAT, LGT):
+def spec_buffer(CAM, f, W, H, ns, h, ckeys, C, SPH, BOX, MAT, LGT):
+    """Per frame: pixel-centre METAL point + its reflected radiance (ns samples) for THIS view.
+    View-dependent, but the camera turns ~1 degree per frame while the gold's lobe is ~7 degrees wide,
+    so neighbouring frames (past AND future) can lend their samples, weighted by view angle."""
+    P = np.full((H, W, 3), np.inf, dtype=np.float32)
+    S = np.zeros((H, W, 3), dtype=np.float32)
+    for y in nb.prange(H):
+        for x in range(W):
+            ox, oy, oz, dx, dy, dz = cam_ray(CAM, f, x + 0.5, y + 0.5, W, H)
+            t, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
+            if m < 0 or int(MAT[m, 3]) != METAL:
+                continue
+            px, py, pz = ox + t * dx, oy + t * dy, oz + t * dz
+            P[y, x, 0], P[y, x, 1], P[y, x, 2] = px, py, pz
+            s = seed(f * 37 + 11, y * W + x, 0x5EC)
+            r = g = b = 0.0
+            for k in range(ns):
+                rx, ry, rz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
+                if rx * nx + ry * ny + rz * nz <= 0.0:
+                    continue
+                lr, lg, lb, s = shade_ray(px + nx * EPS, py + ny * EPS, pz + nz * EPS, rx, ry, rz, s, h, ckeys, C, SPH, BOX, MAT, LGT)
+                r += lr
+                g += lg
+                b += lb
+            S[y, x, 0], S[y, x, 1], S[y, x, 2] = MAT[m, 0] * r / ns, MAT[m, 1] * g / ns, MAT[m, 2] * b / ns
+    return P, S
+
+
+@nb.njit(parallel=True, fastmath=True, cache=True)
+def render_B(CAM, t, F, W, H, spp, K, tol, h, Ps, Ds, ckeys, C, SPH, BOX, MAT, LGT, Ks, sig, Pm, Sm):
     """Final frame t: per sample, diffuse = albedo * (bidirectional-temporal direct + cached indirect);
     metal = traced reflection whose diffuse hit is shaded the same way; light = emission."""
     img = np.zeros((H, W, 3), dtype=np.float32)
@@ -560,6 +615,30 @@ def render_B(CAM, t, F, W, H, spp, K, tol, h, Ps, Ds, ckeys, C, SPH, BOX, MAT, L
                         break
                     px, py, pz = ox + tt * dx, oy + tt * dy, oz + tt * dz
                     if typ == METAL:
+                        if bounce == 0 and Ks > 0:
+                            # view-dependent reuse: borrow reflection samples from frames t-Ks..t+Ks that saw
+                            # this point from almost the same direction (Gaussian weight on view angle)
+                            vx, vy, vz = px - CAM[t, 0], py - CAM[t, 1], pz - CAM[t, 2]
+                            vl = math.sqrt(vx * vx + vy * vy + vz * vz)
+                            wr = wg = wb = ws = 0.0
+                            for k in range(max(0, t - Ks), min(F - 1, t + Ks) + 1):
+                                xx, yy = project(CAM, k, px, py, pz, W, H)
+                                if xx < 0:
+                                    continue
+                                qx, qy, qz = Pm[k, yy, xx, 0], Pm[k, yy, xx, 1], Pm[k, yy, xx, 2]
+                                if (qx - px) ** 2 + (qy - py) ** 2 + (qz - pz) ** 2 > tol * tol:
+                                    continue
+                                ux, uy, uz = qx - CAM[k, 0], qy - CAM[k, 1], qz - CAM[k, 2]
+                                ul = math.sqrt(ux * ux + uy * uy + uz * uz)
+                                ca = min(1.0, (vx * ux + vy * uy + vz * uz) / (vl * ul))
+                                w = math.exp(-(math.acos(ca) / sig) ** 2)
+                                wr += w * Sm[k, yy, xx, 0]
+                                wg += w * Sm[k, yy, xx, 1]
+                                wb += w * Sm[k, yy, xx, 2]
+                                ws += w
+                            if ws > 0.0:
+                                lr, lg, lb = wr / ws, wg / ws, wb / ws
+                                break
                         tr, tg, tb = tr * MAT[m, 0], tg * MAT[m, 1], tb * MAT[m, 2]
                         dx, dy, dz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
                         if dx * nx + dy * ny + dz * nz <= 0.0:
