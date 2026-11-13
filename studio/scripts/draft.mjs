@@ -107,7 +107,7 @@ let lines = written.lines.slice(0, verbatim ? 24 : 14).map((l) => ({
 if (verbatim) lines = segments.map((text, i) => ({ ...(lines[i] || { intent: "fact", energy: 2, visual: "" }), text }));
 lines = lines.filter((l) => l.text);
 const hooks = (written.hooks || []).map((h) => (typeof h === "string" ? { text: h } : h)).filter((h) => h?.text).slice(0, 3);
-const chosen = Math.min(Math.max(0, Number(written.chosen) || 0), Math.max(0, hooks.length - 1));
+let chosen = Math.min(Math.max(0, Number(written.chosen) || 0), Math.max(0, hooks.length - 1));
 lines[0].energy = 3;
 if (!verbatim) lines[0].intent = lines[0].intent === "fact" ? "hook" : lines[0].intent;
 console.log(lines.map((l, i) => `  ${i + 1}. [${l.intent}] ${l.text}`).join("\n"));
@@ -352,6 +352,40 @@ try {
   console.warn("music catalog unavailable:", e.message);
 }
 
+/* ═════════════ HOOKS + CAPTION CHECK ═════════════
+ * The alternative hooks and the post caption are published text too ("Alarms blaring 10 seconds
+ * before touching down" invented the "10"). Unsupported alt hooks are dropped; an unsupported caption
+ * is rewritten from source facts only. */
+const altIdx = hooks.map((_, i) => i).filter((i) => i !== chosen);
+const textItems = [...altIdx.map((i) => ({ kind: "hook", i, text: clean(hooks[i].text) })), { kind: "caption", text: String(written.caption || "").trim() }].filter((x) => x.text);
+const textFixes = [];
+if (textItems.length) {
+  console.log("⑥ HOOK + CAPTION CHECK…");
+  const hc = await groqJSON(
+    `You are a strict FACT-CHECKER. For each numbered ITEM, flag any fact (number, date, name, place, claim, superlative) NOT supported by the SOURCE — even if true in the real world. Questions, hashtags, calls to action and style are fine.
+Return ONLY JSON: {"bad":[{"i":item number,"why":"max 8 words","fix":"for a CAPTION only: the caption rewritten with ONLY source facts, same language and style, keep the question and hashtags"}]}`,
+    `SOURCE:\n"""${paragraph.slice(0, 6000)}"""\n\nITEMS:\n${textItems.map((x, k) => `${k + 1}. [${x.kind}] ${x.text}`).join("\n")}`,
+    { maxTokens: 1200, temperature: 0.1 },
+  );
+  const dropHooks = new Set();
+  for (const b of hc?.bad || []) {
+    const it = textItems[Number(b?.i) - 1];
+    if (!it) continue;
+    if (it.kind === "hook") { dropHooks.add(it.i); textFixes.push(`dropped hook "${it.text}" (${clean(b.why)})`); }
+    if (it.kind === "caption") {
+      const fix = String(b.fix || "").trim();
+      textFixes.push(`caption ${fix ? "rewritten" : "flagged"} (${clean(b.why)})`);
+      if (fix) written.caption = fix;
+    }
+  }
+  if (dropHooks.size) {
+    const keep = hooks.filter((_, i) => !dropHooks.has(i));
+    const chosenHook = hooks[chosen];
+    hooks.splice(0, hooks.length, ...keep);
+    chosen = Math.max(0, hooks.indexOf(chosenHook));
+  }
+}
+
 /* ═════════════ WRITE + REPORT ═════════════ */
 const quality = scoreEdit(beats, menu);
 const hookText = clean(hooks[chosen]?.text || lines[0].text);
@@ -396,6 +430,7 @@ ${factFixes.map((f) => `  - ~~${f.before}~~ → ${f.after || "**check this line*
   flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
   ...(urduReport.length ? ["", `🇵🇰 **Urdu:** ${urduReport.join(" · ")}`] : []),
+  ...(textFixes.length ? ["", `🔍 **Hooks/caption check:** ${textFixes.join(" · ")}`] : []),
   ...(swaps.length ? ["", `🛡️ **Scene guard:** ${swaps.length} scene(s) swapped for safe text scenes:`, ...swaps.map((w) => `  - \`${w.from}\` → \`${w.to}\` _(${w.reason})_`)] : []),
   ...(removed.length ? ["", `🧹 **Removed invented attribution (not in your paragraph):** ${removed.join("; ")}`] : []),
   "",
