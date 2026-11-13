@@ -1,0 +1,177 @@
+{
+  "id": "2026-11-13-this-4000-year-old-structure-still-stand",
+  "title": "This 4000-year-old structure still stands alone",
+  "theme": "sunrise",
+  "seed": 8836,
+  "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "This 4000-year-old structure still stands alone",
+    "2.3 million blocks, no wheels, no cranes",
+    "The only ancient wonder left in one piece"
+  ],
+  "caption": "The only wonder left.\nWhat do you think they used to build it? #pyramid #history #facts #giza #ancient\n🎵 Music: \"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-undaunted.mp3",
+  "musicCredit": "\"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8.5,
+    "unique": 10,
+    "total": 10,
+    "families": 4,
+    "plain": 1,
+    "doc": 4,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "4500",
+    "2026",
+    "2300000",
+    "828"
+  ],
+  "beats": [
+    {
+      "text": "This 4500-year-old structure still stands alone.",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "alone"
+      ],
+      "props": {},
+      "why": "Punchy hook, energy 3"
+    },
+    {
+      "text": "Built in 2560 BC for Pharaoh Khufu.",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "emphasis": [
+        "2560 BC"
+      ],
+      "props": {
+        "from": 2026,
+        "to": -2560,
+        "label": "Pharaoh Khufu"
+      },
+      "why": "Time travel to specific date"
+    },
+    {
+      "text": "It used roughly 2.3 million stone blocks.",
+      "primitive": "counter",
+      "energy": 3,
+      "emphasis": [
+        "2.3 million"
+      ],
+      "props": {
+        "from": 0,
+        "to": 2300000,
+        "suffix": "+",
+        "label": "Stone Blocks"
+      },
+      "why": "Visualizes massive quantity"
+    },
+    {
+      "text": "Originally 146 metres tall, towering over everything.",
+      "primitive": "scaleCompare",
+      "energy": 2,
+      "emphasis": [
+        "146 metres"
+      ],
+      "props": {
+        "items": [
+          {
+            "label": "Great Pyramid",
+            "size": 146
+          },
+          {
+            "label": "Burj Khalifa",
+            "size": 828
+          }
+        ],
+        "unit": "m"
+      },
+      "why": "True-scale height comparison"
+    },
+    {
+      "text": "It held the height record for 3800 years.",
+      "primitive": "factCard",
+      "energy": 3,
+      "emphasis": [
+        "3800 years"
+      ],
+      "why": "Duration record visualization"
+    },
+    {
+      "text": "But how did they move those massive blocks?",
+      "primitive": "zoomThrough",
+      "energy": 1,
+      "emphasis": [
+        "how"
+      ],
+      "props": {
+        "word": "HOW?",
+        "reveal": "2.3 Million Blocks"
+      },
+      "why": "Deep dive into mystery"
+    },
+    {
+      "text": "Ramps are the main theory, but no one agrees.",
+      "primitive": "iceberg",
+      "energy": 2,
+      "emphasis": [
+        "main theory"
+      ],
+      "props": {
+        "top": "Ramps",
+        "below": [
+          "Logistics",
+          "Workforce",
+          "Precision"
+        ]
+      },
+      "why": "Theory vs hidden complexity"
+    },
+    {
+      "text": "It’s the only ancient wonder still standing.",
+      "primitive": "cardFan",
+      "energy": 3,
+      "emphasis": [
+        "only"
+      ],
+      "props": {
+        "cards": [
+          "Hanging Gardens",
+          "Colossus",
+          "Lighthouse",
+          "Temple Artemis",
+          "Great Pyramid"
+        ],
+        "pick": 4
+      },
+      "why": "Selecting the last one"
+    },
+    {
+      "text": "That’s why it remains the ultimate symbol of power.",
+      "primitive": "redString",
+      "energy": 2,
+      "emphasis": [
+        "power"
+      ],
+      "props": {
+        "cards": [
+          "Ancient Wonder",
+          "Solo Survivor",
+          "Ultimate Symbol"
+        ]
+      },
+      "why": "Cause to effect chain"
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
