@@ -3,3 +3,5 @@ out/
 public/audio/
 .DS_Store
 public/gen/
+voice-raw/*
+!voice-raw/README.md
