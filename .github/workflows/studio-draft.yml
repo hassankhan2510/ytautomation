@@ -1,0 +1,98 @@
+name: "Studio — Draft Reel"
+
+# Paste a paragraph → free Groq writes 3 hooks + a full beat sheet from the motion-primitive menu →
+# the draft is committed to studio/src/data/drafts/ (edit it on GitHub if you want) → optional
+# preview render as a downloadable MP4. Nothing is posted anywhere.
+on:
+  workflow_dispatch:
+    inputs:
+      paragraph:
+        description: "What is this video about? (paste a paragraph — facts/numbers you include are the ONLY ones it may use)"
+        required: true
+        type: string
+      style:
+        description: "Format"
+        type: choice
+        options: [buildInPublic, techNews, breakdown, story]
+        default: buildInPublic
+      day:
+        description: "Day number (build-in-public only)"
+        required: false
+        type: string
+      theme:
+        description: "Theme"
+        type: choice
+        options: [crimson, acid, electric, paper, taxi]
+        default: crimson
+      preview:
+        description: "Also render a preview MP4 (~5 min)?"
+        type: choice
+        options: ["yes", "no"]
+        default: "yes"
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Write hooks + beat sheet (Groq)
+        id: draft
+        env:
+          PARAGRAPH: ${{ github.event.inputs.paragraph }}
+          STYLE: ${{ github.event.inputs.style }}
+          DAY: ${{ github.event.inputs.day }}
+          THEME: ${{ github.event.inputs.theme }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
+        run: node scripts/draft.mjs
+      - name: Save the draft to the repo (edit it on GitHub, re-render with "Studio — Render Reel")
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add studio/src/data/drafts/
+          git commit -m "studio: draft ${{ steps.draft.outputs.draft }} [skip ci]" || { echo "nothing to commit"; exit 0; }
+          git pull --rebase --autostash || true
+          git push || echo "push skipped"
+      - name: Install headless-Chrome libraries
+        if: ${{ github.event.inputs.preview == 'yes' }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji
+      - name: Install
+        if: ${{ github.event.inputs.preview == 'yes' }}
+        run: npm install --no-audit --no-fund
+      - name: Render preview
+        if: ${{ github.event.inputs.preview == 'yes' }}
+        env:
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+        run: |
+          node scripts/props.mjs "$JOB_FILE" out/props.json
+          npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+          npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
+          cp "$JOB_FILE" out/
+      - name: Deliver preview
+        if: ${{ github.event.inputs.preview == 'yes' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-draft-run${{ github.run_number }}
+          path: |
+            studio/out/reel.mp4
+            studio/out/poster.jpg
+            studio/out/*.json
+          retention-days: 30
+          if-no-files-found: warn
