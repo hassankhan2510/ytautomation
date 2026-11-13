@@ -35,6 +35,7 @@ _kokoro = None
 _omni = None
 _omni_prompt = None
 _omni_lang_arg = None
+_omni_has_speed = False
 
 
 def load_chatterbox():
@@ -89,7 +90,7 @@ def synth_mine(text):
 def load_omnivoice():
     """OmniVoice (k2-fsa) on CPU. One voice-clone prompt from an 8 s clip of the reference (3-10 s is
     what OmniVoice recommends), reused for every beat."""
-    global _omni, _omni_prompt, _omni_lang_arg
+    global _omni, _omni_prompt, _omni_lang_arg, _omni_has_speed
     if _omni is None:
         import inspect
         import subprocess
@@ -102,11 +103,33 @@ def load_omnivoice():
         _omni = OmniVoice.from_pretrained("k2-fsa/OmniVoice", device_map="cpu", dtype=torch.float32)
         params = inspect.signature(_omni.generate).parameters
         _omni_lang_arg = next((p for p in ("language", "language_id", "lang") if p in params), None)
+        _omni_has_speed = "speed" in params
         clip = os.path.join(tempfile.gettempdir(), "omni_ref_clip.wav")
-        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", "0.5", "-t", "8", "-i", REF, clip], check=True)
+        start = most_fluent_window(REF, 8.0)
+        print(f"  reference: most fluent 8 s window starts at {start:.1f}s")
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.2f}", "-t", "8", "-i", REF, clip], check=True)
         _omni_prompt = _omni.create_voice_clone_prompt(ref_audio=clip) if hasattr(_omni, "create_voice_clone_prompt") else clip
         print(f"  OmniVoice ready (language arg: {_omni_lang_arg})")
     return _omni
+
+
+def most_fluent_window(path, win=8.0):
+    """The clone copies the reference's pacing — pick the 8 s stretch with the least silence/hesitation."""
+    data, sr = sf.read(path)
+    if data.ndim > 1:
+        data = data.mean(axis=1)
+    hop = int(sr * 0.05)
+    frames = np.array([np.sqrt(np.mean(data[i:i + hop] ** 2) + 1e-12) for i in range(0, max(1, len(data) - hop), hop)])
+    if not len(frames):
+        return 0.0
+    silent = frames < max(1e-4, np.percentile(frames, 60) * 0.25)
+    n = int(win / 0.05)
+    if len(silent) <= n:
+        return 0.0
+    csum = np.concatenate([[0], np.cumsum(silent)])
+    scores = csum[n:] - csum[:-n]  # silent frames per window
+    best = int(np.argmin(scores[int(0.3 / 0.05):])) + int(0.3 / 0.05)  # skip the very start
+    return best * 0.05
 
 
 def synth_omnivoice(text):
@@ -116,6 +139,8 @@ def synth_omnivoice(text):
     kw.update({"ref_audio": _omni_prompt} if isinstance(_omni_prompt, str) else {"voice_clone_prompt": _omni_prompt})
     if _omni_lang_arg:
         kw[_omni_lang_arg] = lang
+    if _omni_has_speed:
+        kw["speed"] = float(os.environ.get("VOICE_SPEED", "1.08"))  # a touch faster = more energy, fewer drags
     audio = m.generate(**kw)
     return to_mono_24k(audio[0], 24000)
 
@@ -225,7 +250,8 @@ def main():
                 acc += wt
                 words.append({"w": w, "start": round(s, 3), "end": round(start + acc / total * dur, 3)})
         txt = beat.get("text", "").strip()
-        gap = 0.32 if re.search(r"[.!?]['\")\]]?$", txt) else 0.16 if re.search(r"[,;:—–]$", txt) else 0.2
+        # Tight pauses keep the flow (creator found the read too stop-start).
+        gap = 0.22 if re.search(r"[.!?]['\")\]]?$", txt) else 0.1 if re.search(r"[,;:—–]$", txt) else 0.14
         gap += float(beat.get("hold") or 0)
         audio.append(np.zeros(int(gap * SR), dtype=np.float32))
         t += gap

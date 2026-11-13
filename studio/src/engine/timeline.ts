@@ -26,10 +26,14 @@ export function buildTimeline(job: Job, fps: number): Timeline {
     const starts: number[] = [];
     const wordSlices: { w: string; start: number; end: number }[][] = [];
     for (const toks of tokens) {
-      const slice = spoken.slice(wi, wi + Math.max(1, toks.length));
-      wi += Math.max(1, toks.length);
+      // A silent beat (e.g. the visual-only end card) consumes no spoken words; it starts just after
+      // the previous beat's last word.
+      const slice = spoken.slice(wi, wi + toks.length);
+      wi += toks.length;
       wordSlices.push(slice);
-      starts.push(slice.length ? slice[0].start : starts.length ? starts[starts.length - 1] + 1 : 0);
+      const prevSlice = wordSlices.length > 1 ? wordSlices[wordSlices.length - 2] : [];
+      const prevEnd = prevSlice.length ? prevSlice[prevSlice.length - 1].end + 0.3 : starts.length ? starts[starts.length - 1] + 1 : 0;
+      starts.push(slice.length ? slice[0].start : prevEnd);
     }
     const lastEnd = spoken[spoken.length - 1]?.end ?? 0;
     beats.forEach((b, i) => {

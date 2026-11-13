@@ -147,8 +147,9 @@ export const Outro: React.FC<PrimitiveProps> = ({ beat }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { theme, handle, logo: brandLogo } = useRender();
-  const h = prop(beat, "handle", handle || "@cohort_zero");
-  const cta = prop(beat, "cta", "Follow for Day 2");
+  // No channel brand → no avatar/handle, just the Follow prompt (works for any channel).
+  const h = prop<string>(beat, "handle", handle || "");
+  const cta = prop(beat, "cta", "Follow");
   const logo = prop<string>(beat, "logo", brandLogo || "");
   const ring = easeOut(frame, 0, 18);
   const s = pop(frame, fps, 4, "slam");
@@ -157,8 +158,10 @@ export const Outro: React.FC<PrimitiveProps> = ({ beat }) => {
   const tap = frame >= tapAt ? pop(frame, fps, tapAt, "snap") : 0;
   const pulse = 1 + Math.sin(frame / 5) * 0.025;
   const C = 2 * Math.PI * 170;
+  const showProfile = Boolean(h || logo);
   return (
     <Safe>
+      {showProfile ? (<>
       <div style={{ position: "relative", width: 360, height: 360, transform: `scale(${s})` }}>
         <svg width={360} height={360} style={{ position: "absolute", inset: 0, transform: "rotate(-90deg)" }}>
           <circle cx={180} cy={180} r={170} fill="none" stroke={theme.accent} strokeWidth={8} strokeDasharray={C} strokeDashoffset={C * (1 - ring)} strokeLinecap="round" />
@@ -167,10 +170,11 @@ export const Outro: React.FC<PrimitiveProps> = ({ beat }) => {
           {logo ? <Img src={src(logo)} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : <span style={{ fontFamily: theme.display, fontWeight: 900, fontSize: 120, color: theme.ink }}>{h.replace("@", "").slice(0, 1).toUpperCase()}</span>}
         </div>
       </div>
-      <div style={{ marginTop: 44, fontFamily: theme.mono, fontWeight: 700, fontSize: 60, color: theme.ink, minHeight: 72 }}>{typed}<span style={{ opacity: Math.floor(frame / 8) % 2 ? 0 : 1, color: theme.accent }}>▍</span></div>
-      <div style={{ marginTop: 40, position: "relative" }}>
-        <div style={{ padding: "28px 90px", borderRadius: 999, fontFamily: theme.body, fontWeight: 900, fontSize: 46, background: tap > 0.5 ? alpha(theme.ink, 0.12) : theme.accent, color: tap > 0.5 ? theme.ink : theme.onAccent, transform: `scale(${pulse * (1 - Math.sin(tap * Math.PI) * 0.08)})`, boxShadow: tap > 0.5 ? "none" : `0 0 50px ${alpha(theme.accent, 0.55)}`, opacity: easeOut(frame, 14, 8) }}>
-          {tap > 0.5 ? "Following ✓" : cta}
+      {h ? <div style={{ marginTop: 44, fontFamily: theme.mono, fontWeight: 700, fontSize: 60, color: theme.ink, minHeight: 72 }}>{typed}<span style={{ opacity: Math.floor(frame / 8) % 2 ? 0 : 1, color: theme.accent }}>▍</span></div> : null}
+      </>) : null}
+      <div style={{ marginTop: showProfile ? 40 : 0, position: "relative", transform: showProfile ? "none" : `scale(${0.6 + s * 0.6})` }}>
+        <div style={{ padding: showProfile ? "28px 90px" : "36px 120px", borderRadius: 999, fontFamily: theme.body, fontWeight: 900, fontSize: showProfile ? 46 : 64, background: tap > 0.5 ? alpha(theme.ink, 0.12) : theme.accent, color: tap > 0.5 ? theme.ink : theme.onAccent, transform: `scale(${pulse * (1 - Math.sin(tap * Math.PI) * 0.08)})`, boxShadow: tap > 0.5 ? "none" : `0 0 50px ${alpha(theme.accent, 0.55)}`, opacity: easeOut(frame, 14, 8) }}>
+          {tap > 0.5 ? "Following ✓" : showProfile ? cta : `＋ ${cta}`}
         </div>
         {frame >= tapAt - 6 ? (
           <div style={{ position: "absolute", right: 60, bottom: -50, width: 70, height: 70, borderRadius: 35, background: alpha("#FFFFFF", 0.85), border: "4px solid rgba(0,0,0,0.25)", transform: `translate(${interpolate(frame, [tapAt - 6, tapAt], [80, 0], { extrapolateRight: "clamp" })}px, ${interpolate(frame, [tapAt - 6, tapAt], [80, 0], { extrapolateRight: "clamp" })}px) scale(${1 - Math.sin(tap * Math.PI) * 0.25})`, opacity: 1 - easeOut(frame, tapAt + 10, 8) }} />

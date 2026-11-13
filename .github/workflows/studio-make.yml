@@ -22,6 +22,11 @@ on:
         type: choice
         options: [crimson, ocean, grape, sunrise, lagoon, mango, mint, neon, acid, electric, paper, taxi]
         default: crimson
+      channel:
+        description: "Channel branding on the end card: none = just a Follow prompt · cohort_zero = logo + @cohort_zero"
+        type: choice
+        options: ["none", cohort_zero]
+        default: "none"
       language:
         description: "Language: english · urdu (your voice speaks Urdu + English; captions in Roman Urdu)"
         type: choice
@@ -96,6 +101,7 @@ jobs:
           STYLE: ${{ github.event.inputs.style }}
           VERBATIM: ${{ github.event.inputs.verbatim }}
           LANGUAGE: ${{ github.event.inputs.language }}
+          HANDLE: ${{ github.event.inputs.channel == 'cohort_zero' && '@cohort_zero' || '' }}
           THEME: ${{ github.event.inputs.theme }}
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}

@@ -25,7 +25,8 @@ if (paragraph.length < 30) throw new Error("PARAGRAPH is empty/too short — pas
 const style = process.env.STYLE || "explainer";
 const day = Number(process.env.DAY || 0) || null;
 const theme = process.env.THEME && process.env.THEME !== "job" ? process.env.THEME : "crimson";
-const handle = process.env.HANDLE || "@cohort_zero";
+// Channel brand is OPTIONAL: with no HANDLE the reel carries no handle/logo — just a "Follow" prompt.
+const handle = (process.env.HANDLE || "").trim();
 // Channel brand mark (public/ path). Cohort Zero's original logo lives in cohort_zero/02_Brand_Assets/logos
 // and is copied to public/brand/cohortzero-mark.png; other channels pass LOGO.
 const logo = process.env.LOGO || (handle === "@cohort_zero" ? "brand/cohortzero-mark.png" : "");
@@ -72,7 +73,7 @@ const STYLES = {
 };
 
 /* ═════════════ STAGE 1 — WRITER ═════════════ */
-const writerSystem = `You are the head WRITER of a premium Instagram Reels studio (Gen-Z audience; brand ${handle}).
+const writerSystem = `You are the head WRITER of a premium Instagram Reels studio (Gen-Z audience${handle ? `; brand ${handle}` : ""}).
 ${verbatim ? "The creator already wrote the script. Keep every line EXACTLY as given; your job is to tag each line and write hooks." : "Turn the SOURCE into a 25-45 second spoken script."}
 Return ONLY JSON:
 {"facts":[every concrete fact in the SOURCE: numbers, dates, names, places — copied, not invented],
@@ -241,12 +242,9 @@ if (style === "buildInPublic" && day) {
   const ds = beats.find((b) => b.primitive === "dayStamp");
   if (ds) ds.props = { ...(ds.props || {}), day };
 }
-const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow for more";
-beats.push(
-  language === "urdu"
-    ? { text: "Aisi aur stories ke liye follow karo.", speak: "ایسی اور stories کے لیے follow کرو۔", primitive: "outro", energy: 1, props: { cta: "Follow karo" }, hold: 1.0 }
-    : { text: style === "buildInPublic" ? `${cta}.` : "Follow for more stories like this.", primitive: "outro", energy: 1, props: { cta }, hold: 1.0 },
-);
+// End card is VISUAL only — no spoken "follow for more" line (creator's call): just the Follow prompt.
+const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow";
+beats.push({ text: "", primitive: "outro", energy: 1, props: { cta }, hold: 2.2 });
 
 /* ═════════════ SCENE GUARD — no demo data, no outside facts on screen ═════════════
  * (a) A data scene whose required props are missing would show its built-in DEMO content (e.g.
@@ -388,7 +386,10 @@ Return ONLY JSON: {"bad":[{"i":item number,"why":"max 8 words","fix":"for a CAPT
 
 /* ═════════════ WRITE + REPORT ═════════════ */
 const quality = scoreEdit(beats, menu);
-const hookText = clean(hooks[chosen]?.text || lines[0].text);
+// The spoken first line is the fact-checked hook — the title/chosen hook must use IT, never the
+// writer's raw hook (which once said "20,000 slaves" while the source said workers).
+if (!verbatim && hooks[chosen]) hooks[chosen].text = lines[0].text;
+const hookText = clean(verbatim ? (hooks[chosen]?.text || lines[0].text) : lines[0].text);
 const slug = hookText.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "draft";
 const date = new Date().toISOString().slice(0, 10);
 const job = {

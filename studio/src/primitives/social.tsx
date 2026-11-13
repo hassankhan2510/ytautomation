@@ -13,8 +13,8 @@ export const Tweet: React.FC<PrimitiveProps> = ({ beat }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
   const { theme, handle } = useRender();
-  const name = prop(beat, "name", "Cohort Zero");
-  const user = prop(beat, "handle", handle || "@cohort_zero");
+  const name = prop(beat, "name", handle ? handle.replace("@", "") : "Insider");
+  const user = prop(beat, "handle", handle || "@thread");
   const body = prop(beat, "body", beat.text);
   const likes = prop(beat, "likes", 12400);
   const reposts = prop(beat, "reposts", 1830);
@@ -58,7 +58,7 @@ export const CommentCta: React.FC<PrimitiveProps> = ({ beat }) => {
   const { theme, handle } = useRender();
   const keyword = prop(beat, "keyword", "SYSTEM");
   const line = prop(beat, "line", `Comment "${keyword}" and I'll DM you the full breakdown`);
-  const user = prop(beat, "handle", (handle || "@cohort_zero").replace("@", ""));
+  const user = prop(beat, "handle", (handle || "@creator").replace("@", ""));
   const s = pop(frame, fps, 2, "snap");
   const kw = pop(frame, fps, 14, "slam");
   const pulse = 1 + Math.sin(frame / 4) * 0.04;
