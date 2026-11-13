@@ -20,7 +20,9 @@ import { castCandidates, INTENT_LIST, scoreEdit } from "./casting.mjs";
 import { speakFix } from "./speakfix.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const paragraph = (process.env.PARAGRAPH || "").trim();
+// The creator's input can mix FACTS with DIRECTIONS ("make the tone funny", "start with this hook",
+// "add this line") — split below by the brief reader; `paragraph` becomes the trusted SOURCE text.
+let paragraph = (process.env.PARAGRAPH || "").trim();
 if (paragraph.length < 30) throw new Error("PARAGRAPH is empty/too short — paste what the video is about.");
 const style = process.env.STYLE || "explainer";
 const day = Number(process.env.DAY || 0) || null;
@@ -73,6 +75,44 @@ const STYLES = {
 };
 
 /* ═════════════ STAGE 1 — WRITER ═════════════ */
+/* ═════════════ STAGE 0 — BRIEF READER: facts vs the creator's directions ═════════════ */
+let directionsText = "";
+const briefReport = [];
+if (!verbatim) {
+  const brief = await groqJSON(
+    `You read a content creator's brief for a short video. It may be pure facts, or facts mixed with instructions to the editor.
+Split it. Return ONLY JSON:
+{"facts":"ALL factual/story content, copied word-for-word (do not summarize, rephrase or drop anything factual)",
+ "tone":"requested tone/mood or \"\"",
+ "hook":"an opening line the creator wants (exact wording) or \"\"",
+ "must_include":["exact lines/phrases the creator wants in the script"],
+ "structure":"requested structure/ending/pacing or \"\"",
+ "length":"requested length or \"\"",
+ "other":"any other instruction or \"\""}
+If there are no instructions, "facts" is the whole input and the rest are empty.`,
+    paragraph.slice(0, 8000),
+    { maxTokens: 2500, temperature: 0 },
+  );
+  const facts = String(brief?.facts || "").trim();
+  const must = (Array.isArray(brief?.must_include) ? brief.must_include : []).map((x) => String(x).trim()).filter(Boolean);
+  const hookWanted = String(brief?.hook || "").trim();
+  const dir = [
+    brief?.tone && `TONE: ${brief.tone}`,
+    hookWanted && `HOOK: line 1 MUST be the creator's hook — keep its meaning and key words, polish only for flow: "${hookWanted}"`,
+    must.length && `MUST INCLUDE (use these lines/phrases, near-verbatim): ${must.map((m) => `"${m}"`).join("; ")}`,
+    brief?.structure && `STRUCTURE: ${brief.structure}`,
+    brief?.length && `LENGTH: ${brief.length}`,
+    brief?.other && `ALSO: ${brief.other}`,
+  ].filter(Boolean);
+  if (facts.length >= 20 && (dir.length || facts.length < paragraph.length * 0.9)) {
+    // Source = the facts + the creator's own words (their hook / must-include lines are trusted, not "invented").
+    paragraph = [facts, hookWanted, ...must].filter(Boolean).join("\n");
+    directionsText = dir.length ? `\nCREATOR DIRECTIONS — follow these exactly; they override the default style rules:\n- ${dir.join("\n- ")}\n` : "";
+    briefReport.push(dir.length ? dir.map((d) => d.replace(/^([A-Z ]+):.*$/, "$1").trim()).join(", ").toLowerCase() : "none");
+    console.log(`  brief: ${dir.length} direction(s) — ${briefReport[0]}`);
+  }
+}
+
 const writerSystem = `You are the head WRITER of a premium Instagram Reels studio (Gen-Z audience${handle ? `; brand ${handle}` : ""}).
 ${verbatim ? "The creator already wrote the script. Keep every line EXACTLY as given; your job is to tag each line and write hooks." : "Turn the SOURCE into a 25-45 second spoken script."}
 Return ONLY JSON:
@@ -92,7 +132,7 @@ ${language === "urdu" ? `LANGUAGE: "Urdish" for a Pakistani Gen-Z audience — M
 - The hook leads with the single most surprising fact or tension in the SOURCE.
 - energy: 3 hook/reveals/wins, 2 explanation, 1 reflective. Never three 1s in a row.
 FACTS (strict): every number, date, name, place, material, weight, cause and "that's why" reason in the script must come from the SOURCE. Do NOT add outside knowledge — even well-known true facts. Never invent statistics, quotes, studies or sources. Make it gripping through framing, questions and pacing, not extra facts.
-STYLE: ${STYLES[style] || STYLES.explainer}`;
+STYLE: ${STYLES[style] || STYLES.explainer}${directionsText}`;
 const segments = verbatim ? segment(paragraph).slice(0, 24) : [];
 const writerUser = verbatim ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
 
@@ -444,6 +484,7 @@ ${factFixes.map((f) => `  - ~~${f.before}~~ → ${f.after || "**check this line*
   "",
   flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
+  ...(briefReport.length && briefReport[0] !== "none" ? ["", `📝 **Your directions applied:** ${briefReport[0]}`] : []),
   ...(urduReport.length ? ["", `🇵🇰 **Urdu:** ${urduReport.join(" · ")}`] : []),
   ...(textFixes.length ? ["", `🔍 **Hooks/caption check:** ${textFixes.join(" · ")}`] : []),
   ...(swaps.length ? ["", `🛡️ **Scene guard:** ${swaps.length} scene(s) swapped for safe text scenes:`, ...swaps.map((w) => `  - \`${w.from}\` → \`${w.to}\` _(${w.reason})_`)] : []),
