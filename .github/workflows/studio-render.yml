@@ -52,6 +52,7 @@ jobs:
           SEED: ${{ github.event.inputs.seed }}
           SHADERS: ${{ github.event.inputs.shaders }}
           JOB_FILE: ${{ github.event.inputs.job || 'src/data/job.json' }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: node scripts/props.mjs "$JOB_FILE" out/props.json
       - name: Render (shader path, falls back to CSS path on failure)
         run: |

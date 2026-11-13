@@ -9,6 +9,7 @@ import { RenderProvider } from "../engine/render-context";
 import { pickTransition, TRANSITIONS } from "../engine/transitions";
 import { Backdrop, BACKDROPS, CameraRig, Grain, LightLeak, ProgressBar, Vignette } from "../engine/fx";
 import { resolvePrimitive } from "../engine/registry";
+import { BgMedia } from "../engine/bgmedia";
 import { Captions } from "./Captions";
 import { SoundLayer, useDuckedVolume } from "./Sound";
 import type { Job, TimedBeat } from "../engine/types";
@@ -36,7 +37,7 @@ const BeatScene: React.FC<{ beat: TimedBeat; seed: number; backdrop: (typeof BAC
   );
   return (
     <AbsoluteFill>
-      <Backdrop kind={backdrop} seed={seed + beat.index} />
+      {beat.bgSrc ? <BgMedia beat={beat} seed={seed} /> : <Backdrop kind={backdrop} seed={seed + beat.index} />}
       {beat.blur ? <CameraMotionBlur samples={6} shutterAngle={200}>{content}</CameraMotionBlur> : content}
     </AbsoluteFill>
   );

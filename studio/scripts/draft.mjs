@@ -143,7 +143,8 @@ const allCands = [...new Set(cast.flatMap((c) => c.candidates))];
 
 /* ═════════════ STAGE 3 — DIRECTOR ═════════════ */
 const directorSystem = `You are the DIRECTOR / motion editor of a premium Gen-Z Instagram studio. For EACH script line choose the single best scene from THAT LINE'S candidates and fill its props.
-Return ONLY JSON: {"beats":[{"i":line number,"primitive":id,"why":"max 8 words","emphasis":[1-2 words from the line],"props":{…}}]} — exactly one per line, in order.
+Return ONLY JSON: {"beats":[{"i":line number,"primitive":id,"why":"max 8 words","emphasis":[1-2 words from the line],"bg":"2-4 word stock-footage search","props":{…}}]} — exactly one per line, in order.
+BACKGROUND ("bg"): every line gets a real stock video behind it. Give a concrete, FILMABLE search a stock library will have (objects, places, textures, actions, moods) that matches the line — e.g. "pyramid desert sunset", "ancient stone blocks", "server room lights", "city night timelapse". Never names of people, brands or specific events; vary it every line.
 CHOOSING: the scene must SHOW what the line SAYS (a date → time travel, a place → map lock, a comparison → true-scale or versus…). Prefer the richest, most cinematic option that fits; never pick the same id twice in the whole reel; avoid two plain-text scenes in a row.
 PROPS: follow the schema exactly; on-screen strings are SHORT (titles ≤ 5 words, list items ≤ 4 words). Use ONLY facts from FACTS — never invent numbers, quotes, sources or names.
 IMAGES (REQUIRED for archiveFilm, museumFrame, photo, thenNow, beforeAfter): always give "search": 2-5 words naming a REAL subject to find an archival/public-domain photo (e.g. "Apollo Guidance Computer", "Saturn V launch") AND a "prompt" fallback describing the scene visually (era, place, lighting; no text, no logos, no real living person's likeness). thenNow uses search/prompt for THEN and search2/prompt2 for NOW.
@@ -174,6 +175,7 @@ const beats = lines.map((l, k) => {
   if (Array.isArray(d.emphasis) && d.emphasis.length) beat.emphasis = d.emphasis.slice(0, 2).map(clean);
   if (d.props && typeof d.props === "object" && !Array.isArray(d.props) && primitive === d.primitive) beat.props = d.props;
   if (d.why) beat.why = clean(d.why);
+  if (d.bg) beat.bg = clean(d.bg).slice(0, 60);
   return beat;
 });
 if (style === "buildInPublic" && day) {

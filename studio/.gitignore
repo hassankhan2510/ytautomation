@@ -5,3 +5,4 @@ public/audio/
 public/gen/
 voice-raw/*
 !voice-raw/README.md
+public/bg/

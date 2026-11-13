@@ -95,6 +95,80 @@ for (const [i, b] of job.beats.entries()) {
     else console.log("  → no image; the primitive renders its no-image look");
   }
 }
+/**
+ * REAL BACKGROUNDS — every scene gets stock footage that matches what's being said (Pexels: free,
+ * commercial use, no attribution required; credited anyway). Vertical video first, vertical photo
+ * second, the generated backdrop only as a last resort. No asset repeats within a reel.
+ * BG_MODE = video (default) | photo | off.   Needs PEXELS_API_KEY.
+ */
+const BG_MODE = (process.env.BG_MODE || "video").toLowerCase();
+const PEXELS = process.env.PEXELS_API_KEY || "";
+const OWN_BACKDROP = new Set(["museumFrame", "redString", "photo", "outro"]); // these paint their own full background
+const STOP = new Set("the a an and or but of to in on for with at by from is are was were be been it its this that these those as into than then so such just very can will would could should about over after before your you our we they them their there here what when where which who why how not no yes do does did have has had more most much many some any each every all one two three".split(" "));
+const bgQuery = (b) => {
+  if (b.bg) return String(b.bg);
+  const words = String(b.text || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
+  const topic = String(job.title || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter((w) => w.length > 3 && !STOP.has(w));
+  return [...new Set([...words.sort((x, y) => y.length - x.length).slice(0, 2), ...topic.slice(0, 1)])].join(" ") || "abstract light";
+};
+async function pexels(url) {
+  const r = await fetch(url, { headers: { Authorization: PEXELS }, signal: AbortSignal.timeout(30_000) });
+  if (!r.ok) throw new Error(`pexels HTTP ${r.status}`);
+  return r.json();
+}
+async function download(url, file) {
+  const r = await fetch(url, { signal: AbortSignal.timeout(120_000) });
+  if (!r.ok) throw new Error(`download HTTP ${r.status}`);
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length < 20_000) throw new Error("file too small");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, buf);
+}
+if (BG_MODE !== "off" && PEXELS) {
+  const usedIds = new Set();
+  let got = 0;
+  for (const [i, b] of job.beats.entries()) {
+    if (OWN_BACKDROP.has(b.primitive) || b.bgSrc) continue;
+    const q = bgQuery(b);
+    const base = `bg/${job.id || "job"}-${i}`;
+    try {
+      if (BG_MODE === "video") {
+        const d = await pexels(`https://api.pexels.com/videos/search?query=${encodeURIComponent(q)}&orientation=portrait&size=medium&per_page=15`);
+        const vid = (d.videos || []).find((v) => !usedIds.has(`v${v.id}`) && v.duration >= 6);
+        const file = vid && (vid.video_files || [])
+          .filter((f) => f.file_type === "video/mp4" && f.height > f.width && f.height >= 960 && f.height <= 1920)
+          .sort((x, y) => Math.abs(x.height - 1280) - Math.abs(y.height - 1280))[0];
+        if (file) {
+          await download(file.link, path.join("public", `${base}.mp4`));
+          Object.assign(b, { bgSrc: `${base}.mp4`, bgKind: "video" });
+          usedIds.add(`v${vid.id}`);
+          job.credits.push({ beat: i, title: `Pexels video ${vid.id}`, artist: vid.user?.name || "Pexels", license: "Pexels License", url: vid.url });
+          got++;
+          console.log(`beat ${i}: bg video "${q}" -> ${file.width}x${file.height}`);
+          continue;
+        }
+      }
+      const p = await pexels(`https://api.pexels.com/v1/search?query=${encodeURIComponent(q)}&orientation=portrait&per_page=15`);
+      const ph = (p.photos || []).find((x) => !usedIds.has(`p${x.id}`));
+      if (ph) {
+        await download(`${ph.src.original}?auto=compress&cs=tinysrgb&fit=crop&w=1080&h=1920`, path.join("public", `${base}.jpg`));
+        Object.assign(b, { bgSrc: `${base}.jpg`, bgKind: "image" });
+        usedIds.add(`p${ph.id}`);
+        job.credits.push({ beat: i, title: `Pexels photo ${ph.id}`, artist: ph.photographer || "Pexels", license: "Pexels License", url: ph.url });
+        got++;
+        console.log(`beat ${i}: bg photo "${q}"`);
+      } else {
+        console.log(`beat ${i}: no background found for "${q}" — generated backdrop`);
+      }
+    } catch (e) {
+      console.warn(`beat ${i}: background failed (${e.message}) — generated backdrop`);
+    }
+  }
+  console.log(`backgrounds: ${got}/${job.beats.length} scenes have real footage (${BG_MODE})`);
+} else if (BG_MODE !== "off") {
+  console.warn("PEXELS_API_KEY not set — scenes use the generated backdrop");
+}
+
 // Music credit (CC BY tracks require it in the caption/description).
 if (job.music) {
   try {

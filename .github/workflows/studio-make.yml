@@ -37,6 +37,11 @@ on:
         type: choice
         options: [auto, none]
         default: auto
+      backgrounds:
+        description: "Scene backgrounds: video = real stock footage (Pexels) · photo = stock photos · off = generated"
+        type: choice
+        options: [video, photo, "off"]
+        default: video
       sfx:
         description: "Sound effects (whooshes, hits, pops)"
         type: choice
@@ -88,9 +93,11 @@ jobs:
           GROQ_TPM: ${{ vars.GROQ_TPM }}
         run: node scripts/draft.mjs
 
-      - name: ② Images, music, sound settings
+      - name: ② Backgrounds (Pexels video), images, music, sound settings
         env:
           JOB_FILE: ${{ steps.draft.outputs.draft }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          BG_MODE: ${{ github.event.inputs.backgrounds }}
           MUSIC: ${{ github.event.inputs.music }}
           SFX: ${{ github.event.inputs.sfx }}
           SHADERS: "off"
@@ -114,7 +121,7 @@ jobs:
             const fs = require("fs");
             const p = JSON.parse(fs.readFileSync("out/props.json", "utf8")).job;
             const lines = [p.title || "", "", p.caption || ""];
-            const img = (p.credits || []).filter((c) => c.beat !== "music");
+            const img = (p.credits || []).filter((c) => c.beat !== "music" && !/Pexels/i.test(c.license || ""));
             if (img.length) lines.push("", "Images: " + img.map((c) => `${c.title} — ${c.artist} (${c.license})`).join("; "));
             if (p.hooks && p.hooks.length) lines.push("", "--- alternative hooks ---", ...p.hooks);
             fs.writeFileSync("out/caption.txt", lines.join("\n").trim() + "\n");

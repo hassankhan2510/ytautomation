@@ -25,6 +25,11 @@ export type Beat = {
   hold?: number;
   /** Real motion blur for this beat (expensive on CPU — use on the 1-2 most kinetic beats). */
   blur?: boolean;
+  /** Background search query for this beat (stock footage/photo), written by the AI director. */
+  bg?: string;
+  /** Resolved background file under public/ (set by scripts/props.mjs) and its kind. */
+  bgSrc?: string;
+  bgKind?: "video" | "image";
 };
 
 export type Job = {
