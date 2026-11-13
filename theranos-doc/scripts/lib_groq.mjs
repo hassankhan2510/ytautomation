@@ -19,9 +19,11 @@
  */
 
 const API = "https://api.groq.com/openai/v1/chat/completions";
-// Default to qwen3.6-27b: ~30k TPM / 14.4k requests-per-day free vs gpt-oss-120b's 8k / 1k — the small
-// gpt-oss caps were exhausting mid-run ("all keys at limit"). gpt-oss stays as the fallback model.
-export const GROQ_MODEL = process.env.GROQ_MODEL || "qwen/qwen3.6-27b";
+// Default to Groq's current free Qwen (qwen3.8-27b, "preview"; replaced qwen3.6-27b in Nov 2026 — preview
+// ids get renamed without notice). Bigger free budget than gpt-oss-120b's small caps; gpt-oss-120b
+// (a stable PRODUCTION model) stays as the fallback. A 404 "model_not_found" now skips straight to
+// the fallback instead of burning 4 retries, so the next silent rename can't break a run.
+export const GROQ_MODEL = process.env.GROQ_MODEL || "qwen/qwen3.8-27b";
 const FALLBACK_MODEL = process.env.GROQ_FALLBACK_MODEL || "openai/gpt-oss-120b";
 // Per-key TPM: qwen-class free tier ~30k, gpt-oss 8k. Auto by model unless GROQ_TPM overrides.
 const TPM = Number(process.env.GROQ_TPM || (/qwen/i.test(GROQ_MODEL) ? 30000 : 8000));
@@ -162,6 +164,11 @@ export async function groqJSON(system, user, opts = {}) {
             continue;
           }
           throw new Error(`Groq 400: ${body.slice(0, 180)}`);
+        }
+        if (res.status === 404) {
+          const body = await res.text().catch(() => "");
+          console.log(`  ! Groq: model "${model}" is not available (renamed/retired) — switching to fallback. ${body.slice(0, 100)}`);
+          break; // no point retrying a model that doesn't exist; go straight to the next model
         }
         if (!res.ok) throw new Error(`Groq ${res.status}: ${(await res.text().catch(() => "")).slice(0, 180)}`);
         const d = await res.json();

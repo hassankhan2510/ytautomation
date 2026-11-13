@@ -84,7 +84,7 @@ SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
 - Every line must ADD something new (a fact, a turn, a consequence). Never restate or paraphrase an earlier line.
 - The hook leads with the single most surprising fact or tension in the SOURCE.
 - energy: 3 hook/reveals/wins, 2 explanation, 1 reflective. Never three 1s in a row.
-FACTS (strict): every number, date, name and place in the script must come from the SOURCE. Never invent statistics, quotes, studies or sources.
+FACTS (strict): every number, date, name, place, material, weight, cause and "that's why" reason in the script must come from the SOURCE. Do NOT add outside knowledge — even well-known true facts. Never invent statistics, quotes, studies or sources. Make it gripping through framing, questions and pacing, not extra facts.
 STYLE: ${STYLES[style] || STYLES.explainer}`;
 const segments = verbatim ? segment(paragraph).slice(0, 24) : [];
 const writerUser = verbatim ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
@@ -105,6 +105,35 @@ const chosen = Math.min(Math.max(0, Number(written.chosen) || 0), Math.max(0, ho
 lines[0].energy = 3;
 if (!verbatim) lines[0].intent = lines[0].intent === "fact" ? "hook" : lines[0].intent;
 console.log(lines.map((l, i) => `  ${i + 1}. [${l.intent}] ${l.text}`).join("\n"));
+
+/* ═════════════ STAGE 1b — FACT-CHECKER ═════════════
+ * The writer sometimes "helps" with outside knowledge ("each block weighs over a ton"). For a facts
+ * channel every claim must come from the SOURCE, so a separate strict pass checks each line and
+ * rewrites unsupported ones using only the source (verbatim mode: flag only, never change words). */
+const checkerSystem = `You are a strict FACT-CHECKER for a factual short-video channel. For each numbered script line,
+decide if every factual claim in it (numbers, dates, names, materials, causes, superlatives, "that's why" reasons)
+is directly supported by the SOURCE. Style, questions, hooks and opinions without facts are fine.
+Return ONLY JSON: {"lines":[{"i":n,"ok":true|false,"claim":"the unsupported part","fix":"the line rewritten using ONLY source facts, same tone, 5-14 words"}]} — one entry per line.`;
+const checkerUser = `SOURCE:
+"""${paragraph.slice(0, 6000)}"""
+
+SCRIPT:
+${lines.map((l, i) => `${i + 1}. ${l.text}`).join("\n")}`;
+console.log("② FACT-CHECK…");
+const checked = await groqJSON(checkerSystem, checkerUser, { maxTokens: 2500, temperature: 0.1 });
+const factFixes = [];
+for (const c of checked?.lines || []) {
+  const k = Number(c?.i) - 1;
+  if (!lines[k] || c?.ok !== false) continue;
+  const fix = clean(c.fix);
+  if (!verbatim && fix && fix.split(" ").length >= 3) {
+    factFixes.push({ before: lines[k].text, after: fix, claim: clean(c.claim) });
+    lines[k].text = fix;
+  } else {
+    factFixes.push({ before: lines[k].text, after: null, claim: clean(c.claim) });
+  }
+}
+if (factFixes.length) console.log(factFixes.map((f) => `  ✎ "${f.claim}" → ${f.after ? `"${f.after}"` : "(flagged)"}`).join("\n"));
 
 /* ═════════════ STAGE 2 — CASTING ═════════════ */
 const cast = castCandidates({ lines, menu, docBias: style === "explainer", seed: Number(process.env.SEED) || paragraph.length });
@@ -129,7 +158,7 @@ ${lines.map((l, i) => `${i + 1}. [${l.intent}, energy ${l.energy}] "${l.text}"  
 SCENE SCHEMAS:
 ${scenesDoc}`;
 
-console.log("③ DIRECTOR…");
+console.log("④ DIRECTOR…");
 const directed = await groqJSON(directorSystem, directorUser, { maxTokens: 5000, temperature: 0.6 });
 const picks = new Map((directed?.beats || []).map((b, k) => [Number(b?.i) || k + 1, b]));
 
@@ -226,6 +255,11 @@ const report = [
   "",
   "**Script → scenes:**",
   ...beats.map((b, i) => `${i + 1}. \`${b.primitive}\` — ${b.text}${b.why ? `  _(${b.why})_` : ""}`),
+  "",
+  factFixes.length
+    ? `🔍 **Fact-check:** ${factFixes.filter((f) => f.after).length} line(s) rewritten to stay within your paragraph${factFixes.some((f) => !f.after) ? `, ${factFixes.filter((f) => !f.after).length} flagged` : ""}:
+${factFixes.map((f) => `  - ~~${f.before}~~ → ${f.after || "**check this line**"} _(unsupported: ${f.claim || "?"})_`).join("\n")}`
+    : "🔍 **Fact-check:** every line is supported by your paragraph.",
   "",
   flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),

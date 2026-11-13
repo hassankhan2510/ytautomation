@@ -27,12 +27,12 @@ const API = "https://api.groq.com/openai/v1/chat/completions";
 // Default pool = the two models that are reliably available on the Groq free tier. gpt-oss-120b for
 // quality work, gpt-oss-20b for cheap/bulk work. Override with PB_MODELS to add others (e.g. a qwen id
 // you actually have access to).
-// High tier runs on BOTH qwen3.6-27b and gpt-oss-120b. qwen has a far bigger free budget
+// High tier runs on BOTH qwen3.8-27b (Groq's current free Qwen; replaced qwen3.6-27b) and gpt-oss-120b. qwen has a far bigger free budget
 // (~30k TPM / 14.4k RPD vs gpt-oss's 8k / 1k), so the scheduler — which prefers the slot with the
 // most free budget — routes most high-tier work to qwen and only spills to gpt-oss when qwen is busy.
 // That's what stops the mid-run 429 wall you were hitting (gpt-oss's 1k/day cap exhausting).
 const DEFAULT_MODELS = [
-  { id: "qwen/qwen3.6-27b",    tier: "high", tpm: 30000, rpm: 30, rpd: 14000 },
+  { id: "qwen/qwen3.8-27b",    tier: "high", tpm: 30000, rpm: 30, rpd: 14000 },
   { id: "openai/gpt-oss-120b", tier: "high", tpm: 8000,  rpm: 30, rpd: 1000 },
   { id: "openai/gpt-oss-20b",  tier: "mid",  tpm: 8000,  rpm: 30, rpd: 1000 },
 ];
