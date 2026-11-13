@@ -1,0 +1,255 @@
+{
+  "id": "2026-11-13-8-logon-ki-startup-ho-gayi-bank-ipo",
+  "title": "8 logon ki startup ho gayi bank IPO.",
+  "subject": "ABHI fintech bank IPO",
+  "theme": "ocean",
+  "seed": 286,
+  "handle": "",
+  "language": "urdu",
+  "hooks": [
+    "8 logon ki startup ho gayi bank IPO.",
+    "Salary pehle hi access karo, bina loan ke."
+  ],
+  "caption": "8 logon se bank IPO tak. Kya aap bhi salary pehle chahiye hoti hai? #ABHI #PakistaniStartup #Fintech #IPO #GenZ\n🎵 Music: \"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-undaunted.mp3",
+  "musicCredit": "\"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 15,
+    "total": 15,
+    "families": 6,
+    "plain": 4,
+    "doc": 5,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "99"
+  ],
+  "beats": [
+    {
+      "text": "Main script de raha hoon, koi change nahi karna.",
+      "primitive": "typewriter",
+      "energy": 3,
+      "speak": "Main script دے رہا ہوں، کوئی change نہیں کرنا۔",
+      "emphasis": [
+        "script"
+      ],
+      "props": {
+        "heading": "SCRIPT DRAFT"
+      },
+      "why": "Matches typing visual idea",
+      "bg": "close up mechanical keyboard typing"
+    },
+    {
+      "text": "Ye Pakistani startup story actually insane hai, Bro.",
+      "primitive": "stomp",
+      "energy": 3,
+      "speak": "Ye Pakistani startup story actually insane ہے، Bro۔",
+      "emphasis": [
+        "insane"
+      ],
+      "props": {},
+      "why": "High energy hook impact",
+      "bg": "karachi city night timelapse"
+    },
+    {
+      "text": "2021 mein Omair aur Ali ne mid problem notice ki.",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "speak": "twenty twenty one میں Omair اور Ali نے mid problem notice کی۔",
+      "emphasis": [
+        "2021"
+      ],
+      "props": {
+        "to": 2021,
+        "label": "THE BEGINNING"
+      },
+      "why": "Visualizes 2021 timeline shift",
+      "bg": "vintage office desk sepia tone"
+    },
+    {
+      "text": "Aap grind karte ho, par apni salary tak nahi pahunche.",
+      "primitive": "loading",
+      "energy": 2,
+      "speak": "Aap grind کرتے ہو، par اپنی salary تک نہیں پہنچے۔",
+      "emphasis": [
+        "salary"
+      ],
+      "props": {
+        "label": "SALARY LOADING...",
+        "done": "99% STUCK"
+      },
+      "why": "Shows stalled salary progress",
+      "bg": "empty wallet on wooden desk"
+    },
+    {
+      "text": "Log high-interest loans lete hain emergencies ke liye.",
+      "primitive": "iceberg",
+      "energy": 2,
+      "speak": "Log high-interest loans لیتے ہیں emergencies کے لیے۔",
+      "emphasis": [
+        "loans"
+      ],
+      "props": {
+        "top": "Emergency Cash",
+        "below": [
+          "High Interest",
+          "Debt Trap",
+          "Stress",
+          "Cycle"
+        ]
+      },
+      "why": "Reveals hidden loan costs",
+      "bg": "dark water surface texture"
+    },
+    {
+      "text": "Unhone ABHI start kiya ek simple idea ke saath.",
+      "primitive": "decode",
+      "energy": 3,
+      "speak": "Unhone اے بی ایچ آئی start کیا ایک simple idea کے ساتھ۔",
+      "emphasis": [
+        "ABHI"
+      ],
+      "props": {},
+      "why": "Tech startup reveal style",
+      "bg": "green code matrix background"
+    },
+    {
+      "text": "Workers apni earned salary anytime withdraw kar sakte hain.",
+      "primitive": "roadmap",
+      "energy": 3,
+      "speak": "Workers اپنی earned salary anytime withdraw کر سکتے ہیں۔",
+      "emphasis": [
+        "withdraw"
+      ],
+      "props": {
+        "steps": [
+          "Work",
+          "Earn",
+          "Withdraw",
+          "Done"
+        ],
+        "done": 4
+      },
+      "why": "Shows withdrawal process flow",
+      "bg": "smartphone screen glowing dark"
+    },
+    {
+      "text": "Sirf 8 log shared room mein, Y Combinator bag ke saath.",
+      "primitive": "scaleCompare",
+      "energy": 2,
+      "speak": "Sirf eight log shared room میں، Y Combinator bag کے ساتھ۔",
+      "emphasis": [
+        "8 log"
+      ],
+      "props": {
+        "items": [
+          {
+            "label": "Team",
+            "size": 1
+          },
+          {
+            "label": "YC Bag",
+            "size": 1
+          }
+        ],
+        "unit": "x"
+      },
+      "why": "Contrasts small team size",
+      "bg": "small cluttered office room"
+    },
+    {
+      "text": "Phir UAE, Saudi, Oman mein expand ho gaye.",
+      "primitive": "factCard",
+      "energy": 3,
+      "speak": "Phir یو اے ای, Saudi, Oman میں expand ہو گئے۔",
+      "emphasis": [
+        "expand"
+      ],
+      "props": {
+        "fact": "Phir UAE, Saudi, Oman mein expand ho gaye."
+      },
+      "why": "Maps regional expansion arcs"
+    },
+    {
+      "text": "Unhone ek poora microfinance bank kharid liya.",
+      "primitive": "thenNow",
+      "energy": 3,
+      "speak": "Unhone ایک پورا microfinance bank خرید لیا۔",
+      "emphasis": [
+        "kharid"
+      ],
+      "props": {
+        "prompt": "old brick bank building exterior, sepia tone, 1990s",
+        "prompt2": "modern glass bank building, bright daylight, clean",
+        "then": "OLD BANK",
+        "now": "ABHI"
+      },
+      "why": "Shows bank acquisition shift",
+      "bg": "modern bank building exterior"
+    },
+    {
+      "text": "Ab ABHI Microfinance Bank stock exchange pe public ho raha hai.",
+      "primitive": "highlight",
+      "energy": 3,
+      "speak": "Ab اے بی ایچ آئی Microfinance Bank stock exchange پے public ہو رہا ہے۔",
+      "emphasis": [
+        "public"
+      ],
+      "why": "Announces public listing news"
+    },
+    {
+      "text": "Se 'apna paisa kyun nahi milta?' tak.",
+      "primitive": "search",
+      "energy": 2,
+      "speak": "Se 'apna paisa kyun nahi milta?' تک۔",
+      "emphasis": [
+        "paisa"
+      ],
+      "props": {
+        "query": "apna paisa kyun nahi milta",
+        "suggestions": [
+          "salary delay",
+          "loan interest",
+          "fintech solution"
+        ],
+        "pick": 2
+      },
+      "why": "Visualizes the core question",
+      "bg": "computer screen close up"
+    },
+    {
+      "text": "Pakistan ka first fintech-led bank IPO ban gaya.",
+      "primitive": "flip3d",
+      "energy": 3,
+      "speak": "Pakistan کا first fintech-led bank آئی پی او بن گیا۔",
+      "emphasis": [
+        "first"
+      ],
+      "why": "Celebrates first fintech IPO"
+    },
+    {
+      "text": "Ye absolute cinema hai, sach mein.",
+      "primitive": "blob",
+      "energy": 3,
+      "speak": "Ye absolute cinema ہے، سچ میں۔",
+      "emphasis": [
+        "cinema"
+      ],
+      "props": {
+        "word": "CINEMA"
+      },
+      "why": "Cinematic calm closing vibe",
+      "bg": "cinematic film grain overlay"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
