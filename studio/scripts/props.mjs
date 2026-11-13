@@ -41,58 +41,116 @@ async function fetchImage(prompt, file, seed) {
 }
 
 /**
- * REAL archival photos from Wikimedia Commons (free licences: public domain / CC0 / CC BY / CC BY-SA).
- * Best source for history & research — real images beat AI fakes for accuracy. Credits are recorded
- * in job.credits so CC BY / BY-SA attribution can go in the post caption.
+ * MEDIA JUDGE (shared by scene images and backgrounds) — one LLM call scores every scene's candidates
+ * 0-10 for how clearly they show THAT line's subject within the reel's subject. Only a score >= 7 is
+ * used; otherwise the scene gets nothing (its clean no-image look / the generated backdrop).
+ * Wrong media is worse than no media: a stock-market reel once got rebar and paper textures, a random
+ * portrait for "investors", and a Taj Mahal reel got chained hands for "workers".
+ */
+const SUBJECT = String(job.subject || job.title || "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+async function judgeMedia(scenes, what) {
+  if (!scenes.some((s) => s.c.length)) return new Map();
+  const { groqJSON } = await import("../../theranos-doc/scripts/lib_groq.mjs");
+  const res = await groqJSON(
+    `You are a strict PHOTO EDITOR for a factual video. For each SCENE, score every candidate 0-10 for how clearly its description shows the subject or context of THAT spoken line, inside the reel's SUBJECT, and pick the best.
+Score 7+ ONLY if it literally depicts the line's subject (e.g. a stock chart or trading floor for a markets line; the actual monument for a monument line).
+Score LOW (0-3): abstract textures, patterns, generic "mood"/background shots; random people, portraits or offices not specific to the line; a different place, country, landmark, era or event; anything implying a claim the line doesn't make (chains/slavery for "workers", a crash for "growth"); brand logos; identifiable public figures; disturbing imagery.
+Each candidate may be used once in the whole reel.
+Return ONLY JSON: {"picks":[{"scene":n,"pick":candidate number or -1,"score":0-10,"why":"max 8 words"}]}`,
+    `SUBJECT OF THE REEL: ${SUBJECT || "(see lines)"}\nMEDIA TYPE: ${what}\n\n` +
+      scenes.map((s) => `SCENE ${s.n} — line: "${s.line}" (search: ${s.q})\n${s.c.map((c, k) => `  ${k + 1}. [${c.kind}] ${c.desc}`).join("\n") || "  (no candidates)"}`).join("\n\n"),
+    { maxTokens: 1800, temperature: 0.1 },
+  );
+  return new Map(
+    (res?.picks || []).map((p) => [Number(p.scene), { pick: Number(p.pick), score: Number(p.score) || 0, why: String(p.why || "") }]),
+  );
+}
+const MIN_SCORE = Number(process.env.MEDIA_MIN_SCORE || 7);
+
+/**
+ * REAL archival photos from Wikimedia Commons (free licences: public domain / CC0 / CC BY / CC BY-SA),
+ * now as CANDIDATES (title + description) for the judge instead of "first result wins".
  */
 const UA = "StudioReelRenderer/1.0 (automated render job; GitHub Actions)";
 const stripHtml = (s) => String(s || "").replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
-async function fetchCommons(query, file) {
+async function commonsCandidates(query) {
   try {
-    const api = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=10&gsrsearch=${encodeURIComponent(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=1280`;
+    const api = `https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=12&gsrsearch=${encodeURIComponent(`${query} filetype:bitmap`)}&prop=imageinfo&iiprop=url|size|extmetadata&iiurlwidth=1280`;
     const res = await fetch(api, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(30_000) });
     if (!res.ok) throw new Error(`search HTTP ${res.status}`);
     const pages = Object.values((await res.json())?.query?.pages || {}).sort((a, b) => (a.index ?? 99) - (b.index ?? 99));
+    const out = [];
     for (const pg of pages) {
       const ii = pg.imageinfo?.[0];
       const meta = ii?.extmetadata || {};
       const license = stripHtml(meta.LicenseShortName?.value);
       if (!ii?.thumburl || (ii.width || 0) < 700) continue;
       if (!/public domain|^pd|cc0|cc by/i.test(license)) continue; // free licences only
-      const img = await fetch(ii.thumburl, { headers: { "User-Agent": UA }, signal: AbortSignal.timeout(60_000) });
-      if (!img.ok) continue;
-      const buf = Buffer.from(await img.arrayBuffer());
-      if (buf.length < 10_000) continue;
-      fs.mkdirSync(path.dirname(file), { recursive: true });
-      fs.writeFileSync(file, buf);
-      return { title: stripHtml(pg.title).replace(/^File:/, ""), artist: stripHtml(meta.Artist?.value) || "unknown", license, url: ii.descriptionurl };
+      const title = stripHtml(pg.title).replace(/^File:/, "").replace(/\.[a-z]{3,4}$/i, "");
+      const desc = `${title} — ${stripHtml(meta.ImageDescription?.value).slice(0, 140)}`;
+      out.push({ kind: "photo", id: `c${pg.pageid}`, desc, link: ii.thumburl, credit: { title, artist: stripHtml(meta.Artist?.value) || "unknown", license, url: ii.descriptionurl } });
+      if (out.length >= 6) break;
     }
-    console.warn(`  commons: no freely-licensed match for "${query}"`);
+    return out;
   } catch (e) {
-    console.warn(`  commons failed: ${e.message}`);
+    console.warn(`  commons failed for "${query}": ${e.message}`);
+    return [];
   }
-  return null;
+}
+async function downloadTo(url, file, headers = {}) {
+  const r = await fetch(url, { headers, signal: AbortSignal.timeout(120_000) });
+  if (!r.ok) throw new Error(`download HTTP ${r.status}`);
+  const buf = Buffer.from(await r.arrayBuffer());
+  if (buf.length < 10_000) throw new Error("file too small");
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, buf);
 }
 
-// Per beat: search → src (real archival photo), else prompt → src (AI image); same for search2/prompt2 → src2.
+// Scene images: search -> judged archival photo; else prompt -> AI image; same for search2/prompt2 -> src2.
 job.credits = [];
-for (const [i, b] of job.beats.entries()) {
-  for (const [qk, pk, sk, tag] of [["search", "prompt", "src", ""], ["search2", "prompt2", "src2", "b"]]) {
-    const p = b.props || {};
-    if (p[sk] || (!p[qk] && !p[pk])) continue;
-    const base = `gen/${job.id || "job"}-${i}${tag}`;
+{
+  const slots = [];
+  for (const [i, b] of job.beats.entries()) {
+    for (const [qk, pk, sk, tag] of [["search", "prompt", "src", ""], ["search2", "prompt2", "src2", "b"]]) {
+      const p = b.props || {};
+      if (p[sk] || (!p[qk] && !p[pk])) continue;
+      slots.push({ i, b, qk, pk, sk, tag, q: String(p[qk] || ""), line: String(b.text || "") });
+    }
+  }
+  const scenes = [];
+  for (const s of slots) scenes.push({ ...s, n: scenes.length + 1, c: s.q ? await commonsCandidates(s.q) : [] });
+  let picks = new Map();
+  try { picks = await judgeMedia(scenes, "archival/reference photos shown inside the scene"); } catch (e) { console.warn(`  image judge failed (${e.message}) — scenes use their no-image look`); }
+  const used = new Set();
+  let ok = 0, none = 0;
+  for (const s of scenes) {
+    const base = `gen/${job.id || "job"}-${s.i}${s.tag}`;
+    const p = picks.get(s.n);
+    const cand = p && p.pick >= 1 && p.score >= MIN_SCORE ? s.c[p.pick - 1] : null;
     let got = null;
-    if (p[qk]) {
-      console.log(`beat ${i}: archival photo for "${p[qk]}"`);
-      const credit = await fetchCommons(p[qk], path.join("public", `${base}.jpg`));
-      if (credit) { got = `${base}.jpg`; job.credits.push({ beat: i, ...credit }); console.log(`  → ${credit.title} (${credit.license}, ${credit.artist})`); }
+    if (cand && !used.has(cand.id)) {
+      try {
+        await downloadTo(cand.link, path.join("public", `${base}.jpg`), { "User-Agent": UA });
+        got = `${base}.jpg`;
+        used.add(cand.id);
+        job.credits.push({ beat: s.i, ...cand.credit });
+        console.log(`beat ${s.i}: photo "${cand.desc.slice(0, 70)}" ✓ ${p.score}/10 (${p.why})`);
+      } catch (e) {
+        console.warn(`beat ${s.i}: photo download failed (${e.message})`);
+      }
     }
-    if (!got && p[pk]) {
-      console.log(`beat ${i}: AI image for "${p[pk]}"`);
-      if (await fetchImage(p[pk], path.join("public", `${base}-ai.jpg`), (job.seed || 1) * 100 + i * 2 + (tag ? 1 : 0))) got = `${base}-ai.jpg`;
+    const pr = (s.b.props || {})[s.pk];
+    if (!got && pr) {
+      console.log(`beat ${s.i}: AI image for "${pr}"`);
+      if (await fetchImage(pr, path.join("public", `${base}-ai.jpg`), (job.seed || 1) * 100 + s.i * 2 + (s.tag ? 1 : 0))) got = `${base}-ai.jpg`;
     }
-    if (got) b.props = { ...p, [sk]: got };
-    else console.log("  → no image; the primitive renders its no-image look");
+    if (got) { s.b.props = { ...(s.b.props || {}), [s.sk]: got }; ok++; }
+    else { none++; console.log(`beat ${s.i}: no fitting image for "${s.q}"${p?.why ? ` (${p.why})` : ""} — scene uses its no-image look`); }
+  }
+  if (scenes.length) {
+    const msg = `🖼️ Image judge: ${ok} scene image(s) matched · ${none} without a fitting image (no-image look)`;
+    console.log(msg);
+    if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, msg + "\n");
   }
 }
 /**
@@ -133,7 +191,7 @@ if (BG_MODE !== "off" && PEXELS) {
    * reel showed chained hands for "workers"). Rejected scenes get one subject-anchored retry, then fall
    * back to the generated backdrop. */
   const slugDesc = (url) => decodeURIComponent(String(url || "").split("/").filter(Boolean).pop() || "").replace(/-\d+$/, "").replace(/-/g, " ");
-  const subject = String(job.subject || job.title || "").replace(/[^\p{L}\p{N}\s]/gu, " ").replace(/\s+/g, " ").trim();
+  const subject = SUBJECT;
   async function candidatesFor(q) {
     const out = [];
     try {
@@ -155,19 +213,7 @@ if (BG_MODE !== "off" && PEXELS) {
     }
     return out;
   }
-  async function judge(scenes) {
-    const { groqJSON } = await import("../../theranos-doc/scripts/lib_groq.mjs");
-    const res = await groqJSON(
-      `You are a strict PHOTO EDITOR for a factual video. For each SCENE choose the ONE candidate whose description clearly shows the subject or context of that spoken line, within the reel's SUBJECT — or -1 if none truly fits.
-REJECT: a different place, country, landmark, era or event; anything implying a claim the line doesn't make (e.g. chains/slavery when the line says workers; a crash when it says growth); unrelated generic stock (random people, offices, phones) unless the line is about them; brand logos; identifiable public figures; disturbing imagery.
-Prefer footage that is literal and specific over vague "mood" shots. Each candidate may be used once in the whole reel.
-Return ONLY JSON: {"picks":[{"scene":n,"pick":candidate number or -1,"why":"max 8 words"}]}`,
-      `SUBJECT OF THE REEL: ${subject || "(see lines)"}\n\n` + scenes.map((s) => `SCENE ${s.n} — line: "${s.line}" (search: ${s.q})\n${s.c.map((c, k) => `  ${k + 1}. [${c.kind}] ${c.desc}`).join("\n") || "  (no candidates)"}`).join("\n\n"),
-      { maxTokens: 1500, temperature: 0.1 },
-    );
-    return new Map((res?.picks || []).map((p) => [Number(p.scene), { pick: Number(p.pick), why: String(p.why || "") }]));
-  }
-
+  const judge = (scenes) => judgeMedia(scenes, "full-screen background footage/photo behind the scene");
   const usedIds = new Set();
   const todo = job.beats.map((b, i) => ({ b, i })).filter(({ b }) => !OWN_BACKDROP.has(b.primitive) && !b.bgSrc && String(b.text || "").trim());
   let got = 0, rejected = 0;
@@ -185,7 +231,7 @@ Return ONLY JSON: {"picks":[{"scene":n,"pick":candidate number or -1,"why":"max 
     const next = [];
     for (const s of scenes) {
       const p = picks.get(s.n);
-      const cand = p && p.pick >= 1 ? s.c[p.pick - 1] : null;
+      const cand = p && p.pick >= 1 && p.score >= MIN_SCORE ? s.c[p.pick - 1] : null;
       if (!cand || usedIds.has(cand.id)) {
         if (round === 1) next.push({ b: s.b, i: s.i });
         else { rejected++; console.log(`beat ${s.i}: no fitting footage ("${s.q}") — generated backdrop${p?.why ? ` (${p.why})` : ""}`); }
@@ -199,7 +245,7 @@ Return ONLY JSON: {"picks":[{"scene":n,"pick":candidate number or -1,"why":"max 
         usedIds.add(cand.id);
         job.credits.push({ beat: s.i, ...cand.credit });
         got++;
-        console.log(`beat ${s.i}: ${cand.kind} "${cand.desc}" ✓ (${p.why})`);
+        console.log(`beat ${s.i}: ${cand.kind} "${cand.desc}" ✓ ${p.score}/10 (${p.why})`);
       } catch (e) {
         if (round === 1) next.push({ b: s.b, i: s.i });
         else console.warn(`beat ${s.i}: download failed (${e.message}) — generated backdrop`);
