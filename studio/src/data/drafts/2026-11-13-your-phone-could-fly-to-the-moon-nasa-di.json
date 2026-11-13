@@ -1,0 +1,192 @@
+{
+  "id": "2026-11-13-your-phone-could-fly-to-the-moon-nasa-di",
+  "title": "Your phone could fly to the Moon, NASA did it with way less.",
+  "subject": "Apollo 11 rope memory",
+  "theme": "grape",
+  "seed": 2530,
+  "handle": "",
+  "language": "english",
+  "hooks": [
+    "Your phone could fly to the Moon, NASA did it with way less.",
+    "NASA used 4 kilobytes to land humans on the Moon."
+  ],
+  "caption": "4 kilobytes of hand-knitted code. 🧶\nWould you trust it to land on the Moon?\n#Apollo11 #TechHistory #RopeMemory #WomenInSTEM #SpaceFacts\n🎵 Music: \"Infinite Perspective\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-infinite-perspective.mp3",
+  "musicCredit": "\"Infinite Perspective\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8.5,
+    "unique": 11,
+    "total": 11,
+    "families": 5,
+    "plain": 2,
+    "doc": 2,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "5050"
+  ],
+  "beats": [
+    {
+      "text": "Your phone could fly to the Moon, NASA did it with way less.",
+      "primitive": "phoneCall",
+      "energy": 3,
+      "emphasis": [
+        "Moon",
+        "way less"
+      ],
+      "props": {
+        "caller": "Apollo 11",
+        "subtitle": "1969"
+      },
+      "why": "Meme hook contrasts modern/old",
+      "bg": "smartphone screen glowing dark room"
+    },
+    {
+      "text": "In 1969, Apollo 11 landed two humans on the Moon.",
+      "primitive": "archiveFilm",
+      "energy": 2,
+      "emphasis": [
+        "1969",
+        "Moon"
+      ],
+      "props": {
+        "search": "Apollo 11 lunar module",
+        "prompt": "black and white grainy footage of lunar module on moon surface, 1960s",
+        "year": "1969",
+        "place": "Moon"
+      },
+      "why": "Authentic historical landing footage",
+      "bg": "grainy black and white lunar surface"
+    },
+    {
+      "text": "The computer only had about 4 kilobytes of RAM.",
+      "primitive": "counter",
+      "energy": 3,
+      "emphasis": [
+        "4 kilobytes",
+        "RAM"
+      ],
+      "props": {
+        "from": 0,
+        "to": 4,
+        "suffix": " KB",
+        "label": "RAM"
+      },
+      "why": "Visualizes tiny memory capacity",
+      "bg": "vintage computer server racks"
+    },
+    {
+      "text": "But here's the thing, they didn't even type code.",
+      "primitive": "strike",
+      "energy": 2,
+      "emphasis": [
+        "didn't even type",
+        "code"
+      ],
+      "props": {
+        "wrong": "Typed code",
+        "right": "Hand-woven"
+      },
+      "why": "Debunks typing myth visually",
+      "bg": "old mechanical typewriter keys close up"
+    },
+    {
+      "text": "Women literally knitted the software by hand into copper wire.",
+      "primitive": "isoBuild",
+      "energy": 3,
+      "emphasis": [
+        "knitted",
+        "copper wire"
+      ],
+      "props": {
+        "layers": [
+          "Copper Wire",
+          "Hand Knitting",
+          "Software Logic"
+        ]
+      },
+      "why": "Shows manual layering process",
+      "bg": "hands weaving colorful copper wires"
+    },
+    {
+      "text": "It was called rope memory, woven by hand.",
+      "primitive": "codeRain",
+      "energy": 2,
+      "emphasis": [
+        "rope memory",
+        "woven"
+      ],
+      "props": {
+        "word": "ROPE MEMORY"
+      },
+      "why": "Visualizes dense data structure",
+      "bg": "dense bundle of red copper wires"
+    },
+    {
+      "text": "Your phone has way more power than that.",
+      "primitive": "factCard",
+      "energy": 2,
+      "emphasis": [
+        "way more power",
+        "phone"
+      ],
+      "props": {
+        "fact": "Your phone has way more power than that."
+      },
+      "why": "True scale power difference"
+    },
+    {
+      "text": "We took that incredible manual precision for granted for decades.",
+      "primitive": "highlight",
+      "energy": 1,
+      "emphasis": [
+        "incredible",
+        "precision"
+      ],
+      "props": {},
+      "why": "Calm reflection on precision",
+      "bg": "dimly lit vintage factory floor"
+    },
+    {
+      "text": "Respect to the women who literally knitted software.",
+      "primitive": "flip3d",
+      "energy": 3,
+      "emphasis": [
+        "Respect",
+        "women"
+      ],
+      "why": "Emotional tribute statement"
+    },
+    {
+      "text": "Would you trust a hand-woven computer to save your life?",
+      "primitive": "poll",
+      "energy": 2,
+      "emphasis": [
+        "trust",
+        "hand-woven"
+      ],
+      "props": {
+        "question": "Trust it?",
+        "options": [
+          "Yes",
+          "No"
+        ],
+        "result": [
+          50,
+          50
+        ]
+      },
+      "why": "Engages viewer opinion directly",
+      "bg": "abstract digital particles blue"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
