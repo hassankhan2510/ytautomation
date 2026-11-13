@@ -1,0 +1,179 @@
+{
+  "id": "2026-11-13-the-only-ancient-wonder-still-standing",
+  "title": "The only ancient wonder still standing.",
+  "theme": "sunrise",
+  "seed": 2602,
+  "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "The only ancient wonder still standing.",
+    "It’s been the tallest building for 3800 years.",
+    "Nobody can explain how they moved these blocks."
+  ],
+  "caption": "Still the only one left. How did they actually do it? \n\n#giza #history #pyramid #ancientworld #mystery\n🎵 Music: \"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-undaunted.mp3",
+  "musicCredit": "\"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 9,
+    "unique": 10,
+    "total": 10,
+    "families": 6,
+    "plain": 2,
+    "doc": 1,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "2026",
+    "2300000",
+    "100"
+  ],
+  "beats": [
+    {
+      "text": "The only ancient wonder still standing.",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "wonder",
+        "standing"
+      ],
+      "props": {},
+      "why": "High energy hook with slam"
+    },
+    {
+      "text": "Built around 2560 BC for Pharaoh Khufu.",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "emphasis": [
+        "2560 BC",
+        "Khufu"
+      ],
+      "props": {
+        "from": 2026,
+        "to": -2560,
+        "label": "2560 BC"
+      },
+      "why": "Time travel to ancient date"
+    },
+    {
+      "text": "It held 2.3 million stone blocks.",
+      "primitive": "counter",
+      "energy": 3,
+      "emphasis": [
+        "2.3 million",
+        "blocks"
+      ],
+      "props": {
+        "from": 0,
+        "to": 2300000,
+        "suffix": "",
+        "label": "Stone Blocks"
+      },
+      "why": "Rolling number for block count"
+    },
+    {
+      "text": "Originally, it stood 146 metres tall.",
+      "primitive": "splitFlap",
+      "energy": 2,
+      "emphasis": [
+        "146 metres",
+        "tall"
+      ],
+      "props": {
+        "rows": [
+          "ORIGINAL HEIGHT",
+          "146 METRES"
+        ]
+      },
+      "why": "Airport board for height stat"
+    },
+    {
+      "text": "But nobody fully agrees how they moved them.",
+      "primitive": "iceberg",
+      "energy": 2,
+      "emphasis": [
+        "nobody",
+        "agrees"
+      ],
+      "props": {
+        "top": "Pyramid Standing",
+        "below": [
+          "Ramp Theory",
+          "No Machines",
+          "Unknown Method"
+        ]
+      },
+      "why": "Visible tip vs hidden mystery"
+    },
+    {
+      "text": "Ramps are the main theory, but it's unclear.",
+      "primitive": "isoBuild",
+      "energy": 2,
+      "emphasis": [
+        "Ramps",
+        "theory"
+      ],
+      "props": {
+        "layers": [
+          "Base Platform",
+          "Ramp System",
+          "Stone Blocks"
+        ]
+      },
+      "why": "Stacking blocks shows ramp build"
+    },
+    {
+      "text": "It stayed the tallest man-made structure for 3800 years.",
+      "primitive": "ring",
+      "energy": 3,
+      "emphasis": [
+        "3800 years",
+        "tallest"
+      ],
+      "props": {
+        "value": 100,
+        "label": "3800 Years"
+      },
+      "why": "Donut fill for duration stat"
+    },
+    {
+      "text": "Imagine building that without any modern machinery.",
+      "primitive": "search",
+      "energy": 2,
+      "emphasis": [
+        "Imagine",
+        "machinery"
+      ],
+      "props": {
+        "query": "build pyramid no machines",
+        "suggestions": [
+          "ancient construction",
+          "stone lifting"
+        ],
+        "pick": 0
+      },
+      "why": "Search bar for imagination prompt"
+    },
+    {
+      "text": "That scale of engineering is genuinely mind-bending.",
+      "primitive": "auroraType",
+      "energy": 1,
+      "emphasis": [
+        "mind-bending",
+        "engineering"
+      ],
+      "props": {
+        "word": "Mind-Bending"
+      },
+      "why": "Premium calm closing statement"
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
