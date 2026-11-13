@@ -24,11 +24,13 @@ import numpy as np
 EPS = 1e-4
 INF = 1e30
 
-# material table: r, g, b, type (0 diffuse, 1 metal, 2 light), fuzz
-DIFFUSE, METAL, LIGHT = 0, 1, 2
+# material table: r, g, b, type (0 diffuse, 1 metal, 2 light, 3 glass), fuzz (metal) / IOR (glass)
+DIFFUSE, METAL, LIGHT, GLASS = 0, 1, 2, 3
 
 
-def studio_scene():
+def studio_scene(kind="soft"):
+    """soft: big softbox (easy for 1-spp + denoiser). hard: same power from a softbox 25x smaller
+    (sharp shadows, much noisier indirect) + a glass ball that throws a caustic on the floor."""
     MAT = np.array([
         [0.80, 0.78, 0.74, DIFFUSE, 0.0],  # 0 warm white walls
         [0.15, 0.55, 0.55, DIFFUSE, 0.0],  # 1 teal wall
@@ -58,6 +60,13 @@ def studio_scene():
     ], dtype=np.float64)
     # light: x0, x1, z0, z1, y (emitting downward), Le r g b
     LGT = np.array([-0.6, 0.6, -0.6, 0.6, 3.97, 28.0, 25.0, 21.0])
+    if kind == "hard":
+        MAT = np.vstack([MAT, [[0.98, 0.98, 0.98, GLASS, 1.5]]])  # 9 glass
+        SPH = np.vstack([SPH, [[0.95, 0.32, 0.85, 0.32, 9]]])
+        a = 0.12  # light half-size: 0.24 x 0.24 instead of 1.2 x 1.2, same total power
+        BOX[7] = [-a, 3.97, -a, a, 4.0, a, 7]
+        k = (0.6 / a) ** 2
+        LGT = np.array([-a, a, -a, a, 3.97, 28.0 * k, 25.0 * k, 21.0 * k])
     return SPH, BOX, MAT, LGT
 
 
@@ -215,6 +224,39 @@ def metal_dir(dx, dy, dz, nx, ny, nz, fuzz, s):
     return rx / l, ry / l, rz / l, s
 
 
+@nb.njit(inline="always")
+def scatter(dx, dy, dz, nx, ny, nz, m, MAT, s):
+    """Specular event at a METAL or GLASS surface. Returns new direction, throughput tint, the offset
+    normal for the next ray origin, ok flag, rng. Glass: Fresnel (Schlick) chooses reflect vs refract,
+    total internal reflection handled; the sphere normal always points outward."""
+    if int(MAT[m, 3]) == METAL:
+        rx, ry, rz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
+        ok = rx * nx + ry * ny + rz * nz > 0.0
+        return rx, ry, rz, MAT[m, 0], MAT[m, 1], MAT[m, 2], nx, ny, nz, ok, s
+    ior = MAT[m, 4]
+    c = -(dx * nx + dy * ny + dz * nz)
+    if c > 0.0:  # entering
+        eta, fx, fy, fz = 1.0 / ior, nx, ny, nz
+    else:  # leaving
+        eta, fx, fy, fz, c = ior, -nx, -ny, -nz, -c
+    k = 1.0 - eta * eta * (1.0 - c * c)
+    r0 = ((1.0 - ior) / (1.0 + ior)) ** 2
+    fres = r0 + (1.0 - r0) * (1.0 - c) ** 5
+    s = nxt(s)
+    if k < 0.0 or u01(s) < fres:  # reflect
+        rx, ry, rz = dx + 2 * c * fx, dy + 2 * c * fy, dz + 2 * c * fz
+        return rx, ry, rz, 1.0, 1.0, 1.0, fx, fy, fz, True, s
+    sk = math.sqrt(k)
+    rx, ry, rz = eta * dx + (eta * c - sk) * fx, eta * dy + (eta * c - sk) * fy, eta * dz + (eta * c - sk) * fz
+    l = math.sqrt(rx * rx + ry * ry + rz * rz)
+    return rx / l, ry / l, rz / l, MAT[m, 0], MAT[m, 1], MAT[m, 2], -fx, -fy, -fz, True, s
+
+
+@nb.njit(inline="always")
+def is_spec(typ):
+    return typ == METAL or typ == GLASS
+
+
 @nb.njit(cache=True)
 def radiance(ox, oy, oz, dx, dy, dz, s, count_emit, maxd, SPH, BOX, MAT, LGT):
     """Unbiased path tracer with next-event estimation. count_emit=False skips light seen directly
@@ -242,8 +284,8 @@ def radiance(ox, oy, oz, dx, dy, dz, s, count_emit, maxd, SPH, BOX, MAT, LGT):
             dx, dy, dz, s = cos_sample(nx, ny, nz, s)
             count_emit = False
         else:
-            dx, dy, dz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
-            if dx * nx + dy * ny + dz * nz <= 0.0:
+            dx, dy, dz, ar, ag, ab, nx, ny, nz, ok, s = scatter(dx, dy, dz, nx, ny, nz, m, MAT, s)
+            if not ok:
                 break
             count_emit = True
         tr, tg, tb = tr * ar, tg * ag, tb * ab
@@ -383,10 +425,12 @@ def visibility(CAM, F, W, H, stride, jit, h, SPH, BOX, MAT):
                 jy = u01(s)
                 ox, oy, oz, dx, dy, dz = cam_ray(CAM, f, (gx + jx) * stride, (gy + jy) * stride, W, H)
                 t, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
-                if m >= 0 and int(MAT[m, 3]) == METAL:  # follow the reflection: those walls are seen too
+                for _ in range(6):  # follow reflections/refractions: the surfaces seen through them count too
+                    if m < 0 or not is_spec(int(MAT[m, 3])):
+                        break
                     px, py, pz = ox + t * dx, oy + t * dy, oz + t * dz
-                    dx, dy, dz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
-                    ox, oy, oz = px + nx * EPS, py + ny * EPS, pz + nz * EPS
+                    dx, dy, dz, _r, _g, _b, fx, fy, fz, ok, s = scatter(dx, dy, dz, nx, ny, nz, m, MAT, s)
+                    ox, oy, oz = px + fx * EPS, py + fy * EPS, pz + fz * EPS
                     t, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
                 if m < 0 or int(MAT[m, 3]) != DIFFUSE:
                     continue
@@ -450,7 +494,7 @@ def gather_cache(cpos, cnrm, nsamp, ckeys, Cprev, h, SPH, BOX, MAT, LGT):
             dx, dy, dz, s = cos_sample(nx, ny, nz, s)
             qx, qy, qz = ox, oy, oz
             tr, tg, tb = 1.0, 1.0, 1.0
-            for bounce in range(4):
+            for bounce in range(8):
                 t, m, mx, my, mz = hit_scene(qx, qy, qz, dx, dy, dz, INF, SPH, BOX)
                 if m < 0:
                     break
@@ -462,12 +506,12 @@ def gather_cache(cpos, cnrm, nsamp, ckeys, Cprev, h, SPH, BOX, MAT, LGT):
                         b += tb * LGT[7]
                     break
                 px, py, pz = qx + t * dx, qy + t * dy, qz + t * dz
-                if typ == METAL:
-                    tr, tg, tb = tr * MAT[m, 0], tg * MAT[m, 1], tb * MAT[m, 2]
-                    dx, dy, dz, s = metal_dir(dx, dy, dz, mx, my, mz, MAT[m, 4], s)
-                    if dx * mx + dy * my + dz * mz <= 0.0:
+                if is_spec(typ):
+                    dx, dy, dz, ar, ag, ab, fx, fy, fz, ok, s = scatter(dx, dy, dz, mx, my, mz, m, MAT, s)
+                    if not ok:
                         break
-                    qx, qy, qz = px + mx * EPS, py + my * EPS, pz + mz * EPS
+                    tr, tg, tb = tr * ar, tg * ag, tb * ab
+                    qx, qy, qz = px + fx * EPS, py + fy * EPS, pz + fz * EPS
                     continue
                 er, eg, eb, s = direct(px, py, pz, mx, my, mz, s, SPH, BOX, MAT, LGT)
                 kk = cell_key(px, py, pz, mx, my, mz, h)
@@ -536,7 +580,7 @@ def shade_ray(ox, oy, oz, dx, dy, dz, s, h, ckeys, C, SPH, BOX, MAT, LGT):
     """Radiance arriving along a ray, shaded the shot-compiler way: light -> emission, metal -> follow
     the reflection, diffuse -> albedo * (1 NEE sample + cached indirect)."""
     tr, tg, tb = 1.0, 1.0, 1.0
-    for bounce in range(4):
+    for bounce in range(8):
         t, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
         if m < 0:
             return 0.0, 0.0, 0.0, s
@@ -544,12 +588,12 @@ def shade_ray(ox, oy, oz, dx, dy, dz, s, h, ckeys, C, SPH, BOX, MAT, LGT):
         if typ == LIGHT:
             return tr * LGT[5], tg * LGT[6], tb * LGT[7], s
         px, py, pz = ox + t * dx, oy + t * dy, oz + t * dz
-        if typ == METAL:
-            tr, tg, tb = tr * MAT[m, 0], tg * MAT[m, 1], tb * MAT[m, 2]
-            dx, dy, dz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
-            if dx * nx + dy * ny + dz * nz <= 0.0:
+        if is_spec(typ):
+            dx, dy, dz, ar, ag, ab, fx, fy, fz, ok, s = scatter(dx, dy, dz, nx, ny, nz, m, MAT, s)
+            if not ok:
                 return 0.0, 0.0, 0.0, s
-            ox, oy, oz = px + nx * EPS, py + ny * EPS, pz + nz * EPS
+            tr, tg, tb = tr * ar, tg * ag, tb * ab
+            ox, oy, oz = px + fx * EPS, py + fy * EPS, pz + fz * EPS
             continue
         er, eg, eb, s = direct(px, py, pz, nx, ny, nz, s, SPH, BOX, MAT, LGT)
         cr, cg, cb, s, miss = cache_get(ckeys, C, px, py, pz, nx, ny, nz, h, s, SPH, BOX, MAT, LGT)
@@ -568,21 +612,21 @@ def spec_buffer(CAM, f, W, H, ns, h, ckeys, C, SPH, BOX, MAT, LGT):
         for x in range(W):
             ox, oy, oz, dx, dy, dz = cam_ray(CAM, f, x + 0.5, y + 0.5, W, H)
             t, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
-            if m < 0 or int(MAT[m, 3]) != METAL:
+            if m < 0 or not is_spec(int(MAT[m, 3])):
                 continue
             px, py, pz = ox + t * dx, oy + t * dy, oz + t * dz
             P[y, x, 0], P[y, x, 1], P[y, x, 2] = px, py, pz
             s = seed(f * 37 + 11, y * W + x, 0x5EC)
             r = g = b = 0.0
             for k in range(ns):
-                rx, ry, rz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
-                if rx * nx + ry * ny + rz * nz <= 0.0:
+                rx, ry, rz, ar, ag, ab, fx, fy, fz, ok, s = scatter(dx, dy, dz, nx, ny, nz, m, MAT, s)
+                if not ok:
                     continue
-                lr, lg, lb, s = shade_ray(px + nx * EPS, py + ny * EPS, pz + nz * EPS, rx, ry, rz, s, h, ckeys, C, SPH, BOX, MAT, LGT)
-                r += lr
-                g += lg
-                b += lb
-            S[y, x, 0], S[y, x, 1], S[y, x, 2] = MAT[m, 0] * r / ns, MAT[m, 1] * g / ns, MAT[m, 2] * b / ns
+                lr, lg, lb, s = shade_ray(px + fx * EPS, py + fy * EPS, pz + fz * EPS, rx, ry, rz, s, h, ckeys, C, SPH, BOX, MAT, LGT)
+                r += ar * lr
+                g += ag * lg
+                b += ab * lb
+            S[y, x, 0], S[y, x, 1], S[y, x, 2] = r / ns, g / ns, b / ns
     return P, S
 
 
@@ -605,7 +649,7 @@ def render_B(CAM, t, F, W, H, spp, K, tol, h, Ps, Ds, ckeys, C, SPH, BOX, MAT, L
                 ox, oy, oz, dx, dy, dz = cam_ray(CAM, t, x + jx, y + jy, W, H)
                 tr, tg, tb = 1.0, 1.0, 1.0
                 lr = lg = lb = 0.0
-                for bounce in range(4):
+                for bounce in range(8):
                     tt, m, nx, ny, nz = hit_scene(ox, oy, oz, dx, dy, dz, INF, SPH, BOX)
                     if m < 0:
                         break
@@ -614,7 +658,7 @@ def render_B(CAM, t, F, W, H, spp, K, tol, h, Ps, Ds, ckeys, C, SPH, BOX, MAT, L
                         lr, lg, lb = tr * LGT[5], tg * LGT[6], tb * LGT[7]
                         break
                     px, py, pz = ox + tt * dx, oy + tt * dy, oz + tt * dz
-                    if typ == METAL:
+                    if is_spec(typ):
                         if bounce == 0 and Ks > 0:
                             # view-dependent reuse: borrow reflection samples from frames t-Ks..t+Ks that saw
                             # this point from almost the same direction (Gaussian weight on view angle)
@@ -631,7 +675,9 @@ def render_B(CAM, t, F, W, H, spp, K, tol, h, Ps, Ds, ckeys, C, SPH, BOX, MAT, L
                                 ux, uy, uz = qx - CAM[k, 0], qy - CAM[k, 1], qz - CAM[k, 2]
                                 ul = math.sqrt(ux * ux + uy * uy + uz * uz)
                                 ca = min(1.0, (vx * ux + vy * uy + vz * uz) / (vl * ul))
-                                w = math.exp(-(math.acos(ca) / sig) ** 2)
+                                # smooth glass changes faster with view than rough gold: narrower window
+                                sg = sig if typ == METAL else sig * 0.35
+                                w = math.exp(-(math.acos(ca) / sg) ** 2)
                                 wr += w * Sm[k, yy, xx, 0]
                                 wg += w * Sm[k, yy, xx, 1]
                                 wb += w * Sm[k, yy, xx, 2]
@@ -639,11 +685,11 @@ def render_B(CAM, t, F, W, H, spp, K, tol, h, Ps, Ds, ckeys, C, SPH, BOX, MAT, L
                             if ws > 0.0:
                                 lr, lg, lb = wr / ws, wg / ws, wb / ws
                                 break
-                        tr, tg, tb = tr * MAT[m, 0], tg * MAT[m, 1], tb * MAT[m, 2]
-                        dx, dy, dz, s = metal_dir(dx, dy, dz, nx, ny, nz, MAT[m, 4], s)
-                        if dx * nx + dy * ny + dz * nz <= 0.0:
+                        dx, dy, dz, ar, ag, ab, fx, fy, fz, ok, s = scatter(dx, dy, dz, nx, ny, nz, m, MAT, s)
+                        if not ok:
                             break
-                        ox, oy, oz = px + nx * EPS, py + ny * EPS, pz + nz * EPS
+                        tr, tg, tb = tr * ar, tg * ag, tb * ab
+                        ox, oy, oz = px + fx * EPS, py + fy * EPS, pz + fz * EPS
                         continue
                     # diffuse: direct light from the time window (past + FUTURE frames), only on primary hits
                     er = eg = eb = 0.0

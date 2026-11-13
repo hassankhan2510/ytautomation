@@ -5,6 +5,11 @@ name: "shotc — 1/10 compute benchmark"
 on:
   workflow_dispatch:
     inputs:
+      scene:
+        description: "soft = big softbox (easy) · hard = small light + glass caustics"
+        type: choice
+        options: ["hard", "soft"]
+        default: "hard"
       size:
         description: "Resolution and frames"
         type: choice
@@ -12,7 +17,7 @@ on:
         default: "540x960x96"
       b:
         description: "B configs: direct_spp,spp,K,cell,cache_spp[,filter] ; ..."
-        default: "2,2,6,0.06,64;2,2,8,0.06,128;2,2,8,0.06,128,2.5;4,4,8,0.05,128,2.5"
+        default: "2,2,6,0.06,64,2.5,4,2;4,4,8,0.05,128,2.5,4,4;8,4,8,0.04,256,2.5,6,8"
       ref_spp:
         description: "Reference samples per pixel"
         default: "1024"
@@ -44,7 +49,7 @@ jobs:
           DENOISE: ${{ inputs.denoise == 'yes' && '--denoise' || '' }}
         run: |
           IFS=x read W H F <<< "${{ inputs.size }}"
-          python bench.py --W $W --H $H --F $F --ref-spp ${{ inputs.ref_spp }} --b "${{ inputs.b }}" --out runs/actions $DENOISE | tee bench.log
+          python bench.py --scene ${{ inputs.scene }} --W $W --H $H --F $F --ref-spp ${{ inputs.ref_spp }} --b "${{ inputs.b }}" --out runs/actions $DENOISE | tee bench.log
           { echo "### Log"; echo '```'; grep -v "^  ref" bench.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         with:
