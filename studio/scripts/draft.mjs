@@ -17,6 +17,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { groqJSON } from "../../theranos-doc/scripts/lib_groq.mjs";
 import { castCandidates, INTENT_LIST, scoreEdit } from "./casting.mjs";
+import { speakFix } from "./speakfix.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const paragraph = (process.env.PARAGRAPH || "").trim();
@@ -80,7 +81,7 @@ Return ONLY JSON:
  "lines":[{"text":"${language === "urdu" ? "the line in ROMAN Urdu (Latin letters) mixed with English, as shown on screen" : "spoken line"}","intent":one of [${INTENT_LIST.join(", ")}],"energy":1|2|3,"visual":"what the viewer should SEE (max 12 words)"}],
  "mood": one of [mystery, ancient, reflective, science, tension, awe, epic, future, modern, sci-fi, calm, uplifting] — the music mood of the whole reel,
  "caption":"1-2 short lines + a question that drives comments + 5 hashtags"}
-${language === "urdu" ? `LANGUAGE: Urdu for a Pakistani Gen-Z audience — natural spoken Urdu/Hindustani, code-switching to English for tech and modern words the way young Pakistanis really talk (e.g. "Aaj hum AI ke baare mein baat karenge, aur ye technology sab kuch change kar degi."). "text" is Roman Urdu (Latin letters) — the Urdu-script version for the voice is made in a later step. Hooks, caption and visuals are in Roman Urdu/English.
+${language === "urdu" ? `LANGUAGE: "Urdish" for a Pakistani Gen-Z audience — MOSTLY ENGLISH. Every noun, technical term and content word stays in English (computer, RAM, memory, wire, landing, software, mission, astronauts, Moon, years, blocks…). Urdu is ONLY the simple glue and everyday phrases: hai, tha, the, ye, wo, aur, ke, ki, ka, ko, se, mein, pe, par, bhi, toh, nahi, kya, sirf, phir, "kya aapko pata hai", "ye hua", "wo hua", "socho". Never formal or difficult Urdu words. Example: "1969 mein Apollo 11 ne two astronauts ko Moon pe land kiya. Kya aapko pata hai, computer mein sirf 4 KB RAM thi?" "text" is written in Latin letters like that — the voice version is made in a later step. Hooks, caption and visuals follow the same style.
 ` : ""}SCRIPT RULES${verbatim ? " (tagging only — do not change text)" : ""}:
 - ${verbatim ? "One entry in lines per given segment, same order, identical text." : "9-13 lines. Line 1 = the chosen hook. Each line ONE idea, 5-14 words, " + (language === "urdu" ? "spoken casual Roman Urdu with English tech words" : "spoken casual English (contractions, 'you')") + ", no emojis/markdown."}
 - ${verbatim ? "" : "Structure: hook (open loop) → context → 3-6 escalating facts/turns (a pattern interrupt every ~3 lines: question, myth, 'but here's the thing') → payoff → takeaway. Do NOT write a follow/CTA line; it is added automatically."}
@@ -156,7 +157,7 @@ if (language === "urdu") {
   if (englishLines.length) {
     console.log(`  ! ${englishLines.length}/${lines.length} lines are not Roman Urdu — translating`);
     const tr = await groqJSON(
-      `Translate each numbered line into casual spoken ROMAN Urdu (Latin letters) the way young Pakistanis talk, keeping tech/modern words in English (AI, technology, startup, computer, software, data…). Keep the meaning and every fact exactly; do not add facts. 5-14 words each.
+      `Rewrite each numbered line in "Urdish": MOSTLY ENGLISH in Latin letters — keep every noun, technical and content word in English — with only simple Urdu glue words (hai, tha, ye, wo, aur, ke, ki, ka, ko, se, mein, pe, bhi, toh, nahi, kya, sirf) and everyday phrases ("kya aapko pata hai", "ye hua"). No formal Urdu. Keep the meaning and every fact exactly; do not add facts. 5-14 words each.
 Return ONLY JSON: {"lines":[{"i":n,"text":"..."}]}`,
       englishLines.map((x) => `${x.i + 1}. ${x.t}`).join("\n"),
       { maxTokens: 2000, temperature: 0.3 },
@@ -169,8 +170,8 @@ Return ONLY JSON: {"lines":[{"i":n,"text":"..."}]}`,
   }
   const transliterate = async (todo, temperature) => {
     const out = await groqJSON(
-      `Write each numbered Roman-Urdu line in proper URDU SCRIPT (Nastaliq/Arabic letters) for a text-to-speech voice. Keep English/tech words (AI, technology, startup, computer, RAM, software…) in English Latin letters. Same words, same meaning — transliterate, don't rewrite.
-Example: "Aaj hum AI ke baare mein baat karenge" → "آج ہم AI کے بارے میں بات کریں گے"
+      `Prepare each numbered line for an Urdu text-to-speech voice: write ONLY the Urdu glue words (hai, tha, ye, wo, aur, ke, ko, se, mein, kya…) in Urdu script, and copy EVERY English word, name and number EXACTLY as it is in Latin letters/digits. Same words, same order — transliterate the Urdu words only, never translate English words into Urdu.
+Example: "1969 mein Apollo 11 ne two astronauts ko Moon pe land kiya" → "1969 میں Apollo 11 نے two astronauts کو Moon پے land کیا"
 Return ONLY JSON: {"lines":[{"i":n,"urdu":"..."}]}`,
       todo.map((k) => `${k + 1}. ${lines[k].text}`).join("\n"),
       { maxTokens: 2500, temperature },
@@ -185,6 +186,8 @@ Return ONLY JSON: {"lines":[{"i":n,"urdu":"..."}]}`,
   let missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
   if (missing.length) await transliterate(missing, 0.1);
   missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
+  // Voice-only pronunciation: acronyms + numbers said in English (screen keeps "RAM", "1969").
+  for (const l of lines) l.speak = speakFix(l.speak || l.text);
   urduReport.push(`${lines.length - missing.length}/${lines.length} lines voiced from Urdu script${missing.length ? ` (${missing.length} read from Roman Urdu)` : ""}`);
   console.log(`  ${urduReport.join(" · ")}`);
 }
