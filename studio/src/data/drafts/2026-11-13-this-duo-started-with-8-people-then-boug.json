@@ -1,0 +1,216 @@
+{
+  "id": "2026-11-13-this-duo-started-with-8-people-then-boug",
+  "title": "This duo started with 8 people, then bought a bank.",
+  "subject": "ABHI Pakistan fintech bank",
+  "theme": "ocean",
+  "seed": 3400,
+  "handle": "",
+  "language": "english",
+  "hooks": [
+    "This duo started with 8 people, then bought a bank.",
+    "You can't touch your money till payday.",
+    "Pakistan's first fintech bank IPO is here."
+  ],
+  "caption": "From 8 people to a bank IPO. 🤯\nHow would you spend your early salary? 👇\n#ABHI #PakistaniStartups #Fintech #IPO #GenZ\n🎵 Music: \"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-inspired.mp3",
+  "musicCredit": "\"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 12,
+    "total": 12,
+    "families": 5,
+    "plain": 3,
+    "doc": 2,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "24.8607",
+    "67.0011",
+    "23.4202",
+    "53.8478",
+    "24.7136",
+    "46.6753",
+    "21.4735",
+    "55.9833"
+  ],
+  "beats": [
+    {
+      "text": "This duo started with 8 people, then bought a bank.",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "bought",
+        "bank"
+      ],
+      "props": {},
+      "why": "High energy hook slam",
+      "bg": "modern bank facade night"
+    },
+    {
+      "text": "It started in 2021 with Omair and Ali.",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "emphasis": [
+        "2021"
+      ],
+      "props": {
+        "to": 2021,
+        "label": "The Start"
+      },
+      "why": "Time travel to start year",
+      "bg": "abstract digital time lapse"
+    },
+    {
+      "text": "They saw workers stuck waiting for payday.",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "stuck"
+      ],
+      "props": {},
+      "why": "Problem statement focus",
+      "bg": "office worker tired closeup"
+    },
+    {
+      "text": "So they launched ABHI for early salary access.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "emphasis": [
+        "ABHI"
+      ],
+      "props": {},
+      "why": "Clean launch reveal",
+      "bg": "smartphone screen glow abstract"
+    },
+    {
+      "text": "No office. Just 8 people and a YC bag.",
+      "primitive": "versus",
+      "energy": 2,
+      "emphasis": [
+        "8 people"
+      ],
+      "props": {
+        "left": "Big Bank",
+        "right": "ABHI",
+        "leftSub": "Massive HQ",
+        "rightSub": "8 People"
+      },
+      "why": "Contrast scale vs resources",
+      "bg": "empty startup office room"
+    },
+    {
+      "text": "Then they expanded to UAE, Saudi, and Oman.",
+      "primitive": "globe",
+      "energy": 2,
+      "emphasis": [
+        "expanded"
+      ],
+      "props": {
+        "pins": [
+          {
+            "name": "Pakistan",
+            "lat": 24.8607,
+            "lon": 67.0011
+          },
+          {
+            "name": "UAE",
+            "lat": 23.4202,
+            "lon": 53.8478
+          },
+          {
+            "name": "Saudi",
+            "lat": 24.7136,
+            "lon": 46.6753
+          },
+          {
+            "name": "Oman",
+            "lat": 21.4735,
+            "lon": 55.9833
+          }
+        ]
+      },
+      "why": "Regional expansion visualization",
+      "bg": "aerial view desert cities"
+    },
+    {
+      "text": "But here's the thing. They bought a bank.",
+      "primitive": "burst",
+      "energy": 3,
+      "emphasis": [
+        "bought"
+      ],
+      "props": {
+        "word": "BANK"
+      },
+      "why": "Dramatic acquisition impact",
+      "bg": "bank vault door opening"
+    },
+    {
+      "text": "They fixed it and relaunched as ABHI Microfinance.",
+      "primitive": "checklist",
+      "energy": 2,
+      "emphasis": [
+        "relaunched"
+      ],
+      "props": {
+        "items": [
+          "Acquired Bank",
+          "Fixed Systems",
+          "Relaunched ABHI"
+        ],
+        "title": "The Pivot"
+      },
+      "why": "Rebranding steps completed",
+      "bg": "abstract geometric transformation"
+    },
+    {
+      "text": "Now it's going public on the stock exchange.",
+      "primitive": "newsBanner",
+      "energy": 3,
+      "emphasis": [
+        "going public"
+      ],
+      "props": {
+        "headline": "ABHI Goes Public",
+        "label": "BREAKING",
+        "ticker": "IPO Launching"
+      },
+      "why": "Breaking news format",
+      "bg": "stock exchange trading floor"
+    },
+    {
+      "text": "This is Pakistan's first fintech-led bank IPO.",
+      "primitive": "factCard",
+      "energy": 3,
+      "emphasis": [
+        "first"
+      ],
+      "why": "Milestone celebration impact",
+      "props": {
+        "fact": "This is Pakistan's first fintech-led bank IPO."
+      }
+    },
+    {
+      "text": "From shared room to stock market. Absolute cinema.",
+      "primitive": "flowField",
+      "energy": 1,
+      "emphasis": [
+        "cinema"
+      ],
+      "props": {
+        "word": "CINEMA"
+      },
+      "why": "Cinematic closing statement",
+      "bg": "particle wind field abstract"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
