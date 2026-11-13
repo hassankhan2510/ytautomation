@@ -1,0 +1,188 @@
+{
+  "id": "2026-11-13-did-you-know-octopuses-run-on-three-hear",
+  "title": "Did you know octopuses run on three hearts?",
+  "theme": "crimson",
+  "seed": 2462,
+  "handle": "@cohort_zero",
+  "hooks": [
+    "Did you know octopuses run on three hearts?",
+    "Most think their brain runs the show—wrong!",
+    "Two-thirds of an octopus's brain lives in its arms."
+  ],
+  "caption": "Three hearts, blue blood, brainy arms—octopuses are wild. Which fact blew your mind? #Octopus #MarineMagic #ScienceFacts #DidYouKnow #CohortZero",
+  "quality": {
+    "score": 9.5,
+    "unique": 12,
+    "total": 12,
+    "families": 6,
+    "plain": 1,
+    "doc": 4,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "2023",
+    "66"
+  ],
+  "beats": [
+    {
+      "text": "Did you know octopuses run on three hearts?",
+      "primitive": "warp",
+      "energy": 3,
+      "emphasis": [
+        "three hearts"
+      ],
+      "props": {
+        "word": "HEARTS"
+      },
+      "why": "Dynamic entry, three hearts concept"
+    },
+    {
+      "text": "Yeah, they actually have three beating chambers.",
+      "primitive": "factCard",
+      "energy": 2,
+      "emphasis": [
+        "three"
+      ],
+      "props": {
+        "fact": "Three beating chambers",
+        "n": 7
+      },
+      "why": "Collectible card shows fact"
+    },
+    {
+      "text": "Two pump blood to the gills, the third to the rest of the body.",
+      "primitive": "museumFrame",
+      "energy": 2,
+      "emphasis": [
+        "gills",
+        "body"
+      ],
+      "props": {
+        "prompt": "realistic illustration of octopus circulatory system with arrows from hearts to gills and body, soft underwater lighting",
+        "name": "Octopus Circulation",
+        "dates": "2023"
+      },
+      "why": "Illustrates circulatory flow visually"
+    },
+    {
+      "text": "Ever wonder why their blood looks blue?",
+      "primitive": "search",
+      "energy": 3,
+      "emphasis": [
+        "blue"
+      ],
+      "props": {
+        "query": "why is octopus blood blue"
+      },
+      "why": "Shows curiosity via search UI"
+    },
+    {
+      "text": "It’s because they use copper‑based hemocyanin, not iron.",
+      "primitive": "decode",
+      "energy": 2,
+      "emphasis": [
+        "copper"
+      ],
+      "props": {},
+      "why": "Reveals copper vs iron secret"
+    },
+    {
+      "text": "People assume they’re just squishy brains.",
+      "primitive": "redString",
+      "energy": 3,
+      "emphasis": [
+        "squishy"
+      ],
+      "props": {
+        "cards": [
+          "squishy brains",
+          "distributed neurons",
+          "multitaskers"
+        ]
+      },
+      "why": "Links myth to fact visually"
+    },
+    {
+      "text": "About two thirds of their neurons live in their arms.",
+      "primitive": "counter",
+      "energy": 2,
+      "emphasis": [
+        "two thirds"
+      ],
+      "props": {
+        "from": 0,
+        "to": 66,
+        "suffix": "%",
+        "label": "Neurons in arms"
+      },
+      "why": "Displays two‑thirds neuron ratio"
+    },
+    {
+      "text": "Each arm can kind of think on its own.",
+      "primitive": "codeRain",
+      "energy": 2,
+      "emphasis": [
+        "think"
+      ],
+      "props": {
+        "word": "THINK"
+      },
+      "why": "Shows independent arm thinking"
+    },
+    {
+      "text": "They can shift color and texture in a fraction of a second.",
+      "primitive": "thenNow",
+      "energy": 2,
+      "emphasis": [
+        "color"
+      ],
+      "props": {
+        "prompt": "sepia‑toned octopus with dull skin, static water background",
+        "prompt2": "vibrant octopus flashing bright colors, dynamic reef backdrop",
+        "then": "Then",
+        "now": "Now"
+      },
+      "why": "Contrasts color shift before/after"
+    },
+    {
+      "text": "Even though they’re colorblind, they still camouflage perfectly.",
+      "primitive": "tape",
+      "energy": 2,
+      "emphasis": [
+        "camouflage"
+      ],
+      "props": {
+        "tape": "—",
+        "word": "CAMOUFLAGE"
+      },
+      "why": "Highlights camouflage despite colorblindness"
+    },
+    {
+      "text": "Bottom line: octopus brains are spread out, making them ultimate multitaskers.",
+      "primitive": "orbit",
+      "energy": 3,
+      "emphasis": [
+        "multitaskers"
+      ],
+      "props": {
+        "center": "MULTITASKING",
+        "items": [
+          "arm control",
+          "skin pattern",
+          "escape",
+          "hunting"
+        ]
+      },
+      "why": "Shows multitasking concepts orbiting"
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
