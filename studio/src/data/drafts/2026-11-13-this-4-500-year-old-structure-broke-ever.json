@@ -1,0 +1,187 @@
+{
+  "id": "2026-11-13-this-4-500-year-old-structure-broke-ever",
+  "title": "This 4,500-year-old structure broke every record",
+  "theme": "sunrise",
+  "seed": 4069,
+  "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "This 4,500-year-old structure broke every record",
+    "One ancient wonder survived while the other six died",
+    "How did they move 2.3 million blocks?"
+  ],
+  "caption": "4,500 years old and still standing. Would you trust your life to its construction? 🏺 #GreatPyramid #HistoryTok #AncientEgypt #Khufu #Engineering\n🎵 Music: \"Lost Frontier\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-lost-frontier.mp3",
+  "musicCredit": "\"Lost Frontier\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 11,
+    "total": 11,
+    "families": 5,
+    "plain": 3,
+    "doc": 3,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "4500",
+    "2026"
+  ],
+  "beats": [
+    {
+      "text": "This 4,500-year-old structure was the tallest on earth",
+      "primitive": "zoomThrough",
+      "energy": 3,
+      "emphasis": [
+        "tallest",
+        "earth"
+      ],
+      "props": {
+        "word": "TALLEST",
+        "reveal": "ON EARTH"
+      },
+      "why": "Fast zoom matches visual idea",
+      "bg": "Great Pyramid Giza sunset close up"
+    },
+    {
+      "text": "Built for Pharaoh Khufu around 2560 BC",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "emphasis": [
+        "2560 BC"
+      ],
+      "props": {
+        "from": 2026,
+        "to": -2560,
+        "label": "Pharaoh Khufu"
+      },
+      "why": "Time travel to 2560 BC",
+      "bg": "sepia ancient egypt desert map"
+    },
+    {
+      "text": "Standing 146 metres, it was the tallest man made structure",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "146 metres"
+      ],
+      "why": "True scale height comparison",
+      "bg": "colosseum rome ancient ruins"
+    },
+    {
+      "text": "It held the tallest structure title for 3,800 years",
+      "primitive": "counter",
+      "energy": 3,
+      "emphasis": [
+        "3,800 years"
+      ],
+      "props": {
+        "from": 0,
+        "to": 3800,
+        "suffix": " years",
+        "label": "Tallest Structure"
+      },
+      "why": "Counting up to 3800 years",
+      "bg": "giza plateau time lapse clouds"
+    },
+    {
+      "text": "But here’s the thing: we still don’t know",
+      "primitive": "iceberg",
+      "energy": 2,
+      "emphasis": [
+        "don't know"
+      ],
+      "props": {
+        "top": "We know it exists",
+        "below": [
+          "No blueprints found",
+          "Worker records missing",
+          "Exact method debated",
+          "Millions of questions"
+        ]
+      },
+      "why": "Unknowns hidden below surface",
+      "bg": "dark foggy archaeological site"
+    },
+    {
+      "text": "How they moved 2.3 million massive stone blocks",
+      "primitive": "factCard",
+      "energy": 2,
+      "emphasis": [
+        "2.3 million"
+      ],
+      "props": {
+        "fact": "2.3 million stone blocks",
+        "n": 1
+      },
+      "why": "Highlighting the massive number",
+      "bg": "stacked limestone blocks texture"
+    },
+    {
+      "text": "Ramps are the leading theory, but debates rage",
+      "primitive": "isoBuild",
+      "energy": 2,
+      "emphasis": [
+        "Ramps"
+      ],
+      "props": {
+        "layers": [
+          "Base Foundation",
+          "Spiral Ramp",
+          "Mid Section",
+          "Upper Slope",
+          "Peak"
+        ]
+      },
+      "why": "Visualizing the ramp theory",
+      "bg": "isometric 3d pyramid ramp animation"
+    },
+    {
+      "text": "Six other ancient wonders are no longer standing today",
+      "primitive": "flip3d",
+      "energy": 2,
+      "emphasis": [
+        "no longer standing"
+      ],
+      "why": "Listing the lost wonders",
+      "bg": "ancient stone ruins rubble"
+    },
+    {
+      "text": "This is the only one still standing today",
+      "primitive": "thenNow",
+      "energy": 3,
+      "emphasis": [
+        "only one"
+      ],
+      "props": {
+        "then": "Ancient Wonders",
+        "now": "Today",
+        "prompt": "Ancient Greek temple ruins in sepia",
+        "prompt2": "Great Pyramid of Giza in bright daylight"
+      },
+      "why": "Contrast past vs present state",
+      "bg": "giza pyramid night stars clear"
+    },
+    {
+      "text": "Proof that human engineering defies time itself",
+      "primitive": "auroraType",
+      "energy": 1,
+      "emphasis": [
+        "defies time"
+      ],
+      "props": {
+        "word": "TIMELESS"
+      },
+      "why": "Premium closing statement",
+      "bg": "modern city skyline timelapse night"
+    },
+    {
+      "text": "Follow for more stories like this.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1
+    }
+  ]
+}
