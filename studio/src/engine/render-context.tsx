@@ -10,6 +10,8 @@ export type RenderInfo = {
   shaders: boolean;
   timeline: Timeline;
   handle?: string;
+  /** Channel brand mark (public/ path) — end card avatar etc. */
+  logo?: string;
 };
 
 const Ctx = createContext<RenderInfo | null>(null);

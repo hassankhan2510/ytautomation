@@ -4,18 +4,165 @@
   "theme": "crimson",
   "seed": 11,
   "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
   "beats": [
-    { "text": "Day one.", "primitive": "dayStamp", "energy": 3, "props": { "day": 1, "title": "I built a machine that makes videos while I sleep" }, "hold": 0.4 },
-    { "text": "It runs four channels and costs zero dollars.", "primitive": "stomp", "energy": 3, "emphasis": ["four", "zero"] },
-    { "text": "Agencies charge four thousand a month for this.", "primitive": "bars", "energy": 2, "props": { "title": "Monthly cost to run 4 channels", "prefix": "$", "data": [{ "label": "Agency", "value": 4000 }, { "label": "Freelancer", "value": 900 }, { "label": "This system", "value": 0 }] } },
-    { "text": "Here's the whole thing, one command.", "primitive": "terminal", "energy": 2, "props": { "title": "zsh — ~/empire", "lines": ["$ npm run studio -- --day 1", "→ writing hook with a free LLM", "→ voicing it in my own cloned voice", "→ choreographing 40 cuts", "✓ reel.mp4 ready in 6m 12s"] } },
-    { "text": "The AI never touches the edit. It just picks moves.", "primitive": "code", "energy": 2, "props": { "file": "beat-sheet.ts", "lines": ["// the LLM only writes this:", "{ primitive: \"stomp\", energy: 3 }", "{ primitive: \"terminal\", lines }", "// the motion is hand-built", "const reel = render(beats)"] } },
-    { "text": "Old way: editors, deadlines, burnout.", "primitive": "versus", "energy": 2, "props": { "left": "Editors", "leftSub": "$4k/mo · 3 day turnaround", "right": "One script", "rightSub": "$0 · ships while I sleep" } },
-    { "text": "Then my phone started doing this.", "primitive": "notifs", "energy": 3, "props": { "items": [{ "app": "Instagram", "title": "cohort_zero", "body": "Your reel hit 10,000 plays", "color": "#C8102E", "icon": "◎" }, { "app": "YouTube", "title": "New subscribers", "body": "+312 this week", "color": "#FF0033", "icon": "▶" }, { "app": "Gmail", "title": "Partnership inquiry", "body": "Can you build this for our brand?", "color": "#EA4335", "icon": "M" }] } },
-    { "text": "Ten thousand plays on a reel nobody edited.", "primitive": "counter", "energy": 3, "props": { "from": 0, "to": 10000, "label": "plays · zero editors" } },
-    { "text": "The myth is you need a team.", "primitive": "strike", "energy": 3, "props": { "wrong": "You need a team", "right": "You need a system" } },
-    { "text": "Every single day, it ships.", "primitive": "ghGrid", "energy": 2, "props": { "count": 1247, "label": "commits shipping this machine" } },
-    { "text": "Tomorrow I'll show you how it writes the hooks.", "primitive": "highlight", "energy": 1, "emphasis": ["hooks"] },
-    { "text": "Follow so you don't miss day two.", "primitive": "outro", "energy": 1, "props": { "cta": "Follow for Day 2" }, "hold": 1.2 }
+    {
+      "text": "Day one.",
+      "primitive": "dayStamp",
+      "energy": 3,
+      "props": {
+        "day": 1,
+        "title": "I built a machine that makes videos while I sleep"
+      },
+      "hold": 0.4
+    },
+    {
+      "text": "It runs four channels and costs zero dollars.",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "four",
+        "zero"
+      ]
+    },
+    {
+      "text": "Agencies charge four thousand a month for this.",
+      "primitive": "bars",
+      "energy": 2,
+      "props": {
+        "title": "Monthly cost to run 4 channels",
+        "prefix": "$",
+        "data": [
+          {
+            "label": "Agency",
+            "value": 4000
+          },
+          {
+            "label": "Freelancer",
+            "value": 900
+          },
+          {
+            "label": "This system",
+            "value": 0
+          }
+        ]
+      }
+    },
+    {
+      "text": "Here's the whole thing, one command.",
+      "primitive": "terminal",
+      "energy": 2,
+      "props": {
+        "title": "zsh — ~/empire",
+        "lines": [
+          "$ npm run studio -- --day 1",
+          "→ writing hook with a free LLM",
+          "→ voicing it in my own cloned voice",
+          "→ choreographing 40 cuts",
+          "✓ reel.mp4 ready in 6m 12s"
+        ]
+      }
+    },
+    {
+      "text": "The AI never touches the edit. It just picks moves.",
+      "primitive": "code",
+      "energy": 2,
+      "props": {
+        "file": "beat-sheet.ts",
+        "lines": [
+          "// the LLM only writes this:",
+          "{ primitive: \"stomp\", energy: 3 }",
+          "{ primitive: \"terminal\", lines }",
+          "// the motion is hand-built",
+          "const reel = render(beats)"
+        ]
+      }
+    },
+    {
+      "text": "Old way: editors, deadlines, burnout.",
+      "primitive": "versus",
+      "energy": 2,
+      "props": {
+        "left": "Editors",
+        "leftSub": "$4k/mo · 3 day turnaround",
+        "right": "One script",
+        "rightSub": "$0 · ships while I sleep"
+      }
+    },
+    {
+      "text": "Then my phone started doing this.",
+      "primitive": "notifs",
+      "energy": 3,
+      "props": {
+        "items": [
+          {
+            "app": "Instagram",
+            "title": "cohort_zero",
+            "body": "Your reel hit 10,000 plays",
+            "color": "#C8102E",
+            "icon": "◎"
+          },
+          {
+            "app": "YouTube",
+            "title": "New subscribers",
+            "body": "+312 this week",
+            "color": "#FF0033",
+            "icon": "▶"
+          },
+          {
+            "app": "Gmail",
+            "title": "Partnership inquiry",
+            "body": "Can you build this for our brand?",
+            "color": "#EA4335",
+            "icon": "M"
+          }
+        ]
+      }
+    },
+    {
+      "text": "Ten thousand plays on a reel nobody edited.",
+      "primitive": "counter",
+      "energy": 3,
+      "props": {
+        "from": 0,
+        "to": 10000,
+        "label": "plays · zero editors"
+      }
+    },
+    {
+      "text": "The myth is you need a team.",
+      "primitive": "strike",
+      "energy": 3,
+      "props": {
+        "wrong": "You need a team",
+        "right": "You need a system"
+      }
+    },
+    {
+      "text": "Every single day, it ships.",
+      "primitive": "ghGrid",
+      "energy": 2,
+      "props": {
+        "count": 1247,
+        "label": "commits shipping this machine"
+      }
+    },
+    {
+      "text": "Tomorrow I'll show you how it writes the hooks.",
+      "primitive": "highlight",
+      "energy": 1,
+      "emphasis": [
+        "hooks"
+      ]
+    },
+    {
+      "text": "Follow so you don't miss day two.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 2"
+      },
+      "hold": 1.2
+    }
   ]
 }

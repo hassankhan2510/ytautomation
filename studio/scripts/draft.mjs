@@ -25,6 +25,9 @@ const style = process.env.STYLE || "explainer";
 const day = Number(process.env.DAY || 0) || null;
 const theme = process.env.THEME && process.env.THEME !== "job" ? process.env.THEME : "crimson";
 const handle = process.env.HANDLE || "@cohort_zero";
+// Channel brand mark (public/ path). Cohort Zero's original logo lives in cohort_zero/02_Brand_Assets/logos
+// and is copied to public/brand/cohortzero-mark.png; other channels pass LOGO.
+const logo = process.env.LOGO || (handle === "@cohort_zero" ? "brand/cohortzero-mark.png" : "");
 const verbatim = /^(yes|true|1)$/i.test(process.env.VERBATIM || "");
 const clean = (s) => String(s ?? "").replace(/[*_#`]/g, "").replace(/\s+/g, " ").trim();
 
@@ -184,6 +187,7 @@ const job = {
   theme,
   seed: Number(process.env.SEED) || Math.floor(Math.random() * 9000) + 100,
   handle,
+  ...(logo ? { logo } : {}),
   hooks: hooks.map((h) => clean(h.text)),
   caption: String(written.caption || "").trim(),
   quality,

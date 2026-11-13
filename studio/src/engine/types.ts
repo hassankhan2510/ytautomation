@@ -43,6 +43,8 @@ export type Job = {
   words?: Word[];
   /** Cap on real GPU shader cuts when the render enables shaders (slow on CPU runners). Default: no cap. */
   shaderCuts?: number;
+  /** Brand mark under public/ (e.g. "brand/cohortzero-mark.png") — used by the end card avatar. */
+  logo?: string;
   /** On-screen handle for end card / chrome (e.g. "@cohort_zero"). */
   handle?: string;
   beats: Beat[];

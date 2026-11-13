@@ -146,10 +146,10 @@ export const Photo: React.FC<PrimitiveProps> = ({ beat, rng }) => {
 export const Outro: React.FC<PrimitiveProps> = ({ beat }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const { theme, handle } = useRender();
+  const { theme, handle, logo: brandLogo } = useRender();
   const h = prop(beat, "handle", handle || "@cohort_zero");
   const cta = prop(beat, "cta", "Follow for Day 2");
-  const logo = prop(beat, "logo", "");
+  const logo = prop<string>(beat, "logo", brandLogo || "");
   const ring = easeOut(frame, 0, 18);
   const s = pop(frame, fps, 4, "slam");
   const typed = h.slice(0, Math.floor(Math.max(0, frame - 10) * 1.4));

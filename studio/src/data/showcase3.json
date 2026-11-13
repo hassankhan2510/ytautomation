@@ -4,19 +4,155 @@
   "theme": "crimson",
   "seed": 37,
   "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
   "beats": [
-    { "text": "Thirty days. No days off.", "primitive": "calendar", "energy": 3, "props": { "day": 30, "days": 31, "month": "30 DAY BUILD" } },
-    { "text": "Everything I tried went wrong.", "primitive": "glitchTitle", "energy": 3, "props": { "title": "Everything broke" } },
-    { "text": "So I stopped editing and started engineering.", "primitive": "flip3d", "energy": 2, "emphasis": ["engineering."] },
-    { "text": "Here's what the machine handles for me.", "primitive": "orbit", "energy": 1, "props": { "center": "ME", "items": ["Script", "Voice", "Motion", "Captions", "Music", "Hooks"] } },
-    { "text": "Every step, done automatically.", "primitive": "checklist", "energy": 2, "props": { "title": "Daily pipeline", "items": ["Write the hook", "Record the voice", "Cut 40 shots", "Export in 1080p"] } },
-    { "text": "Before and after.", "primitive": "beforeAfter", "energy": 2, "props": { "beforeLabel": "MANUAL · 6 HRS", "afterLabel": "MACHINE · 6 MIN" } },
-    { "text": "Editing used to cost four thousand dollars.", "primitive": "price", "energy": 3, "props": { "was": "$4,000", "now": "$0", "note": "per month, forever" } },
-    { "text": "Views went straight up.", "primitive": "lineChart", "energy": 2, "props": { "label": "Weekly views", "data": [1, 2, 2, 4, 3, 7, 11, 18, 29, 47], "end": "+4,600%" } },
-    { "text": "Ninety one percent watched to the end.", "primitive": "ring", "energy": 2, "props": { "value": 91, "label": "watched to the end" } },
-    { "text": "Difficulty? Honestly, insane.", "primitive": "meter", "energy": 3, "props": { "value": 96, "unit": "%", "label": "difficulty" } },
-    { "text": "But one card changed everything.", "primitive": "cardFan", "energy": 2, "props": { "cards": ["Luck", "Money", "Systems", "Talent", "Team"], "pick": 2 } },
-    { "text": "Systems. Now watch day thirty one.", "primitive": "zoomThrough", "energy": 3, "props": { "word": "SYSTEMS", "reveal": "Day 31 starts now" } },
-    { "text": "Follow so you don't miss it.", "primitive": "outro", "energy": 1, "props": { "cta": "Follow for Day 31" }, "hold": 1.0 }
+    {
+      "text": "Thirty days. No days off.",
+      "primitive": "calendar",
+      "energy": 3,
+      "props": {
+        "day": 30,
+        "days": 31,
+        "month": "30 DAY BUILD"
+      }
+    },
+    {
+      "text": "Everything I tried went wrong.",
+      "primitive": "glitchTitle",
+      "energy": 3,
+      "props": {
+        "title": "Everything broke"
+      }
+    },
+    {
+      "text": "So I stopped editing and started engineering.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "emphasis": [
+        "engineering."
+      ]
+    },
+    {
+      "text": "Here's what the machine handles for me.",
+      "primitive": "orbit",
+      "energy": 1,
+      "props": {
+        "center": "ME",
+        "items": [
+          "Script",
+          "Voice",
+          "Motion",
+          "Captions",
+          "Music",
+          "Hooks"
+        ]
+      }
+    },
+    {
+      "text": "Every step, done automatically.",
+      "primitive": "checklist",
+      "energy": 2,
+      "props": {
+        "title": "Daily pipeline",
+        "items": [
+          "Write the hook",
+          "Record the voice",
+          "Cut 40 shots",
+          "Export in 1080p"
+        ]
+      }
+    },
+    {
+      "text": "Before and after.",
+      "primitive": "beforeAfter",
+      "energy": 2,
+      "props": {
+        "beforeLabel": "MANUAL · 6 HRS",
+        "afterLabel": "MACHINE · 6 MIN"
+      }
+    },
+    {
+      "text": "Editing used to cost four thousand dollars.",
+      "primitive": "price",
+      "energy": 3,
+      "props": {
+        "was": "$4,000",
+        "now": "$0",
+        "note": "per month, forever"
+      }
+    },
+    {
+      "text": "Views went straight up.",
+      "primitive": "lineChart",
+      "energy": 2,
+      "props": {
+        "label": "Weekly views",
+        "data": [
+          1,
+          2,
+          2,
+          4,
+          3,
+          7,
+          11,
+          18,
+          29,
+          47
+        ],
+        "end": "+4,600%"
+      }
+    },
+    {
+      "text": "Ninety one percent watched to the end.",
+      "primitive": "ring",
+      "energy": 2,
+      "props": {
+        "value": 91,
+        "label": "watched to the end"
+      }
+    },
+    {
+      "text": "Difficulty? Honestly, insane.",
+      "primitive": "meter",
+      "energy": 3,
+      "props": {
+        "value": 96,
+        "unit": "%",
+        "label": "difficulty"
+      }
+    },
+    {
+      "text": "But one card changed everything.",
+      "primitive": "cardFan",
+      "energy": 2,
+      "props": {
+        "cards": [
+          "Luck",
+          "Money",
+          "Systems",
+          "Talent",
+          "Team"
+        ],
+        "pick": 2
+      }
+    },
+    {
+      "text": "Systems. Now watch day thirty one.",
+      "primitive": "zoomThrough",
+      "energy": 3,
+      "props": {
+        "word": "SYSTEMS",
+        "reveal": "Day 31 starts now"
+      }
+    },
+    {
+      "text": "Follow so you don't miss it.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 31"
+      },
+      "hold": 1.0
+    }
   ]
 }

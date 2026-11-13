@@ -74,7 +74,7 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = false }) => {
   }, [timeline, job.seed, width, height, useShaders]);
 
   return (
-    <RenderProvider value={{ theme, seed: job.seed, shaders: useShaders, timeline, handle: job.handle }}>
+    <RenderProvider value={{ theme, seed: job.seed, shaders: useShaders, timeline, handle: job.handle, logo: job.logo }}>
       <AbsoluteFill style={{ background: theme.bg }}>
         <TransitionSeries>
           {plan.flatMap(({ beat, t, backdrop }) => {

@@ -4,19 +4,175 @@
   "theme": "crimson",
   "seed": 71,
   "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
   "beats": [
-    { "text": "POV: you just replaced your whole content team.", "primitive": "pov", "energy": 2 },
-    { "text": "Week one was chaos.", "primitive": "errorPopups", "energy": 3, "props": { "errors": ["motivation.exe has stopped responding", "render_final_v7.mp4 not found", "sleep: 3 hrs remaining", "Are you sure you want to quit?"] } },
-    { "text": "Loading confidence.", "primitive": "loading", "energy": 2, "props": { "label": "Loading confidence", "done": "Confidence installed ✓" } },
-    { "text": "Then it clicked.", "primitive": "spotlight", "energy": 2, "props": { "word": "It clicked" } },
-    { "text": "I build apps, brands, videos, empires.", "primitive": "rotator", "energy": 2, "props": { "lead": "I build", "words": ["apps", "brands", "videos", "empires"] } },
-    { "text": "Here's the bill.", "primitive": "receipt", "energy": 2, "props": { "title": "CONTENT TEAM", "lines": [{ "item": "Video editor", "price": "$0" }, { "item": "Voice actor", "price": "$0" }, { "item": "Motion designer", "price": "$0" }, { "item": "Scriptwriter", "price": "$0" }], "total": "$0.00", "stamp": "PAID" } },
-    { "text": "Me versus an agency.", "primitive": "scoreboard", "energy": 2, "props": { "a": "ME", "b": "AGENCY", "rows": [{ "label": "Videos/week", "a": 14, "b": 2 }, { "label": "Cost", "a": 0, "b": 4000 }, { "label": "Hours", "a": 1, "b": 40 }] } },
-    { "text": "Is going viral just luck?", "primitive": "slotMachine", "energy": 3, "props": { "result": ["7", "7", "7"], "label": "Not luck" } },
-    { "text": "You need to be on camera to grow.", "primitive": "verdict", "energy": 3, "props": { "claim": "You need to be on camera to grow", "verdict": "MYTH" } },
-    { "text": "My only rules.", "primitive": "stickyNotes", "energy": 2, "props": { "notes": ["ship daily", "no excuses", "systems > goals", "post anyway"] } },
-    { "text": "The one shortcut that matters.", "primitive": "keyboard", "energy": 2, "props": { "keys": ["CTRL", "S"], "caption": "save the system, not the file" } },
-    { "text": "You've got sixty seconds to start.", "primitive": "timer", "energy": 3, "props": { "from": 60, "label": "seconds to start yours" } },
-    { "text": "Follow so you don't fall behind.", "primitive": "outro", "energy": 1, "props": { "cta": "Follow for Day 2" }, "hold": 1.0 }
+    {
+      "text": "POV: you just replaced your whole content team.",
+      "primitive": "pov",
+      "energy": 2
+    },
+    {
+      "text": "Week one was chaos.",
+      "primitive": "errorPopups",
+      "energy": 3,
+      "props": {
+        "errors": [
+          "motivation.exe has stopped responding",
+          "render_final_v7.mp4 not found",
+          "sleep: 3 hrs remaining",
+          "Are you sure you want to quit?"
+        ]
+      }
+    },
+    {
+      "text": "Loading confidence.",
+      "primitive": "loading",
+      "energy": 2,
+      "props": {
+        "label": "Loading confidence",
+        "done": "Confidence installed ✓"
+      }
+    },
+    {
+      "text": "Then it clicked.",
+      "primitive": "spotlight",
+      "energy": 2,
+      "props": {
+        "word": "It clicked"
+      }
+    },
+    {
+      "text": "I build apps, brands, videos, empires.",
+      "primitive": "rotator",
+      "energy": 2,
+      "props": {
+        "lead": "I build",
+        "words": [
+          "apps",
+          "brands",
+          "videos",
+          "empires"
+        ]
+      }
+    },
+    {
+      "text": "Here's the bill.",
+      "primitive": "receipt",
+      "energy": 2,
+      "props": {
+        "title": "CONTENT TEAM",
+        "lines": [
+          {
+            "item": "Video editor",
+            "price": "$0"
+          },
+          {
+            "item": "Voice actor",
+            "price": "$0"
+          },
+          {
+            "item": "Motion designer",
+            "price": "$0"
+          },
+          {
+            "item": "Scriptwriter",
+            "price": "$0"
+          }
+        ],
+        "total": "$0.00",
+        "stamp": "PAID"
+      }
+    },
+    {
+      "text": "Me versus an agency.",
+      "primitive": "scoreboard",
+      "energy": 2,
+      "props": {
+        "a": "ME",
+        "b": "AGENCY",
+        "rows": [
+          {
+            "label": "Videos/week",
+            "a": 14,
+            "b": 2
+          },
+          {
+            "label": "Cost",
+            "a": 0,
+            "b": 4000
+          },
+          {
+            "label": "Hours",
+            "a": 1,
+            "b": 40
+          }
+        ]
+      }
+    },
+    {
+      "text": "Is going viral just luck?",
+      "primitive": "slotMachine",
+      "energy": 3,
+      "props": {
+        "result": [
+          "7",
+          "7",
+          "7"
+        ],
+        "label": "Not luck"
+      }
+    },
+    {
+      "text": "You need to be on camera to grow.",
+      "primitive": "verdict",
+      "energy": 3,
+      "props": {
+        "claim": "You need to be on camera to grow",
+        "verdict": "MYTH"
+      }
+    },
+    {
+      "text": "My only rules.",
+      "primitive": "stickyNotes",
+      "energy": 2,
+      "props": {
+        "notes": [
+          "ship daily",
+          "no excuses",
+          "systems > goals",
+          "post anyway"
+        ]
+      }
+    },
+    {
+      "text": "The one shortcut that matters.",
+      "primitive": "keyboard",
+      "energy": 2,
+      "props": {
+        "keys": [
+          "CTRL",
+          "S"
+        ],
+        "caption": "save the system, not the file"
+      }
+    },
+    {
+      "text": "You've got sixty seconds to start.",
+      "primitive": "timer",
+      "energy": 3,
+      "props": {
+        "from": 60,
+        "label": "seconds to start yours"
+      }
+    },
+    {
+      "text": "Follow so you don't fall behind.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 2"
+      },
+      "hold": 1.0
+    }
   ]
 }

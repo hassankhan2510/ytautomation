@@ -4,20 +4,141 @@
   "theme": "crimson",
   "seed": 53,
   "handle": "@cohort_zero",
+  "logo": "brand/cohortzero-mark.png",
   "beats": [
-    { "text": "The future just arrived.", "primitive": "warp", "energy": 3, "props": { "word": "The future is here" } },
-    { "text": "And it's coming from code, not cameras.", "primitive": "codeRain", "energy": 3, "props": { "word": "Code > Cameras" } },
-    { "text": "From Karachi to the whole world.", "primitive": "globe", "energy": 2, "props": { "label": "Karachi → everywhere" } },
-    { "text": "Here's how the machine thinks.", "primitive": "neuralNet", "energy": 2, "props": { "inputs": ["Topic", "Trends", "Voice", "Style"], "output": "A finished reel" } },
-    { "text": "I built it layer by layer.", "primitive": "isoBuild", "energy": 2, "props": { "layers": ["Idea", "Script", "Voice", "Motion", "Audience"] } },
-    { "text": "Scanning for what's next.", "primitive": "radar", "energy": 2, "props": { "items": ["AI agents", "Creators", "Brands", "Founders"], "label": "Opportunities" } },
-    { "text": "Build. Ship. Repeat.", "primitive": "prism", "energy": 3, "props": { "faces": ["Build", "Ship", "Repeat", "Daily"] } },
-    { "text": "Data is the new oil.", "primitive": "dotWave", "energy": 1, "props": { "word": "Data is the new oil" } },
-    { "text": "Picture a founder at midnight, shipping.", "primitive": "photo", "energy": 1, "props": { "prompt": "young founder working late at night on a laptop in a dark Karachi apartment, city lights through window", "caption": "2:14 AM" } },
-    { "text": "Ideas are liquid. Systems give them shape.", "primitive": "blob", "energy": 1, "props": { "word": "Systems give shape" } },
-    { "text": "Let it flow.", "primitive": "photo", "energy": 1 },
-    { "text": "Stay early.", "primitive": "flowField", "energy": 1, "props": { "word": "Stay early" } },
-    { "text": "This is just the beginning.", "primitive": "auroraType", "energy": 1, "props": { "word": "Just the beginning" } },
-    { "text": "Follow for the next drop.", "primitive": "outro", "energy": 1, "props": { "cta": "Follow for more" }, "hold": 1.0 }
+    {
+      "text": "The future just arrived.",
+      "primitive": "warp",
+      "energy": 3,
+      "props": {
+        "word": "The future is here"
+      }
+    },
+    {
+      "text": "And it's coming from code, not cameras.",
+      "primitive": "codeRain",
+      "energy": 3,
+      "props": {
+        "word": "Code > Cameras"
+      }
+    },
+    {
+      "text": "From Karachi to the whole world.",
+      "primitive": "globe",
+      "energy": 2,
+      "props": {
+        "label": "Karachi → everywhere"
+      }
+    },
+    {
+      "text": "Here's how the machine thinks.",
+      "primitive": "neuralNet",
+      "energy": 2,
+      "props": {
+        "inputs": [
+          "Topic",
+          "Trends",
+          "Voice",
+          "Style"
+        ],
+        "output": "A finished reel"
+      }
+    },
+    {
+      "text": "I built it layer by layer.",
+      "primitive": "isoBuild",
+      "energy": 2,
+      "props": {
+        "layers": [
+          "Idea",
+          "Script",
+          "Voice",
+          "Motion",
+          "Audience"
+        ]
+      }
+    },
+    {
+      "text": "Scanning for what's next.",
+      "primitive": "radar",
+      "energy": 2,
+      "props": {
+        "items": [
+          "AI agents",
+          "Creators",
+          "Brands",
+          "Founders"
+        ],
+        "label": "Opportunities"
+      }
+    },
+    {
+      "text": "Build. Ship. Repeat.",
+      "primitive": "prism",
+      "energy": 3,
+      "props": {
+        "faces": [
+          "Build",
+          "Ship",
+          "Repeat",
+          "Daily"
+        ]
+      }
+    },
+    {
+      "text": "Data is the new oil.",
+      "primitive": "dotWave",
+      "energy": 1,
+      "props": {
+        "word": "Data is the new oil"
+      }
+    },
+    {
+      "text": "Picture a founder at midnight, shipping.",
+      "primitive": "photo",
+      "energy": 1,
+      "props": {
+        "prompt": "young founder working late at night on a laptop in a dark Karachi apartment, city lights through window",
+        "caption": "2:14 AM"
+      }
+    },
+    {
+      "text": "Ideas are liquid. Systems give them shape.",
+      "primitive": "blob",
+      "energy": 1,
+      "props": {
+        "word": "Systems give shape"
+      }
+    },
+    {
+      "text": "Let it flow.",
+      "primitive": "photo",
+      "energy": 1
+    },
+    {
+      "text": "Stay early.",
+      "primitive": "flowField",
+      "energy": 1,
+      "props": {
+        "word": "Stay early"
+      }
+    },
+    {
+      "text": "This is just the beginning.",
+      "primitive": "auroraType",
+      "energy": 1,
+      "props": {
+        "word": "Just the beginning"
+      }
+    },
+    {
+      "text": "Follow for the next drop.",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for more"
+      },
+      "hold": 1.0
+    }
   ]
 }
