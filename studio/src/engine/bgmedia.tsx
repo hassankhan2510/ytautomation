@@ -4,6 +4,7 @@ import { useRender } from "./render-context";
 import { alpha } from "./theme";
 import { hash01 } from "./rng";
 import type { TimedBeat } from "./types";
+import { Parallax25D } from "./parallax";
 
 /**
  * REAL BACKGROUND — stock video or photo matching what's being said, behind every scene.
@@ -26,6 +27,9 @@ export const BgMedia: React.FC<{ beat: TimedBeat; seed: number }> = ({ beat, see
   const shade = theme.dark ? "#000000" : "#FFFFFF";
   return (
     <AbsoluteFill style={{ overflow: "hidden", background: theme.bg }}>
+      {beat.layers ? (
+        <Parallax25D layers={beat.layers} t={t} seed={seed + beat.index} />
+      ) : (
       <AbsoluteFill style={{ transform: kb }}>
         {beat.bgKind === "video" ? (
           <OffthreadVideo src={src} muted style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -33,6 +37,7 @@ export const BgMedia: React.FC<{ beat: TimedBeat; seed: number }> = ({ beat, see
           <Img src={src} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         )}
       </AbsoluteFill>
+      )}
       <AbsoluteFill
         style={{
           background: `linear-gradient(180deg, ${alpha(shade, 0.62)} 0%, ${alpha(shade, 0.3)} 26%, ${alpha(shade, 0.26)} 55%, ${alpha(shade, 0.72)} 100%)`,

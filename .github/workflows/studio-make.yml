@@ -114,6 +114,13 @@ jobs:
           SHADERS: "off"
         run: node scripts/props.mjs "$JOB_FILE" out/props.json
 
+      - name: ②b 2.5D — bring photos to life (depth layers; never fails the run)
+        continue-on-error: true
+        run: |
+          python -c "import torch" 2>/dev/null || pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers opencv-python-headless pillow numpy
+          python scripts/depth25d.py out/props.json
+
       - name: ③ Narrate (your voice) + lock timing to the speech
         env:
           # Urdu reels always use OmniVoice (the Chatterbox clone is English-only).

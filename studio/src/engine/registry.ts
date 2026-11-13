@@ -13,6 +13,7 @@ import { AppGrid, Funnel, Headlines, History, Iceberg, MindMap, NewsBanner, Pie,
 import { ArchiveFilm, BookChapter, Declassified, FactCard, Locate, MuseumFrame, RedString, ResearchPaper, ScaleCompare, ThenNow, Typewriter, YearRewind } from "../primitives/documentary";
 import { Atom, BoardingPass, Chalkboard, CircuitBoard, DnaHelix, Heartbeat, Magnifier, MapRoute, NewspaperSpin, PhoneCall, PolaroidStack, SolarSystem } from "../primitives/science";
 
+import { Parallax } from "../primitives/depth";
 export type PrimitiveMeta = {
   id: string;
   category: "text" | "ui" | "data" | "layout" | "media" | "brand";
@@ -133,6 +134,7 @@ export const REGISTRY: Record<string, Entry> = {
   chalkboard: def(Chalkboard, { id: "chalkboard", category: "text", showsText: false, energy: 1, description: "SCIENCE: a formula or a few short lines hand-written line by line with the chalk tip (whiteboard on light themes). Maths, physics, simple explanations.", props: "lines: string[] (1-4 short lines, e.g. 'E = mc²'), title?: string" }),
   polaroidStack: def(PolaroidStack, { id: "polaroidStack", category: "media", showsText: false, energy: 1, description: "Polaroids drop onto a pile one by one with handwritten captions; first can be a real photo. Memories, eras, people, 'back then'.", props: "items: (string | {caption})[] (1-4 short captions), search?/prompt? (photo for the first)" }),
   phoneCall: def(PhoneCall, { id: "phoneCall", category: "ui", showsText: false, energy: 3, description: "MEME: incoming call screen — pulsing avatar, slide-to-answer swipes, call connects with a timer. Hooks like 'the future is calling'.", props: "caller: string (e.g. 'The Future', 'Your 2030 self'), subtitle?: string" }),
+  parallax: def(Parallax, { id: "parallax", category: "media", showsText: false, energy: 1, description: "DOC/DEPTH: a full-screen photo that comes alive in 2.5D (depth layers drift past each other in a slow camera move). The premium documentary shot for people, places, artifacts and moments.", props: "search: 2-5 words naming a REAL photographable subject (archival photo), prompt?: AI image fallback, stamp?: 'PLACE · YEAR' from the source, title?: string (max 5 words)" }),
   outro: def(Outro, { id: "outro", category: "brand", showsText: false, energy: 1, description: "End card: avatar ring draws, handle types, follow button gets tapped. Always the last beat.", props: "handle?: string, cta?: string, logo?: 'brand/<file>'" }),
 };
 

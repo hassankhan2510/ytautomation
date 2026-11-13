@@ -103,7 +103,7 @@ for (const [i, b] of job.beats.entries()) {
  */
 const BG_MODE = (process.env.BG_MODE || "video").toLowerCase();
 const PEXELS = process.env.PEXELS_API_KEY || "";
-const OWN_BACKDROP = new Set(["museumFrame", "redString", "photo", "outro"]); // these paint their own full background
+const OWN_BACKDROP = new Set(["museumFrame", "redString", "photo", "parallax", "outro"]); // these paint their own full background
 const STOP = new Set("the a an and or but of to in on for with at by from is are was were be been it its this that these those as into than then so such just very can will would could should about over after before your you our we they them their there here what when where which who why how not no yes do does did have has had more most much many some any each every all one two three".split(" "));
 const bgQuery = (b) => {
   if (b.bg) return String(b.bg);

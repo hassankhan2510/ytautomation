@@ -33,6 +33,8 @@ export type Beat = {
   /** Resolved background file under public/ (set by scripts/props.mjs) and its kind. */
   bgSrc?: string;
   bgKind?: "video" | "image";
+  /** 2.5D depth layers for an image background (set by scripts/depth25d.py). */
+  layers?: { far: string; mid: string; near: string };
 };
 
 export type Job = {
