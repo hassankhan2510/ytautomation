@@ -1,0 +1,153 @@
+{
+  "id": "2026-11-13-i-built-a-0-video-studio-that-renders-in",
+  "title": "I built a $0 video studio that renders in minutes.",
+  "theme": "crimson",
+  "seed": 6784,
+  "handle": "@cohort_zero",
+  "hooks": [
+    "What if your video edits never break?",
+    "I built a $0 video studio that renders in minutes.",
+    "Day 2 of my public video studio build."
+  ],
+  "caption": "Day 2: 0‑cost video studio scaling fast.\nWhat would you build with a free AI editor?\n#VideoStudio #NoCode #AI #GitHubActions #BuildInPublic",
+  "beats": [
+    {
+      "text": "I built a $0 video studio that renders in minutes.",
+      "primitive": "dayStamp",
+      "energy": 3,
+      "emphasis": [
+        "$0"
+      ],
+      "props": {
+        "day": 2,
+        "title": "Video Studio"
+      }
+    },
+    {
+      "text": "Now it has 76 motion primitives",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "76"
+      ],
+      "props": {}
+    },
+    {
+      "text": "Run the build, watch the output",
+      "primitive": "terminal",
+      "energy": 2,
+      "emphasis": [
+        "build"
+      ],
+      "props": {
+        "lines": [
+          "$ python build.py",
+          "Building...",
+          "✓ Done in 5m"
+        ],
+        "title": "Build Log"
+      }
+    },
+    {
+      "text": "Runs on free GitHub Actions",
+      "primitive": "highlight",
+      "energy": 1,
+      "emphasis": [
+        "free",
+        "GitHub"
+      ],
+      "props": {}
+    },
+    {
+      "text": "From 17 to 76 primitives in a day",
+      "primitive": "counter",
+      "energy": 3,
+      "emphasis": [
+        "76"
+      ],
+      "props": {
+        "from": 17,
+        "to": 76,
+        "label": "primitives"
+      }
+    },
+    {
+      "text": "Menu picks moves, AI never edits",
+      "primitive": "code",
+      "energy": 2,
+      "emphasis": [
+        "AI"
+      ],
+      "props": {
+        "lines": [
+          "menu = load('primitives.json')",
+          "pick = random.choice(menu)"
+        ],
+        "file": "menu.py"
+      }
+    },
+    {
+      "text": "Build finished, notifications rolling in",
+      "primitive": "notifs",
+      "energy": 3,
+      "emphasis": [
+        "notifications"
+      ],
+      "props": {
+        "items": [
+          {
+            "app": "GitHub",
+            "title": "Build complete",
+            "body": "76 primitives ready"
+          },
+          {
+            "app": "Twitter",
+            "title": "Fake tweet posted"
+          }
+        ]
+      }
+    },
+    {
+      "text": "What’s next? Adding cloned voice",
+      "primitive": "list",
+      "energy": 2,
+      "emphasis": [
+        "cloned",
+        "voice"
+      ],
+      "props": {
+        "items": [
+          "Add cloned voice",
+          "Add more primitives",
+          "Launch public demo"
+        ],
+        "title": "Next steps"
+      }
+    },
+    {
+      "text": "Comment VOICE and I’ll DM the demo",
+      "primitive": "commentCta",
+      "energy": 3,
+      "emphasis": [
+        "VOICE"
+      ],
+      "props": {
+        "keyword": "VOICE",
+        "line": "Comment VOICE for a demo"
+      }
+    },
+    {
+      "text": "Follow for Day 3",
+      "primitive": "outro",
+      "energy": 1,
+      "emphasis": [
+        "Follow"
+      ],
+      "props": {
+        "handle": "@cohort_zero",
+        "cta": "Follow for Day 3"
+      },
+      "hold": 1
+    }
+  ]
+}
