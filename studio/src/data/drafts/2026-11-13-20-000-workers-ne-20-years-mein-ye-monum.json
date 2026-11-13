@@ -1,0 +1,158 @@
+{
+  "id": "2026-11-13-20-000-workers-ne-20-years-mein-ye-monum",
+  "title": "20,000 workers ne 20 years mein ye monument banaya.",
+  "theme": "sunrise",
+  "seed": 2241,
+  "handle": "",
+  "language": "urdu",
+  "hooks": [
+    "20,000 workers ne 20 years mein ye monument banaya.",
+    "Shah Jahan built this for his wife",
+    "Ye sirf building nahi, love story hai"
+  ],
+  "caption": "20 years of history in one place. Kya aapne Taj Mahal ki close-ups dekhi hain? #TajMahal #Agra #History #Mughal #Travel\n🎵 Music: \"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-undaunted.mp3",
+  "musicCredit": "\"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8.5,
+    "unique": 10,
+    "total": 10,
+    "families": 5,
+    "plain": 2,
+    "doc": 5,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "2026"
+  ],
+  "beats": [
+    {
+      "text": "20,000 workers ne 20 years mein ye monument banaya.",
+      "primitive": "counter",
+      "energy": 3,
+      "speak": "twenty thousand workers نے twenty years میں ye monument banaya.",
+      "props": {
+        "from": 0,
+        "to": 20000,
+        "label": "Workers"
+      },
+      "why": "Visualizes the massive workforce and duration",
+      "bg": "Taj Mahal construction site timelapse"
+    },
+    {
+      "text": "Location Agra, India hai. Ye Taj Mahal hai.",
+      "primitive": "locate",
+      "energy": 2,
+      "speak": "Location Agra, India ہے. Ye Taj Mahal ہے.",
+      "props": {
+        "place": "Agra, India",
+        "lat": 27.1751,
+        "lon": 78.0421
+      },
+      "why": "Precisely maps the monument's geographic location",
+      "bg": "Agra city aerial drone view"
+    },
+    {
+      "text": "Mughal emperor Shah Jahan ne ye banwaya.",
+      "primitive": "museumFrame",
+      "energy": 2,
+      "speak": "Mughal emperor Shah Jahan نے ye banwaya.",
+      "props": {
+        "name": "Shah Jahan",
+        "prompt": "Aged portrait of Mughal emperor Shah Jahan, regal attire, soft lighting"
+      },
+      "why": "Displays the emperor's historical portrait formally",
+      "bg": "Mughal palace interior marble texture"
+    },
+    {
+      "text": "Ye uski wife Mumtaz Mahal ki memory hai.",
+      "primitive": "highlight",
+      "energy": 1,
+      "speak": "Ye uski wife Mumtaz Mahal ki memory ہے.",
+      "props": {},
+      "why": "Emphasizes the emotional core of the fact",
+      "bg": "White marble floral inlay close-up"
+    },
+    {
+      "text": "Construction around 1632 mein start hua tha.",
+      "primitive": "yearRewind",
+      "energy": 2,
+      "speak": "Construction around sixteen thirty two میں start hua tha.",
+      "props": {
+        "from": 2026,
+        "to": 1632,
+        "label": "Construction Start"
+      },
+      "why": "Time-travels to the start of construction",
+      "bg": "Old stone blocks and blueprints"
+    },
+    {
+      "text": "20 years ka kaam, white marble se bana.",
+      "primitive": "scaleCompare",
+      "energy": 3,
+      "speak": "twenty years ka kaam, white marble سے bana.",
+      "props": {
+        "items": [
+          {
+            "label": "Workers",
+            "size": 20000
+          },
+          {
+            "label": "Years",
+            "size": 20
+          }
+        ],
+        "unit": "x"
+      },
+      "why": "Shows the scale of time and material",
+      "bg": "White marble quarry close-up"
+    },
+    {
+      "text": "But here’s the thing, ye sirf building nahi hai.",
+      "primitive": "iceberg",
+      "energy": 2,
+      "speak": "But here’s the thing, ye sirf building nahi ہے.",
+      "props": {
+        "top": "Building",
+        "below": [
+          "Art",
+          "Love",
+          "History",
+          "Memory"
+        ]
+      },
+      "why": "Reveals the hidden depth of the monument",
+      "bg": "Intricate Taj Mahal carving details"
+    },
+    {
+      "text": "Ye world ke most visited monuments mein se hai.",
+      "primitive": "factCard",
+      "energy": 3,
+      "speak": "Ye world ke most visited monuments میں سے ہے.",
+      "props": {
+        "fact": "Ye world ke most visited monuments mein se hai."
+      },
+      "why": "Visualizes global visitor popularity ranking"
+    },
+    {
+      "text": "Art, love, aur history ka perfect blend hai.",
+      "primitive": "auroraType",
+      "energy": 1,
+      "speak": "Art, love, aur history ka perfect blend ہے.",
+      "props": {
+        "word": "Perfect Blend"
+      },
+      "why": "Premium closing statement with gradient text",
+      "bg": "Golden hour sunlight on marble"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
