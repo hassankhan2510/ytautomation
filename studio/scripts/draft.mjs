@@ -32,7 +32,8 @@ const handle = (process.env.HANDLE || "").trim();
 // Channel brand mark (public/ path). Cohort Zero's original logo lives in cohort_zero/02_Brand_Assets/logos
 // and is copied to public/brand/cohortzero-mark.png; other channels pass LOGO.
 const logo = process.env.LOGO || (handle === "@cohort_zero" ? "brand/cohortzero-mark.png" : "");
-const verbatim = /^(yes|true|1)$/i.test(process.env.VERBATIM || "");
+const verbatimInput = /^(yes|true|1)$/i.test(process.env.VERBATIM || "");
+const briefReport = []; // what the brief stages did, shown in the run summary
 // LANGUAGE: english (default) | urdu. Urdu reels: the voice reads Urdu SCRIPT (English tech words kept
 // in English) while the screen + captions show ROMAN Urdu — how Pakistani Gen-Z actually types.
 const language = (process.env.LANGUAGE || "english").toLowerCase() === "urdu" ? "urdu" : "english";
@@ -74,10 +75,49 @@ const STYLES = {
   story: "Personal story arc: hook → struggle → turning point → result → lesson.",
 };
 
-/* ═════════════ STAGE 1 — WRITER ═════════════ */
+/* ═════════════ STAGE 0a — EDITOR NOTES: words addressed to us, not to the viewer ═════════════
+ * Creators paste things like "i am giving you the script, make it as it is, no change" or a ChatGPT
+ * preamble ("Here's the Gen Z version of that paragraph:") in front of the script. Those must never be
+ * spoken. The LLM only POINTS at such spans (exact substrings); we delete them ourselves, so the script
+ * itself can never be rewritten here. "No change / as it is" also switches on verbatim mode. */
+let verbatim = verbatimInput;
+{
+  try {
+    const notes = await groqJSON(
+      `The creator pasted text for a narrated video. Find spans addressed to the EDITOR / AI / tool rather than spoken to the viewer: meta-instructions ("i am giving you the script", "make it as it is", "no change in script", "this is voice script", "make the tone funny"), chatbot preambles/labels ("Here's the Gen Z version of that paragraph (scroll-stopping, TikTok ready):", "Script:"). The story/facts themselves and lines meant to be spoken are NOT notes — even casual ones like "Bro this story is insane".
+Copy each note span EXACTLY as written (same characters). Set keep_exact true only if the creator asks to keep their script unchanged / as it is / word for word.
+Return ONLY JSON: {"notes":["exact span", ...],"keep_exact":true|false}`,
+      paragraph.slice(0, 8000),
+      { maxTokens: 800, temperature: 0 },
+    );
+    let cut = paragraph;
+    const removed = [];
+    for (const n of (notes?.notes || []).map((x) => String(x).trim()).filter((x) => x.length >= 4)) {
+      const k = cut.toLowerCase().indexOf(n.toLowerCase());
+      if (k < 0) continue;
+      cut = (cut.slice(0, k) + " " + cut.slice(k + n.length)).trim();
+      removed.push(n);
+    }
+    cut = cut.replace(/^[\s:*\-–—)]+/, "").replace(/[\s(:]+$/, "").trim();
+    // a stray ")" left over from a "(...)" preamble
+    if ((cut.match(/\)/g) || []).length > (cut.match(/\(/g) || []).length) cut = cut.replace(/\)\s*$/, "").trim();
+    if (removed.length && cut.length >= paragraph.length * 0.5 && cut.length >= 40) {
+      paragraph = cut;
+      console.log(`  editor notes removed (never spoken): ${removed.map((r) => `"${r.slice(0, 60)}"`).join(" · ")}`);
+      briefReport.push(`removed your note(s) to the editor: ${removed.map((r) => `"${r.slice(0, 50)}"`).join(", ")}`);
+    }
+    if (notes?.keep_exact === true && !verbatim) {
+      verbatim = true;
+      console.log("  creator asked for no changes → verbatim mode");
+      briefReport.push("kept your script as-is (you asked for no changes)");
+    }
+  } catch (e) {
+    console.warn(`  editor-notes pass failed (${e.message}) — using the text as given`);
+  }
+}
+
 /* ═════════════ STAGE 0 — BRIEF READER: facts vs the creator's directions ═════════════ */
 let directionsText = "";
-const briefReport = [];
 if (!verbatim) {
   const brief = await groqJSON(
     `You read a content creator's brief for a short video. It may be pure facts, or facts mixed with instructions to the editor.
@@ -109,7 +149,7 @@ If there are no instructions, "facts" is the whole input and the rest are empty.
     paragraph = [facts, hookWanted, ...must].filter(Boolean).join("\n");
     directionsText = dir.length ? `\nCREATOR DIRECTIONS — follow these exactly; they override the default style rules:\n- ${dir.join("\n- ")}\n` : "";
     briefReport.push(dir.length ? dir.map((d) => d.split(":")[0].replace(/\(.*$/, "").trim()).join(", ").toLowerCase() : "none");
-    console.log(`  brief: ${dir.length} direction(s) — ${briefReport[0]}`);
+    console.log(`  brief: ${dir.length} direction(s) — ${briefReport.at(-1)}`);
   }
 }
 
@@ -484,7 +524,7 @@ ${factFixes.map((f) => `  - ~~${f.before}~~ → ${f.after || "**check this line*
   "",
   flagged.size ? `⚠️ **Numbers not found in your paragraph — check before posting:** ${[...flagged].join(", ")}` : "✅ Every number on screen comes from your paragraph.",
   ...(places.length ? ["", `📍 **Map locations to double-check:** ${places.join("; ")}`] : []),
-  ...(briefReport.length && briefReport[0] !== "none" ? ["", `📝 **Your directions applied:** ${briefReport[0]}`] : []),
+  ...(briefReport.filter((r) => r !== "none").length ? ["", `📝 **Your directions applied:** ${briefReport.filter((r) => r !== "none").join(" · ")}`] : []),
   ...(urduReport.length ? ["", `🇵🇰 **Urdu:** ${urduReport.join(" · ")}`] : []),
   ...(textFixes.length ? ["", `🔍 **Hooks/caption check:** ${textFixes.join(" · ")}`] : []),
   ...(swaps.length ? ["", `🛡️ **Scene guard:** ${swaps.length} scene(s) swapped for safe text scenes:`, ...swaps.map((w) => `  - \`${w.from}\` → \`${w.to}\` _(${w.reason})_`)] : []),
