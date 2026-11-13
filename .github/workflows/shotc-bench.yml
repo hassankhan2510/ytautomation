@@ -1,0 +1,49 @@
+name: "shotc — 1/10 compute benchmark"
+# Shot compiler vs per-frame path tracing on a standard 4-core GitHub runner (CPU only).
+# Same renderer core, same scene, equal-quality comparison against a high-sample reference.
+
+on:
+  workflow_dispatch:
+    inputs:
+      size:
+        description: "Resolution and frames"
+        type: choice
+        options: ["540x960x96", "270x480x48", "1080x1920x48"]
+        default: "540x960x96"
+      b:
+        description: "B configs: direct_spp,spp,K,cell,cache_spp[,filter] ; ..."
+        default: "2,2,6,0.06,64;2,2,8,0.06,128;2,2,8,0.06,128,2.5;4,4,8,0.05,128,2.5"
+      ref_spp:
+        description: "Reference samples per pixel"
+        default: "1024"
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    defaults:
+      run:
+        working-directory: shotc
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numba numpy pillow
+      - name: Machine
+        run: |
+          nproc; lscpu | grep -E "Model name|^CPU\(s\)" || true
+          { echo "### Machine"; echo '```'; lscpu | grep -E "Model name|^CPU\(s\)"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Benchmark
+        run: |
+          IFS=x read W H F <<< "${{ inputs.size }}"
+          python bench.py --W $W --H $H --F $F --ref-spp ${{ inputs.ref_spp }} --b "${{ inputs.b }}" --out runs/actions | tee bench.log
+          { echo "### Log"; echo '```'; grep -v "^  ref" bench.log; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: shotc-bench-${{ github.run_number }}
+          path: |
+            shotc/runs/actions/*.json
+            shotc/runs/actions/*.png
+            shotc/bench.log
+          retention-days: 30
