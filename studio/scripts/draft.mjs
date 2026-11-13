@@ -239,6 +239,15 @@ Return ONLY JSON: {"bad":[{"i":item number,"why":"max 8 words"}]} (empty list if
   }
 }
 
+// Percentage scenes (ring, meter) must show a percentage that is actually in the source — otherwise the
+// director tends to pour any number into them ("100%" labelled "3800 years").
+const srcNumsForPct = new Set((paragraph.match(/\d[\d,.]*/g) || []).map((n) => n.replace(/[,.]+$/, "").replace(/,/g, "")));
+for (const b of beats) {
+  if (!["ring", "meter"].includes(b.primitive)) continue;
+  const v = String(b.props?.value ?? "");
+  if (!srcNumsForPct.has(v) || !/%|percent/i.test(paragraph)) swapSafe(b, `${b.primitive} value ${v || "?"}% not a percentage from the source`);
+}
+
 /* ═════════════ FACT GUARD — numbers must come from the source ═════════════ */
 const nums = (s) => (String(s).match(/\d[\d,.]*/g) || []).map((n) => n.replace(/[,.]+$/, "").replace(/,/g, ""));
 const sourceNums = new Set(nums(paragraph));

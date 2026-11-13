@@ -19,6 +19,14 @@ export const SplitFlap: React.FC<PrimitiveProps> = ({ beat }) => {
     else acc.push(w);
     return acc;
   }, []).slice(0, 4));
+  // Rows longer than the board wrap word-by-word onto the next row (never chopped mid-word).
+  const wrapped = rows.flatMap((r) => r.toUpperCase().split(/\s+/).reduce<string[]>((acc, w) => {
+    const last = acc[acc.length - 1];
+    if (last !== undefined && (last + " " + w).length <= 10) acc[acc.length - 1] = last + " " + w;
+    else acc.push(w.slice(0, 10));
+    return acc;
+  }, [])).slice(0, 5);
+  rows.splice(0, rows.length, ...wrapped);
   const width = Math.min(10, Math.max(...rows.map((r) => r.length)));
   const cell = Math.floor(880 / width) - 10;
   return (
