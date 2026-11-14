@@ -48,9 +48,9 @@ on:
         options: [auto, none]
         default: auto
       backgrounds:
-        description: "Scene backgrounds: video = real stock footage (Pexels) · photo = stock photos · off = generated"
+        description: "Backgrounds/images: video = stock footage · photo = stock photos · off = generated · 'my images + …' = ALSO place your own photos from studio/public/my-images where they fit"
         type: choice
-        options: [video, photo, "off"]
+        options: [video, photo, "off", "my images + video", "my images + photo", "my images only"]
         default: video
       sfx:
         description: "Sound effects (whooshes, hits, pops)"
@@ -114,7 +114,8 @@ jobs:
         env:
           JOB_FILE: ${{ steps.draft.outputs.draft }}
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
-          BG_MODE: ${{ github.event.inputs.backgrounds }}
+          BG_MODE: ${{ contains(github.event.inputs.backgrounds, 'video') && 'video' || (contains(github.event.inputs.backgrounds, 'photo') && 'photo' || 'off') }}
+          MY_IMAGES: ${{ startsWith(github.event.inputs.backgrounds, 'my images') && 'yes' || 'no' }}
           # Groq powers the footage judge (only footage that matches the line's context is used).
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}

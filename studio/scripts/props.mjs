@@ -110,6 +110,77 @@ async function downloadTo(url, file, headers = {}) {
 
 // Scene images: search -> judged archival photo; else prompt -> AI image; same for search2/prompt2 -> src2.
 job.credits = [];
+
+/**
+ * MY IMAGES (MY_IMAGES=yes): the creator drops photos into public/my-images/, each NAMED for what it
+ * shows ("Elon Musk.jpg", "Tesla factory 2.png"). One LLM call reads the script and decides where each
+ * photo genuinely fits — a scene's own image slot, the full-screen background, or (for a line that is
+ * about that subject) a photo scene. A photo may be used in several scenes; none is forced in. Matched
+ * beats are then skipped by the stock/archive searches below. The creator owns these images: no credit
+ * line is added.
+ */
+if (/^(yes|true|1)$/i.test(process.env.MY_IMAGES || "")) {
+  const dir = path.join("public", "my-images");
+  const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => /\.(jpe?g|png|webp)$/i.test(f)) : [];
+  if (!files.length) {
+    console.log("🖼️ My images: the folder public/my-images/ is empty — nothing to place");
+  } else {
+    // what each photo shows, from its file name: "elon_musk-2.JPG" -> "elon musk"
+    const imgs = files.map((f, k) => ({ n: k + 1, file: f, name: f.replace(/\.[^.]+$/, "").replace(/[_\-.]+/g, " ").replace(/\s*\(?\d+\)?\s*$/, "").replace(/\s+/g, " ").trim() }));
+    // which scene types have their own image slot (parsed from the registry's prop docs)
+    const reg = fs.readFileSync(path.join("src", "engine", "registry.ts"), "utf8");
+    const withSlot = new Set([...reg.matchAll(/id: "([A-Za-z0-9]+)"[^\n]*?props: "([^"]*)"/g)].filter((m) => /\b(src|prompt|search)\b/.test(m[2])).map((m) => m[1]));
+    const beats = job.beats.map((b, i) => ({ i, b })).filter(({ b }) => String(b.text || "").trim() && b.primitive !== "outro");
+    const { groqJSON } = await import("../../theranos-doc/scripts/lib_groq.mjs");
+    let res = null;
+    try {
+      // MY_IMAGES_PLAN (JSON) = a fixed placement plan instead of the LLM (tests / manual control)
+      if (process.env.MY_IMAGES_PLAN) res = JSON.parse(process.env.MY_IMAGES_PLAN);
+      else res = await groqJSON(
+        `You place the CREATOR'S OWN PHOTOS into a short narrated video. Each photo is described by its file name. For each photo, choose the scene(s) whose spoken line is genuinely ABOUT what the photo shows (the person, place, object or event named) — usually where it is mentioned by name, or a line clearly about it ("he", "the company") right after. A photo may go in several scenes; never put a photo where it does not fit; never force all photos in; at most one photo per scene.
+Placement: "slot" if the scene type has an image slot (marked [slot]); otherwise "background" (full-screen behind the scene); use "photo" (replace the scene with a full photo card) only for a line that is mainly about that subject and has no slot.
+Return ONLY JSON: {"place":[{"scene":n,"photo":k,"as":"slot|background|photo","why":"max 8 words"}]}`,
+        `PHOTOS:\n${imgs.map((x) => `${x.n}. ${x.name}`).join("\n")}\n\nSCENES:\n${beats.map(({ i, b }) => `${i + 1}. [${b.primitive}${withSlot.has(b.primitive) ? " slot" : ""}] "${b.text}"`).join("\n")}`,
+        { maxTokens: 1500, temperature: 0.1 },
+      );
+    } catch (e) {
+      console.warn(`  my-images matcher failed (${e.message}) — your photos were not placed`);
+    }
+    const placed = [];
+    const taken = new Set();
+    const OWN_BACKDROP_EARLY = new Set(["museumFrame", "redString", "photo", "parallax", "outro"]); // paint their own background
+    for (const p of res?.place || []) {
+      const i = Number(p.scene) - 1;
+      const img = imgs[Number(p.photo) - 1];
+      const b = job.beats[i];
+      if (!b || !img || taken.has(i) || b.primitive === "outro") continue;
+      // copy under a safe name (spaces/case in file names must not break the renderer)
+      const ext = path.extname(img.file).toLowerCase();
+      const safe = `gen/my-${img.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "photo"}-${img.n}${ext}`;
+      fs.mkdirSync(path.join("public", "gen"), { recursive: true });
+      if (!fs.existsSync(path.join("public", safe))) fs.copyFileSync(path.join(dir, img.file), path.join("public", safe));
+      let as = String(p.as || "");
+      if (as === "slot" && !withSlot.has(b.primitive)) as = "background";
+      if (as === "slot") {
+        b.props = { ...(b.props || {}), src: safe };
+        delete b.props.search; delete b.props.prompt;
+      } else if (as === "photo") {
+        b.primitive = "photo";
+        b.props = { src: safe, caption: img.name.replace(/\b\w/g, (c) => c.toUpperCase()) };
+      } else {
+        if (OWN_BACKDROP_EARLY.has(b.primitive)) continue;
+        Object.assign(b, { bgSrc: safe, bgKind: "image" });
+      }
+      taken.add(i);
+      placed.push(`scene ${i + 1} ← "${img.name}" as ${as} (${String(p.why || "").slice(0, 60)})`);
+    }
+    const unused = imgs.filter((x) => !placed.some((p) => p.includes(`"${x.name}"`))).map((x) => x.name);
+    const msg = `🖼️ **My images:** ${placed.length} placement(s) from ${imgs.length} photo(s)` + (unused.length ? ` · not used (no fitting line): ${unused.join(", ")}` : "");
+    console.log(msg);
+    for (const p of placed) console.log(`  ${p}`);
+    if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [msg, ...placed.map((p) => `- ${p}`), ""].join("\n"));
+  }
+}
 {
   const slots = [];
   for (const [i, b] of job.beats.entries()) {
