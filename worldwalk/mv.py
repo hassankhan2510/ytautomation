@@ -229,3 +229,174 @@ def chained_lift(gen, inp, method, depth_model, k_sweep=(2, 4), tau=0.002, dev="
     out = {"method": method, "psnr_imagined": float(np.mean(ps)), "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"), "points": int(len(P))}
     log(f"  {method:6s}: final-world PSNR on imagined pixels {out['psnr_imagined']:.2f} dB   median depth error of lifts {out['median_lift_err']:.3f}")
     return out
+
+
+# ═════════════════════ v2: CHUNKED, WORLD-LOCKED GENERATION ═════════════════════
+def room_path(F, fov=60.0, deg=70.0):
+    """Start back in the room looking at the pedestal (lots of context), then turn right while
+    drifting sideways: new regions enter gradually from the screen edge (~2 deg per frame)."""
+    CAM = np.zeros((F, 13))
+    for f in range(F):
+        u = f / max(1, F - 1)
+        pos = np.array([-1.2 + 1.2 * u, 1.5, 2.4 - 0.4 * u])
+        a = math.radians(-10 + deg * u)
+        fwd = np.array([math.sin(a), -0.12, -math.cos(a)])
+        fwd /= np.linalg.norm(fwd)
+        right = np.cross(fwd, [0.0, 1.0, 0.0])
+        right /= np.linalg.norm(right)
+        up = np.cross(right, fwd)
+        CAM[f] = [*pos, *fwd, *right, *up, math.tan(math.radians(fov) / 2)]
+    return CAM
+
+
+def scene_truth(CAM, W, H, tex=1.0):
+    SPH, BOX, MAT, LGT = T.studio_scene("hard")
+    GT = [ww.gt_frame(CAM, f, W, H, SPH, BOX, MAT, LGT, tex) for f in range(len(CAM))]
+    return np.array([ww.tonemap(g[0]) for g in GT], np.float32), np.array([g[1] for g in GT], np.float32)
+
+
+class World:
+    """The persistent explicit state (points). Starts from the first view with its exact depth."""
+    def __init__(self, CAM, W, H, rgb0, z0):
+        self.CAM, self.W, self.H = CAM, W, H
+        fin = np.isfinite(z0)
+        self.P, self.R, ys, xs = ww.unproject(CAM, 0, W, H, np.where(fin, z0, 1e3), np.ones((H, W), bool))
+        self.C = ww.inv_tonemap(rgb0[ys, xs]).astype(np.float32)
+
+    def render(self, f):
+        img, zr, cov, _, _ = ww.splat(self.P, self.C, self.R.astype(np.float64), self.CAM, f, self.W, self.H, np.ones(len(self.P)))
+        return ww.tonemap(img).astype(np.float32), zr, cov
+
+    def add(self, f, z, mask, rgb):
+        Pn, Rn, yn, xn = ww.unproject(self.CAM, f, self.W, self.H, z, mask)
+        self.P = np.vstack([self.P, Pn]); self.R = np.concatenate([self.R, Rn])
+        self.C = np.vstack([self.C, ww.inv_tonemap(rgb[yn, xn]).astype(np.float32)])
+
+
+def plane_sweep_conf(frames, CAM, t, nbrs, z_prior, dev="cpu", **kw):
+    """plane_sweep + a per-pixel CONFIDENCE: the matched depth must explain the other views clearly
+    better than the single-view prior does (photo-consistency margin) — otherwise keep the prior."""
+    z_mv = plane_sweep(frames, CAM, t, nbrs, z_prior, dev=dev, **kw)
+    def photo_cost(z):
+        W, H = frames.shape[2], frames.shape[1]
+        I = torch.tensor(frames, device=dev, dtype=torch.float32)
+        rt = rays(CAM, t, W, H, dev)
+        X = torch.tensor(CAM[t, 0:3], device=dev, dtype=torch.float32) + torch.tensor(z, device=dev, dtype=torch.float32)[..., None] * rt
+        cost = torch.zeros((H, W), device=dev); cnt = torch.zeros((H, W), device=dev)
+        for n in nbrs:
+            grid, zn = project_grid(CAM, n, X, W, H)
+            col, valid = sample(I[n], grid)
+            valid = valid & (zn > 0.05)
+            d = (col - I[t]).abs().mean(-1)
+            cost += torch.where(valid, d, torch.zeros_like(d)); cnt += valid.float()
+        cost = torch.where(cnt > 0, cost / cnt.clamp(min=1), torch.full_like(cost, 1.0))
+        return Fnn.avg_pool2d(cost[None, None], 5, stride=1, padding=2)[0, 0].cpu().numpy()
+    c_mv, c_sv = photo_cost(z_mv), photo_cost(np.where(np.isfinite(z_prior), z_prior, 3.0))
+    conf = c_mv < 0.8 * c_sv  # triangulation explains the other views >=20% better
+    return np.where(conf, z_mv, z_prior), conf
+
+
+def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print):
+    """World-locked generation: chunks of `chunk` frames (overlapping by one). Each chunk is rendered
+    from the CURRENT world — so content imagined in earlier chunks is already on screen and moves
+    correctly with the camera — then the generator fills only what is still unknown, and every frame
+    is lifted into the world before the next chunk is rendered.
+    gen_fn(frames[k,H,W,3], masks[k,H,W]) -> filled frames. method: single | multi | hybrid."""
+    F = len(CAM)
+    world = World(CAM, W, H, gt_rgb[0], gt_z[0])
+    final = np.zeros((F, H, W, 3), np.float32)
+    imagined = np.zeros((F, H, W), bool)
+    final[0] = gt_rgb[0]
+    st = (1.0, 0.0)
+    lift_err, conf_frac = [], []
+    s = 0
+    while s < F - 1:
+        idx = list(range(s, min(s + chunk, F)))
+        frames, masks = [], []
+        for f in idx:
+            img, zr, cov = world.render(f)
+            frames.append(img); masks.append(~cov)
+        frames, masks = np.array(frames), np.array(masks)
+        gen = gen_fn(frames, masks, idx).astype(np.float32)
+        gen = np.where(masks[..., None], gen, frames)  # keep everything the world already knows
+        for j, f in enumerate(idx):
+            if f == 0:
+                continue
+            img, zr, cov = world.render(f)
+            hole = ~cov
+            final[f] = np.where(hole[..., None], gen[j], img)
+            imagined[f] |= masks[j]
+            if hole.mean() <= tau:
+                continue
+            z1, st = single_view_depth(gen[j], zr, cov, depth_model, st)
+            if method == "single":
+                z = z1
+            else:
+                nb = [idx[k] for k in range(len(idx)) if idx[k] != f and abs(idx[k] - f) >= 2][:4] or [idx[k] for k in range(len(idx)) if idx[k] != f]
+                gl = np.zeros((F, H, W, 3), np.float32)
+                gl[idx] = gen
+                if method == "multi":
+                    z = plane_sweep(gl, CAM, f, nb, z1, dev=dev)
+                else:
+                    z, conf = plane_sweep_conf(gl, CAM, f, nb, z1, dev=dev)
+                    conf_frac.append(float(conf[hole].mean()))
+            ok = hole & np.isfinite(gt_z[f])
+            if ok.sum():
+                lift_err.append(float(np.median(np.abs(z[ok] - gt_z[f][ok]) / gt_z[f][ok])))
+            world.add(f, z, hole, gen[j])
+        s = idx[-1]
+    # score: does the final world reproduce the frames the user was shown (imagined pixels only)?
+    ps = []
+    for f in range(1, F):
+        img, _, cov = world.render(f)
+        m = imagined[f] & cov
+        if m.sum() > 50:
+            ps.append(10 * math.log10(1 / max(float(np.mean((img[m] - final[f][m]) ** 2)), 1e-10)))
+    back, back_holes = walk_back(world, CAM)
+    out = {"method": method, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
+           "imagined_pct": 100 * float(imagined[1:].mean()), "trusted_triangulation_pct": 100 * float(np.mean(conf_frac)) if conf_frac else None}
+    log(f"  {method:6s}: world reproduces shown frames {out['world_psnr']:.2f} dB · seam ratio {out['seam_ratio']:.2f} · walk-back holes {out['walk_back_holes_pct']:.2f}% · lift depth err {out['median_lift_err']:.3f}"
+        + (f" · triangulation trusted on {out['trusted_triangulation_pct']:.0f}% of new px" if conf_frac else ""))
+    return out, final, back
+
+
+def oracle_gen(gt_rgb):
+    return lambda frames, masks, idx: gt_rgb[idx]
+
+
+def sticker_gen(gt_rgb):
+    """Adversarial stand-in for what VACE did: whatever the FIRST frame of the chunk shows in the hole
+    is pasted at the same screen position in every frame of the chunk (screen-locked content)."""
+    def g(frames, masks, idx):
+        first = gt_rgb[idx[0]]
+        return np.repeat(first[None], len(idx), 0)
+    return g
+
+
+def seam_score(final, imagined):
+    """How visible is the join between imagined and already-known pixels? Ratio of the colour jump
+    ACROSS the boundary to the typical jump between neighbouring pixels nearby (1.0 = invisible seam,
+    larger = visible edge). Averaged over frames that contain imagined pixels."""
+    out = []
+    for img, m in zip(final, imagined):
+        if m.mean() < 0.002 or m.mean() > 0.98:
+            continue
+        g = img.mean(-1)
+        dx = np.abs(np.diff(g, axis=1)); mx = m[:, 1:] != m[:, :-1]
+        dy = np.abs(np.diff(g, axis=0)); my = m[1:, :] != m[:-1, :]
+        across = np.concatenate([dx[mx], dy[my]])
+        near = ww.dilate(m, 4) & ~m  # the known side, within 4 px of the join
+        typical = np.concatenate([dx[near[:, 1:] & ~mx], dy[near[1:, :] & ~my]])
+        if len(across) > 20 and len(typical) > 20:
+            out.append(float(np.mean(across) / max(np.mean(typical), 1e-4)))
+    return float(np.mean(out)) if out else float("nan")
+
+
+def walk_back(world, CAM):
+    """Revisit: render the built world along the reverse path. No generation: holes left = what a
+    returning user would still be missing; the frames are the 'never forgets' demo."""
+    frames, holes = [], []
+    for f in range(len(CAM) - 1, -1, -1):
+        img, _, cov = world.render(f)
+        frames.append(img); holes.append(float((~cov).mean()))
+    return np.array(frames), float(np.mean(holes))
