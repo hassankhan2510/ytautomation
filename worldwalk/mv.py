@@ -296,7 +296,7 @@ def plane_sweep_conf(frames, CAM, t, nbrs, z_prior, dev="cpu", **kw):
     return np.where(conf, z_mv, z_prior), conf
 
 
-def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None):
+def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None, blend="hard"):
     """World-locked generation: chunks of `chunk` frames (overlapping by one). Each chunk is rendered
     from the CURRENT world — so content imagined in earlier chunks is already on screen and moves
     correctly with the camera — then the generator fills only what is still unknown, and every frame
@@ -320,6 +320,8 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
         gen = gen_fn(frames, masks, idx).astype(np.float32)
         if raw_out is not None:
             raw_out.append(gen.copy())
+        if blend != "hard":
+            gen = np.array([harmonize(g, fr, m, mode=blend) for g, fr, m in zip(gen, frames, masks)])
         gen = np.where(masks[..., None], gen, frames)  # keep everything the world already knows
         if lift == "last":
             # KEYFRAME LIFTING (v3): inside the chunk the viewer sees the model's own coherent video;
@@ -380,6 +382,37 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
     log(f"  {method:6s}/{lift:5s}: world reproduces shown frames {out['world_psnr']:.2f} dB · seam ratio {out['seam_ratio']:.2f} · walk-back holes {out['walk_back_holes_pct']:.2f}% · lift depth err {out['median_lift_err']:.3f}"
         + (f" · triangulation trusted on {out['trusted_triangulation_pct']:.0f}% of new px" if conf_frac else ""))
     return out, final, back
+
+
+def harmonize(gen, known, hole, band=8, sigma=12.0, mode="field"):
+    """Seam fix (v4). The video model re-paints the whole frame, and its colours drift a little from
+    the world's render (VAE / lighting drift). Hard-pasting its hole pixels next to rendered pixels
+    then leaves a visible step at the join (v3 seam ratio 9.2). Fix, measured on a band just OUTSIDE
+    the hole where we have BOTH the model's version and the world's version of the same pixels:
+      'affine': one per-channel gain+offset for the whole hole;
+      'field' : affine + a smooth residual field (normalised Gaussian convolution of the band error,
+                like seamless cloning) that is exact at the join and fades away from it."""
+    if hole.mean() < 1e-4 or hole.all():
+        return gen
+    from scipy.ndimage import gaussian_filter, distance_transform_edt
+    B = ww.dilate(hole, band) & ~hole
+    if B.sum() < 50:
+        return gen
+    out = gen.copy()
+    for c in range(3):
+        g, k = gen[..., c][B], known[..., c][B]
+        A = np.stack([g, np.ones_like(g)], 1)
+        a, b = np.linalg.lstsq(A, k, rcond=None)[0]
+        a = float(np.clip(a, 0.7, 1.4)); b = float(np.clip(b, -0.2, 0.2))
+        out[..., c] = a * gen[..., c] + b
+    if mode == "field":
+        r = np.where(B[..., None], known - out, 0.0)
+        wsum = gaussian_filter(B.astype(np.float32), sigma)
+        fill = np.stack([gaussian_filter(r[..., c], sigma) for c in range(3)], -1) / np.maximum(wsum, 1e-3)[..., None]
+        d = distance_transform_edt(hole)  # px into the hole from the join
+        fade = np.exp(-d / (3 * sigma))[..., None]
+        out = np.where(hole[..., None], out + fade * np.clip(fill, -0.3, 0.3), out)
+    return np.clip(out, 0, 1).astype(np.float32)
 
 
 def oracle_gen(gt_rgb):
