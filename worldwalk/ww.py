@@ -197,6 +197,92 @@ def fit_affine(dm, disp_r, sel):
     return s, t
 
 
+def fit_planes(X, k_max=10, iters=800, thr=0.02, min_frac=0.01, rng=None):
+    """Sequential RANSAC: up to k_max planes (n, c with n.x = c) from 3D points X of the CURRENT state."""
+    rng = rng or np.random.default_rng(0)
+    planes, rest = [], X
+    n0 = len(X)
+    for _ in range(k_max):
+        if len(rest) < max(150, min_frac * n0):
+            break
+        i = rng.integers(0, len(rest), (iters, 3))
+        a, b, c = rest[i[:, 0]], rest[i[:, 1]], rest[i[:, 2]]
+        nrm = np.cross(b - a, c - a)
+        ln = np.linalg.norm(nrm, axis=1)
+        ok = ln > 1e-6
+        nrm, a = nrm[ok] / ln[ok, None], a[ok]
+        off = (nrm * a).sum(1)
+        cnt = (np.abs(rest @ nrm.T - off[None]) < thr).sum(0)
+        best = int(np.argmax(cnt))
+        if cnt[best] < max(150, min_frac * n0):
+            break
+        nb, ob = nrm[best], off[best]
+        inl = np.abs(rest @ nb - ob) < thr
+        # refine by least squares on the inliers
+        Y = rest[inl]
+        cen = Y.mean(0)
+        _, _, vt = np.linalg.svd(Y - cen, full_matrices=False)
+        nb = vt[-1]
+        ob = nb @ cen
+        planes.append((nb, ob))
+        rest = rest[np.abs(rest @ nb - ob) >= thr]
+    return planes
+
+
+def plane_snap(z_mono, CAM, f, W, H, hole, zr, cov, tol=0.15):
+    """OURS (structure-aware lifting): extend the flat surfaces already in the world into the hole.
+    The mono depth only VOTES which surface a hole pixel belongs to (if any plane is within tol of it);
+    the depth itself then comes from the existing geometry, so it cannot drift."""
+    ys, xs = np.nonzero(cov)
+    if len(ys) < 500:
+        return z_mono, 0.0
+    k = np.random.default_rng(0).choice(len(ys), min(20000, len(ys)), replace=False)
+    Pw, _, _, _ = unproject(CAM, f, W, H, zr, cov)
+    Pw = Pw[k]
+    planes = fit_planes(Pw)
+    if not planes:
+        return z_mono, 0.0
+    # CONTINUITY: label covered pixels by the plane they lie on; a hole component may only continue
+    # planes that actually touch its rim in the image (surfaces extend across the seam, never jump).
+    from scipy import ndimage
+    Pall, _, cy, cx = unproject(CAM, f, W, H, zr, cov)
+    lab_img = np.full((H, W), -1, np.int64)
+    dist_best = np.full(len(Pall), np.inf)
+    for pi_, (nb, ob) in enumerate(planes):
+        dd = np.abs(Pall @ nb - ob)
+        on = (dd < 0.02) & (dd < dist_best)
+        dist_best[on] = dd[on]
+        lab_img[cy[on], cx[on]] = pi_
+    comp, ncomp = ndimage.label(hole)
+    allowed = {}
+    for c in range(1, ncomp + 1):
+        rim = dilate(comp == c, 3) & cov
+        labs, cnts = np.unique(lab_img[rim], return_counts=True)
+        allowed[c] = {int(l) for l, n in zip(labs, cnts) if l >= 0 and n >= 15}
+    hy, hx = np.nonzero(hole)
+    hc = comp[hy, hx]
+    th = CAM[f, 12]
+    asp = W / H
+    u = ((hx + 0.5) / W * 2 - 1) * th * asp
+    v = (1 - (hy + 0.5) / H * 2) * th
+    o, fw, rt, up = CAM[f, 0:3], CAM[f, 3:6], CAM[f, 6:9], CAM[f, 9:12]
+    w = fw[None] + u[:, None] * rt[None] + v[:, None] * up[None]  # ray with unit forward component
+    zm = z_mono[hy, hx]
+    best = np.full(len(hy), np.inf)
+    bestz = zm.copy()
+    for pi_, (nb, ob) in enumerate(planes):
+        okc = np.array([pi_ in allowed[c] for c in hc]) if len(hc) else np.zeros(0, bool)
+        den = w @ nb
+        zc = np.where(np.abs(den) > 1e-6, (ob - o @ nb) / np.where(np.abs(den) > 1e-6, den, 1), -1)  # z-depth of the plane hit
+        rel = np.abs(zc - zm) / np.maximum(zm, 1e-6)
+        take = okc & (zc > 0.05) & (rel < tol) & (rel < best)
+        best[take] = rel[take]
+        bestz[take] = zc[take]
+    out = z_mono.copy()
+    out[hy, hx] = bestz
+    return out, float(np.isfinite(best).mean())
+
+
 LAST_FIELDS = [None]
 
 
@@ -352,9 +438,10 @@ def main():
     ap.add_argument("--H", type=int, default=384)
     ap.add_argument("--F", type=int, default=96)
     ap.add_argument("--gen", default="oracle", choices=["oracle", "lama"])
-    ap.add_argument("--lift", default="scalefield", choices=["global", "band", "poisson", "band_bg", "poisson_bg", "scalefield", "gt", "oracle_affine", "oracle_scalefield"])
+    ap.add_argument("--lift", default="scalefield", choices=["global", "band", "poisson", "band_bg", "poisson_bg", "scalefield", "gt", "oracle_affine", "oracle_scalefield", "planes"])
     ap.add_argument("--tau", type=float, default=0.004, help="generate only when novel pixel fraction > tau")
     ap.add_argument("--out", default="runs/v0")
+    ap.add_argument("--frontier", type=int, default=0, help="leave this many px at the image border uncommitted (0 = off)")
     ap.add_argument("--elastic", type=int, default=0, help="re-solve the fields of the last K imagined regions jointly (0 = off)")
     ap.add_argument("--edge-drop", type=float, default=0.0, help="drop lifted pixels with |grad log z| above this (0 = off)")
     ap.add_argument("--lifted-conf", type=float, default=0.25, help="anchor weight of imagined+lifted points")
@@ -392,7 +479,7 @@ def main():
         EW = ElasticWorld(CAM, W, H, int(os.environ.get("SF_G", 12)), lam=float(os.environ.get("SF_LAM", 3.0)))
     rng = np.random.default_rng(1)
     events, rows = 0, []
-    lift_err_all, seam_err_all, diag = [], [], []
+    lift_err_all, seam_err_all, diag, snap_log = [], [], [], []
     frames_out = []
     for f in range(1, F):
         rgb_gt, z_gt = GT[f]
@@ -414,6 +501,10 @@ def main():
             dm = depth(gen_rgb)
             if args.lift == "gt":  # CEILING: perfect depth for every new pixel
                 zl = np.where(np.isfinite(z_gt), z_gt, 1e3)
+            elif args.lift == "planes":  # scale-field lift, then snap to the world's extended surfaces
+                zl, st = lift_depth("scalefield", dm, zr, cov, hole, st, w=Qm)
+                zl, snapped = plane_snap(zl, CAM, f, W, H, hole, zr, cov)
+                snap_log.append(snapped)
             elif args.lift == "oracle_scalefield":  # smooth (non-affine) correction, perfectly fitted on the hole
                 okh = hole & np.isfinite(z_gt)
                 dg = np.where(np.isfinite(z_gt), 1 / np.maximum(z_gt, 1e-6), 0)
@@ -453,6 +544,16 @@ def main():
                 lz = np.log(np.maximum(zl, 1e-4))
                 gy_, gx_ = np.gradient(lz)
                 lift_mask = hole & (np.hypot(gx_, gy_) < args.edge_drop)
+            if args.frontier > 0:
+                # LAZY COMMIT AT THE FRONTIER: geometry entering at the screen edge has context on one
+                # side only, so it is the least constrained — and it is exactly what the NEXT strip will
+                # anchor on. Leave a band of M px at the image border uncommitted; one frame later it sits
+                # inside the view with more context and is lifted then.
+                M = args.frontier
+                edge = np.zeros_like(hole)
+                edge[:M, :] = edge[-M:, :] = True
+                edge[:, :M] = edge[:, -M:] = True
+                lift_mask = lift_mask & ~edge
             Pn, Rn, yn, xn = unproject(CAM, f, W, H, zl, lift_mask)
             eid = -1
             if EW is not None and args.lift == "scalefield" and LAST_FIELDS[0] is not None:
@@ -469,6 +570,9 @@ def main():
             C = np.vstack([C, inv_tonemap(gen_rgb[yn, xn]).astype(np.float32)])
             img, zr, cov, Qm, Im = splat(P, C, R.astype(np.float64), CAM, f, W, H, Q)
         out = tonemap(img)
+        if g_sec > 0:
+            # pixels generated but not committed (frontier) are still SHOWN this frame
+            out = np.where(~cov[..., None], gen_rgb, out)
         mse = float(np.mean((out - tonemap(rgb_gt)) ** 2))
         rows.append({"f": f, "novel_px": float(nov), "novel_tok": float(tok), "generated": g_sec > 0, "render_s": render_sec, "gen_s": g_sec, "psnr": 10 * math.log10(1 / max(mse, 1e-10)), "points": int(len(P))})
         frames_out.append((out * 255).astype(np.uint8))
@@ -486,6 +590,7 @@ def main():
         "seam_abs_rel_err_median_of_events": float(np.median(seam_err_all)) if seam_err_all else None,
         "seam_abs_rel_err_mean_of_events": float(np.mean(seam_err_all)) if seam_err_all else None,
         "mean_psnr": float(np.mean([r["psnr"] for r in rows])),
+        "plane_snapped_frac": float(np.mean(snap_log)) if snap_log else None,
         "revisit_psnr_last_frame": last["psnr"],
         "render_s_per_frame": float(np.mean([r["render_s"] for r in rows])),
         "gen_s_total": gen_sec,
