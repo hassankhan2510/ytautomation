@@ -5,6 +5,7 @@ STUDIO — NARRATE: speak every beat of a render-props job and lock the timeline
 
 Env: VOICE = mine (Chatterbox clone, English) | omnivoice (OmniVoice clone — Urdu + English, Apache-2.0)
           | kokoro | edge | none
+     Another cloned speaker: add "-<name>" (e.g. mine-sufyan, omnivoice-sufyan) -> uses voice/<name>.wav
 Urdu reels: each beat may carry `speak` (Urdu script) — the voice reads that while the screen shows `text`.
 
 Each beat is synthesized separately, trimmed of dead air, then joined with natural pauses
@@ -280,7 +281,18 @@ def speakable(text):
 
 def main():
     props_path = sys.argv[1] if len(sys.argv) > 1 else "out/props.json"
+    global REF
     mode = (os.environ.get("VOICE") or "mine").lower()
+    if "-" in mode:  # mine-sufyan / omnivoice-sufyan -> same engine, that speaker's sample
+        mode, speaker = mode.split("-", 1)
+        cand = os.path.join(ROOT, "voice", f"{speaker}.wav")
+        if os.path.exists(cand):
+            REF = cand
+            print(f"voice sample: {speaker} ({cand})")
+        else:
+            print(f"! voice/{speaker}.wav missing — using the default voice_ref.wav")
+    if (os.environ.get("LANGUAGE") or "").lower() == "urdu" and mode != "none":
+        mode = "omnivoice"  # Urdu reels always use OmniVoice (the Chatterbox clone is English-only)
     props = json.load(open(props_path, encoding="utf-8"))
     job = props["job"]
     if mode == "none":

@@ -33,9 +33,9 @@ on:
         options: [english, urdu]
         default: english
       voice:
-        description: "Narration: mine = your clone (English) · omnivoice = your clone (Urdu+English, slower) · kokoro / edge = AI voices · none"
+        description: "Narration: mine = your clone (English) · omnivoice = your clone (Urdu+English, slower) · '…-sufyan' = Sufyan's voice · kokoro / edge = AI voices · none"
         type: choice
-        options: [mine, omnivoice, kokoro, edge, none]
+        options: [mine, mine-sufyan, omnivoice, omnivoice-sufyan, kokoro, edge, none]
         default: mine
       verbatim:
         description: "no = AI writes the script (default) · yes = read my text word-for-word"
@@ -87,10 +87,10 @@ jobs:
         run: |
           pip install numpy soundfile edge-tts
           pip install kokoro
-          if [ "${{ github.event.inputs.language }}" = "urdu" ] || [ "${{ github.event.inputs.voice }}" = "omnivoice" ]; then
+          if [[ "${{ github.event.inputs.language }}" = "urdu" || "${{ github.event.inputs.voice }}" = omnivoice* ]]; then
             pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
             pip install omnivoice
-          elif [ "${{ github.event.inputs.voice }}" = "mine" ]; then
+          elif [[ "${{ github.event.inputs.voice }}" = mine* ]]; then
             pip install chatterbox-tts peft resemble-perth
           fi
 
@@ -135,8 +135,10 @@ jobs:
 
       - name: ③ Narrate (your voice) + lock timing to the speech
         env:
-          # Urdu reels always use OmniVoice (the Chatterbox clone is English-only).
-          VOICE: ${{ (github.event.inputs.language == 'urdu' && github.event.inputs.voice != 'none') && 'omnivoice' || github.event.inputs.voice }}
+          # mine-<name> / omnivoice-<name> = that speaker's sample (voice/<name>.wav).
+          # Urdu reels always switch to OmniVoice (the Chatterbox clone is English-only) — narrate.py does it.
+          VOICE: ${{ github.event.inputs.voice }}
+          LANGUAGE: ${{ github.event.inputs.language }}
         run: python scripts/narrate.py out/props.json
 
       - name: ④ Render the reel
