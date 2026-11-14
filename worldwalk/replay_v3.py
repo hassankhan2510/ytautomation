@@ -26,3 +26,8 @@ for blend in modes:
     print(blend, json.dumps({k: round(v, 3) if isinstance(v, float) else v for k, v in out.items()}))
     np.save(os.path.join(d, f"replay_shown_{blend}.npy"), (np.clip(shown, 0, 1) * 255).astype(np.uint8))
 json.dump(res, open(os.path.join(d, "replay_v3.json"), "w"), indent=1)
+# colour drift: mean RGB of the imagined side late in the walk vs the model's own raw output there
+ref = raw[-9:, :, W // 2:].reshape(-1, 3).mean(0)
+for b in modes:
+    sh = np.load(os.path.join(d, f"replay_shown_{b}.npy"))[40:, :, W // 2:].reshape(-1, 3).mean(0) / 255
+    print(f"{b:9s} late imagined mean RGB {np.round(sh, 3)} vs raw {np.round(ref, 3)} · cast (R-G, B-G) {sh[0]-sh[1]:+.3f} {sh[2]-sh[1]:+.3f}")

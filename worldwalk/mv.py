@@ -401,11 +401,15 @@ def harmonize(gen, known, hole, band=8, sigma=12.0, mode="field"):
     out = gen.copy()
     for c in range(3):
         g, k = gen[..., c][B], known[..., c][B]
-        A = np.stack([g, np.ones_like(g)], 1)
-        a, b = np.linalg.lstsq(A, k, rcond=None)[0]
-        a = float(np.clip(a, 0.7, 1.4)); b = float(np.clip(b, -0.2, 0.2))
+        if mode in ("offset", "field_off"):
+            a = 1.0  # a thin, nearly flat band cannot pin down a gain -> offset only (no colour cast)
+        else:
+            # ridge toward gain 1: a gain is only trusted when the band has real contrast
+            gm, km = g.mean(), k.mean(); vg = float(((g - gm) ** 2).sum()); lam = 0.02 * len(g)
+            a = float(np.clip((float(((g - gm) * (k - km)).sum()) + lam) / (vg + lam), 0.8, 1.25))
+        b = float(np.clip(k.mean() - a * g.mean(), -0.2, 0.2))
         out[..., c] = a * gen[..., c] + b
-    if mode == "field":
+    if mode in ("field", "field_off"):
         r = np.where(B[..., None], known - out, 0.0)
         wsum = gaussian_filter(B.astype(np.float32), sigma)
         fill = np.stack([gaussian_filter(r[..., c], sigma) for c in range(3)], -1) / np.maximum(wsum, 1e-3)[..., None]
