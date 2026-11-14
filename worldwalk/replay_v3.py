@@ -23,7 +23,7 @@ for blend in modes:
     g = shown[F // 2:, :, W // 2:].mean(-1)
     out["stripe_dx_dy"] = float(np.abs(np.diff(g, axis=2)).mean() / np.abs(np.diff(g, axis=1)).mean())
     res[blend] = out
-    print(blend, json.dumps({k: round(v, 3) if isinstance(v, float) else v for k, v in out.items()}))
+    print("RES", blend, json.dumps({k: round(v, 3) if isinstance(v, float) else v for k, v in out.items()}))
     np.save(os.path.join(d, f"replay_shown_{blend}.npy"), (np.clip(shown, 0, 1) * 255).astype(np.uint8))
 json.dump(res, open(os.path.join(d, "replay_v3.json"), "w"), indent=1)
 # colour drift: mean RGB of the imagined side late in the walk vs the model's own raw output there

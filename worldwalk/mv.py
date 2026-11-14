@@ -320,9 +320,15 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
         gen = gen_fn(frames, masks, idx).astype(np.float32)
         if raw_out is not None:
             raw_out.append(gen.copy())
-        if blend != "hard":
-            gen = np.array([harmonize(g, fr, m, mode=blend) for g, fr, m in zip(gen, frames, masks)])
-        gen = np.where(masks[..., None], gen, frames)  # keep everything the world already knows
+        base = blend.split("+")[0]
+        if base != "hard":
+            gen = np.array([harmonize(g, fr, m, mode=base) for g, fr, m in zip(gen, frames, masks)])
+        if "feather" in blend:
+            # display only: cross-fade from the model's pixels to the world's over the 8 px band the
+            # model repainted OUTSIDE the hole (the world itself only ever receives hole pixels)
+            gen = np.array([feather(g, fr, m) for g, fr, m in zip(gen, frames, masks)])
+        else:
+            gen = np.where(masks[..., None], gen, frames)  # keep everything the world already knows
         if lift == "last":
             # KEYFRAME LIFTING (v3): inside the chunk the viewer sees the model's own coherent video;
             # only the chunk's LAST frame is written into the world, in one piece with one depth fit.
@@ -377,14 +383,49 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
         if m.sum() > 50:
             ps.append(10 * math.log10(1 / max(float(np.mean((img[m] - final[f][m]) ** 2)), 1e-10)))
     back, back_holes = walk_back(world, CAM)
-    out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
+    out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), **seam_parts(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
            "imagined_pct": 100 * float(imagined[1:].mean()), "trusted_triangulation_pct": 100 * float(np.mean(conf_frac)) if conf_frac else None}
     log(f"  {method:6s}/{lift:5s}: world reproduces shown frames {out['world_psnr']:.2f} dB · seam ratio {out['seam_ratio']:.2f} · walk-back holes {out['walk_back_holes_pct']:.2f}% · lift depth err {out['median_lift_err']:.3f}"
         + (f" · triangulation trusted on {out['trusted_triangulation_pct']:.0f}% of new px" if conf_frac else ""))
     return out, final, back
 
 
-def harmonize(gen, known, hole, band=8, sigma=12.0, mode="field"):
+def feather(gen, known, hole, band=8):
+    from scipy.ndimage import distance_transform_edt
+    d = distance_transform_edt(~hole)  # 0 inside the hole, px distance outside
+    a = np.clip(1.0 - (d - 0.5) / band, 0.0, 1.0)
+    a[hole] = 1.0
+    return (a[..., None] * gen + (1 - a[..., None]) * known).astype(np.float32)
+
+
+def seam_parts(final, imagined, r=5, sigma=3.0):
+    """Split a visible seam into its causes, on rings r px either side of the join:
+    colour_step = local-mean colour jump across the join / typical known-side gradient (colour/brightness);
+    sharpness   = gradient energy just inside the imagined side / just outside (1.0 = equally sharp,
+                  < 1 = the imagined side is blurrier)."""
+    from scipy.ndimage import gaussian_filter
+    cs, sh = [], []
+    for img, m in zip(final, imagined):
+        if m.mean() < 0.002 or m.mean() > 0.98:
+            continue
+        g = img.mean(-1)
+        rin = m & ww.dilate(~m, r)
+        rout = ~m & ww.dilate(m, r)
+        if rin.sum() < 50 or rout.sum() < 50:
+            continue
+        def lmean(w):
+            return gaussian_filter(g * w, sigma) / np.maximum(gaussian_filter(w.astype(np.float32), sigma), 1e-4)
+        mi, mo = lmean(rin.astype(np.float32)), lmean(rout.astype(np.float32))
+        edge = ww.dilate(m, 1) & ww.dilate(~m, 1)
+        gy, gx = np.gradient(g)
+        gm = np.hypot(gx, gy)
+        typ = gm[rout].mean()
+        cs.append(float(np.abs(mi - mo)[edge].mean() / max(typ, 1e-4)))
+        sh.append(float(gm[rin & ~edge].mean() / max(gm[rout & ~edge].mean(), 1e-4)))
+    return {"seam_colour_step": float(np.mean(cs)) if cs else float("nan"), "seam_sharpness_in_vs_out": float(np.mean(sh)) if sh else float("nan")}
+
+
+def harmonize(gen, known, hole, band=8, sigma=3.0, mode="field"):
     """Seam fix (v4). The video model re-paints the whole frame, and its colours drift a little from
     the world's render (VAE / lighting drift). Hard-pasting its hole pixels next to rendered pixels
     then leaves a visible step at the join (v3 seam ratio 9.2). Fix, measured on a band just OUTSIDE
@@ -394,6 +435,8 @@ def harmonize(gen, known, hole, band=8, sigma=12.0, mode="field"):
                 like seamless cloning) that is exact at the join and fades away from it."""
     if hole.mean() < 1e-4 or hole.all():
         return gen
+    import os
+    sigma = float(os.environ.get("HARM_SIGMA", sigma)); band = int(os.environ.get("HARM_BAND", band))
     from scipy.ndimage import gaussian_filter, distance_transform_edt
     B = ww.dilate(hole, band) & ~hole
     if B.sum() < 50:
