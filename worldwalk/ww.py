@@ -102,6 +102,7 @@ def splat(P, C, R, CAM, f, W, H, Q):
     img = np.zeros((H, W, 3), np.float32)
     Z = np.full((H, W), np.inf, np.float32)
     Qm = np.zeros((H, W), np.float32)
+    Im = np.full((H, W), -1, np.int64)
     asp = W / H
     th = CAM[f, 12]
     fy = H / (2 * th)
@@ -122,9 +123,10 @@ def splat(P, C, R, CAM, f, W, H, Q):
                 if z < Z[yy, xx]:
                     Z[yy, xx] = z
                     Qm[yy, xx] = Q[i]
+                    Im[yy, xx] = i
                     img[yy, xx, 0], img[yy, xx, 1], img[yy, xx, 2] = C[i, 0], C[i, 1], C[i, 2]
     cov = np.isfinite(Z)
-    return img, Z, cov, Qm
+    return img, Z, cov, Qm, Im
 
 
 def unproject(CAM, f, W, H, zmap, mask):
@@ -195,6 +197,9 @@ def fit_affine(dm, disp_r, sel):
     return s, t
 
 
+LAST_FIELDS = [None]
+
+
 def scalefield_fit(dm, disp_r, sel, w, prev, G=int(os.environ.get("SF_G", 12)), lam=float(os.environ.get("SF_LAM", 3.0)), mu=0.05, nmax=30000):
     """OURS: the mono depth's error is mostly a slowly varying scale/shift, so solve for smooth
     FIELDS s(x,y), t(x,y) on a coarse G x G grid: confidence-weighted data term on every covered
@@ -254,6 +259,7 @@ def scalefield_fit(dm, disp_r, sel, w, prev, G=int(os.environ.get("SF_G", 12)), 
     fx, fy = gx - x0, gy - y0
     def up(F):
         return F[y0, x0] * (1 - fx) * (1 - fy) + F[y0, x0 + 1] * fx * (1 - fy) + F[y0 + 1, x0] * (1 - fx) * fy + F[y0 + 1, x0 + 1] * fx * fy
+    LAST_FIELDS[0] = (S, Tt)
     return up(S) * dm + up(Tt), (s0, t0)
 
 
@@ -349,6 +355,7 @@ def main():
     ap.add_argument("--lift", default="scalefield", choices=["global", "band", "poisson", "band_bg", "poisson_bg", "scalefield", "gt", "oracle_affine", "oracle_scalefield"])
     ap.add_argument("--tau", type=float, default=0.004, help="generate only when novel pixel fraction > tau")
     ap.add_argument("--out", default="runs/v0")
+    ap.add_argument("--elastic", type=int, default=0, help="re-solve the fields of the last K imagined regions jointly (0 = off)")
     ap.add_argument("--edge-drop", type=float, default=0.0, help="drop lifted pixels with |grad log z| above this (0 = off)")
     ap.add_argument("--lifted-conf", type=float, default=0.25, help="anchor weight of imagined+lifted points")
     ap.add_argument("--init", default="mono", choices=["mono", "gt"], help="gt = start the world from exact depth (isolates lifting)")
@@ -374,13 +381,23 @@ def main():
     P, R, ys, xs = unproject(CAM, 0, W, H, zinit, np.ones((H, W), bool))
     C = rgb0[ys, xs]
     Q = np.ones(len(P))  # confidence: first-view points 1.0, imagined+lifted points lower
+    # per-point lift metadata for the elastic world: event id (-1 = fixed first view), pixel, mono value
+    pev = np.full(len(P), -1, np.int64)
+    ppx = np.zeros(len(P))
+    ppy = np.zeros(len(P))
+    pm = np.zeros(len(P))
+    EW = None
+    if args.elastic > 0:
+        from elastic import ElasticWorld
+        EW = ElasticWorld(CAM, W, H, int(os.environ.get("SF_G", 12)), lam=float(os.environ.get("SF_LAM", 3.0)))
+    rng = np.random.default_rng(1)
     events, rows = 0, []
     lift_err_all, seam_err_all, diag = [], [], []
     frames_out = []
     for f in range(1, F):
         rgb_gt, z_gt = GT[f]
         t1 = time.time()
-        img, zr, cov, Qm = splat(P, C, R.astype(np.float64), CAM, f, W, H, Q)
+        img, zr, cov, Qm, Im = splat(P, C, R.astype(np.float64), CAM, f, W, H, Q)
         render_sec = time.time() - t1
         hole = ~cov
         nov = hole.mean()
@@ -437,11 +454,20 @@ def main():
                 gy_, gx_ = np.gradient(lz)
                 lift_mask = hole & (np.hypot(gx_, gy_) < args.edge_drop)
             Pn, Rn, yn, xn = unproject(CAM, f, W, H, zl, lift_mask)
+            eid = -1
+            if EW is not None and args.lift == "scalefield" and LAST_FIELDS[0] is not None:
+                eid = EW.add_event(f, LAST_FIELDS[0][0], LAST_FIELDS[0][1], dm, Im, rng)
+            pev = np.concatenate([pev, np.full(len(Pn), eid)])
+            ppx = np.concatenate([ppx, xn.astype(np.float64)])
+            ppy = np.concatenate([ppy, yn.astype(np.float64)])
+            pm = np.concatenate([pm, dm[yn, xn].astype(np.float64)])
             P = np.vstack([P, Pn])
             R = np.concatenate([R, Rn])
             Q = np.concatenate([Q, np.full(len(Pn), args.lifted_conf)])
+            if eid >= 0:
+                P, moved = EW.solve(pev, ppx, ppy, pm, P, window=args.elastic)
             C = np.vstack([C, inv_tonemap(gen_rgb[yn, xn]).astype(np.float32)])
-            img, zr, cov, Qm = splat(P, C, R.astype(np.float64), CAM, f, W, H, Q)
+            img, zr, cov, Qm, Im = splat(P, C, R.astype(np.float64), CAM, f, W, H, Q)
         out = tonemap(img)
         mse = float(np.mean((out - tonemap(rgb_gt)) ** 2))
         rows.append({"f": f, "novel_px": float(nov), "novel_tok": float(tok), "generated": g_sec > 0, "render_s": render_sec, "gen_s": g_sec, "psnr": 10 * math.log10(1 / max(mse, 1e-10)), "points": int(len(P))})
