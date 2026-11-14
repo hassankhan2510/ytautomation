@@ -296,7 +296,7 @@ def plane_sweep_conf(frames, CAM, t, nbrs, z_prior, dev="cpu", **kw):
     return np.where(conf, z_mv, z_prior), conf
 
 
-def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print):
+def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None):
     """World-locked generation: chunks of `chunk` frames (overlapping by one). Each chunk is rendered
     from the CURRENT world — so content imagined in earlier chunks is already on screen and moves
     correctly with the camera — then the generator fills only what is still unknown, and every frame
@@ -318,7 +318,29 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
             frames.append(img); masks.append(~cov)
         frames, masks = np.array(frames), np.array(masks)
         gen = gen_fn(frames, masks, idx).astype(np.float32)
+        if raw_out is not None:
+            raw_out.append(gen.copy())
         gen = np.where(masks[..., None], gen, frames)  # keep everything the world already knows
+        if lift == "last":
+            # KEYFRAME LIFTING (v3): inside the chunk the viewer sees the model's own coherent video;
+            # only the chunk's LAST frame is written into the world, in one piece with one depth fit.
+            # (v2 lifted every frame's ~10 px sliver with its own depth -> slivers drift apart -> stripes.)
+            for j, f in enumerate(idx):
+                if f == 0:
+                    continue
+                final[f] = gen[j]
+                imagined[f] |= masks[j]
+            f = idx[-1]
+            img, zr, cov = world.render(f)
+            hole = ~cov
+            if hole.mean() > tau:
+                z1, st = single_view_depth(gen[-1], zr, cov, depth_model, st)
+                ok = hole & np.isfinite(gt_z[f])
+                if ok.sum():
+                    lift_err.append(float(np.median(np.abs(z1[ok] - gt_z[f][ok]) / gt_z[f][ok])))
+                world.add(f, z1, hole, gen[-1])
+            s = idx[-1]
+            continue
         for j, f in enumerate(idx):
             if f == 0:
                 continue
@@ -353,9 +375,9 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
         if m.sum() > 50:
             ps.append(10 * math.log10(1 / max(float(np.mean((img[m] - final[f][m]) ** 2)), 1e-10)))
     back, back_holes = walk_back(world, CAM)
-    out = {"method": method, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
+    out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
            "imagined_pct": 100 * float(imagined[1:].mean()), "trusted_triangulation_pct": 100 * float(np.mean(conf_frac)) if conf_frac else None}
-    log(f"  {method:6s}: world reproduces shown frames {out['world_psnr']:.2f} dB · seam ratio {out['seam_ratio']:.2f} · walk-back holes {out['walk_back_holes_pct']:.2f}% · lift depth err {out['median_lift_err']:.3f}"
+    log(f"  {method:6s}/{lift:5s}: world reproduces shown frames {out['world_psnr']:.2f} dB · seam ratio {out['seam_ratio']:.2f} · walk-back holes {out['walk_back_holes_pct']:.2f}% · lift depth err {out['median_lift_err']:.3f}"
         + (f" · triangulation trusted on {out['trusted_triangulation_pct']:.0f}% of new px" if conf_frac else ""))
     return out, final, back
 
