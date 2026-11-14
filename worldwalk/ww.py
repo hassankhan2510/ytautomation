@@ -34,8 +34,23 @@ import tracer as T  # noqa: E402
 
 
 # ───────────────────────── ground-truth world (deterministic shading) ─────────────────────────
+@nb.njit(inline="always")
+def _hash3(ix, iy, iz):
+    h = math.sin(ix * 12.9898 + iy * 78.233 + iz * 37.719) * 43758.5453
+    return h - math.floor(h)
+
+
+@nb.njit(inline="always")
+def surface_tex(px, py, pz):
+    """Procedural albedo texture (two scales of blocky value noise): real surfaces have detail, and
+    multi-view matching needs it. Deterministic in world space, so every view sees the same texture."""
+    a = _hash3(math.floor(px * 5), math.floor(py * 5), math.floor(pz * 5))
+    b = _hash3(math.floor(px * 23), math.floor(py * 23), math.floor(pz * 23))
+    return 0.62 + 0.26 * a + 0.24 * b
+
+
 @nb.njit(parallel=True, cache=True)
-def gt_frame(CAM, f, W, H, SPH, BOX, MAT, LGT):
+def gt_frame(CAM, f, W, H, SPH, BOX, MAT, LGT, tex=0.0):
     """Exact geometry + low-noise shading: albedo * (ambient + 32-sample soft direct), one mirror
     bounce for metal/glass. Returns rgb (linear), z-depth along the camera axis."""
     img = np.zeros((H, W, 3), np.float32)
@@ -63,9 +78,10 @@ def gt_frame(CAM, f, W, H, SPH, BOX, MAT, LGT):
                         eg += g_
                         eb += c
                     amb = 0.18
-                    img[y, x, 0] = tr * MAT[m, 0] * (amb + er / 32 * 0.04)
-                    img[y, x, 1] = tg * MAT[m, 1] * (amb + eg / 32 * 0.04)
-                    img[y, x, 2] = tb * MAT[m, 2] * (amb + eb / 32 * 0.04)
+                    k_ = 1.0 + tex * (surface_tex(px, py, pz) - 1.0)
+                    img[y, x, 0] = tr * MAT[m, 0] * k_ * (amb + er / 32 * 0.04)
+                    img[y, x, 1] = tg * MAT[m, 1] * k_ * (amb + eg / 32 * 0.04)
+                    img[y, x, 2] = tb * MAT[m, 2] * k_ * (amb + eb / 32 * 0.04)
                     break
                 # mirror bounce (metal / glass treated as reflective for the GT look)
                 dn = dx * nx + dy * ny + dz * nz
@@ -159,9 +175,9 @@ class Lama:
 
 
 class MonoDepth:
-    def __init__(self):
+    def __init__(self, device="cpu"):
         from transformers import pipeline
-        self.p = pipeline("depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf", device="cpu")
+        self.p = pipeline("depth-estimation", model="depth-anything/Depth-Anything-V2-Small-hf", device=device)
 
     def __call__(self, rgb01):
         H, W = rgb01.shape[:2]
