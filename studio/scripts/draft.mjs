@@ -40,7 +40,7 @@ const language = (process.env.LANGUAGE || "english").toLowerCase() === "urdu" ? 
 const clean = (s) => String(s ?? "").replace(/[*_#`]/g, "").replace(/\s+/g, " ").trim();
 
 /* ───────────── Script splitting (verbatim mode) ───────────── */
-const CONNECT = /^(and|but|or|so|because|which|who|that|when|while|where|with|without|until|after|before|then|by|to|into|from|on|in)$/i;
+const CONNECT = /^(and|but|or|so|because|which|who|that|when|while|where|with|without|until|after|before|then|by|to|into|from|on|in|aur|lekin|magar|kyunke|kyunki|jab|phir|اور|لیکن|مگر|کیونکہ|جب|پھر|تو)$/i;
 function splitLong(words) {
   if (words.length <= 18) return [words.join(" ")];
   const parts = Math.ceil(words.length / 14);
@@ -48,7 +48,7 @@ function splitLong(words) {
   let best = target, bestScore = Infinity;
   for (let k = 4; k <= words.length - 4; k++) {
     let score = Math.abs(k - target);
-    if (/[,;:—–]$/.test(words[k - 1])) score -= 3.5;
+    if (/[,;:—–،]$/.test(words[k - 1])) score -= 3.5;
     else if (CONNECT.test(words[k])) score -= 1.5;
     if (score < bestScore) { bestScore = score; best = k; }
   }
@@ -56,7 +56,8 @@ function splitLong(words) {
 }
 function segment(script) {
   // closing quotes (incl. curly ” ’ ») stay with their sentence — a line once started with a stray ”
-  const sentences = script.replace(/\s+/g, " ").match(/[^.!?]+[.!?]+["'”’»)\]]*|[^.!?]+$/g) || [script];
+  // Urdu full stop "۔" and question mark "؟" end sentences too
+  const sentences = script.replace(/\s+/g, " ").match(/[^.!?۔؟]+[.!?۔؟]+["'”’»)\]]*|[^.!?۔؟]+$/g) || [script];
   // a piece starting lowercase continues the previous sentence (e.g. after a quoted "...early?” to Pakistan's...")
   const joined = [];
   for (const x of sentences.map((x) => x.trim()).filter(Boolean)) {
@@ -244,7 +245,31 @@ const ROMAN_URDU_WORDS = /\b(hai|hain|ka|ki|ke|aur|ye|yeh|woh|nahi|nahin|kya|mei
 const romanScore = (t) => (String(t).match(ROMAN_URDU_WORDS) || []).length;
 const urduReport = [];
 if (language === "urdu") {
-  const englishLines = lines.map((l, i) => ({ i, t: l.text })).filter((x) => romanScore(x.t) < 1);
+  // Lines written in URDU SCRIPT (you typed Urdu, English words mixed in): the voice reads YOUR exact
+  // Urdu; the screen gets a Roman Urdu transliteration of the same words (no translation, no rewording).
+  const fromScript = new Set();
+  const scriptLines = lines.map((l, i) => ({ i, t: l.text })).filter((x) => urduLetterCount(x.t) >= 3);
+  if (scriptLines.length) {
+    for (const x of scriptLines) { lines[x.i].speak = clean(x.t); fromScript.add(x.i); }
+    const romanize = async (todo) => {
+      const r = await groqJSON(
+        `Write each numbered line in ROMAN Urdu (Latin letters), the way Pakistanis text casually ("ye", "hai", "mein", "unhone"). TRANSLITERATE ONLY: same words, same order, same meaning; copy every English word, name and number exactly; never translate, add or drop anything.
+Return ONLY JSON: {"lines":[{"i":n,"text":"..."}]}`,
+        todo.map((x) => `${x.i + 1}. ${x.t}`).join("\n"),
+        { maxTokens: 2500, temperature: 0.1 },
+      ).catch(() => null);
+      for (const o of r?.lines || []) {
+        const k = Number(o?.i) - 1;
+        if (fromScript.has(k) && clean(o?.text) && urduLetterCount(o.text) === 0) lines[k].text = clean(o.text);
+      }
+    };
+    await romanize(scriptLines);
+    const left = scriptLines.filter((x) => urduLetterCount(lines[x.i].text) > 0);
+    if (left.length) await romanize(left);
+    const stillScript = scriptLines.filter((x) => urduLetterCount(lines[x.i].text) > 0).length;
+    urduReport.push(`${scriptLines.length} line(s) given in Urdu script: voice reads them as written, screen shows Roman Urdu${stillScript ? ` (${stillScript} could not be romanised)` : ""}`);
+  }
+  const englishLines = lines.map((l, i) => ({ i, t: l.text })).filter((x) => !fromScript.has(x.i) && romanScore(x.t) < 1);
   if (englishLines.length) {
     console.log(`  ! ${englishLines.length}/${lines.length} lines are not Roman Urdu — translating`);
     const tr = await groqJSON(
@@ -285,7 +310,8 @@ Return ONLY JSON: {"lines":[{"i":n,"urdu":"..."}]}`,
     }
   };
   console.log("③ URDU SCRIPT (voice)…");
-  await transliterate(lines.map((_, k) => k), 0.2);
+  const notScript = lines.map((_, k) => k).filter((k) => !fromScript.has(k));
+  if (notScript.length) await transliterate(notScript, 0.2);
   let missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
   if (missing.length) await transliterate(missing, 0.1);
   missing = lines.map((l, k) => (l.speak ? -1 : k)).filter((k) => k >= 0);
