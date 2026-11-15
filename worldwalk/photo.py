@@ -80,7 +80,7 @@ if __name__ == "__main__":
     CAM, gt_rgb, gt_z = photo_inputs(path, F, S, S, depth)
     lama = ww.Lama()
     res = {}
-    for blend in ("hard", "field_off"):
+    for blend in os.environ.get("PHOTO_BLENDS", "hard,field_off").split(","):
         t0 = time.time()
         out, shown, back = mv.chunked_world(lama_gen(lama), CAM, S, S, gt_rgb, gt_z, "single", depth, chunk=9, lift="last", blend=blend, log=lambda *a: None)
         out["seconds"] = time.time() - t0
@@ -88,4 +88,6 @@ if __name__ == "__main__":
         print("RES", blend, json.dumps({k: (round(v, 3) if isinstance(v, float) else v) for k, v in out.items() if k != "token_frac_per_chunk"}))
         np.save(os.path.join(out_dir, f"shown_{blend}.npy"), (np.clip(shown, 0, 1) * 255).astype(np.uint8))
         np.save(os.path.join(out_dir, f"back_{blend}.npy"), (np.clip(back, 0, 1) * 255).astype(np.uint8))
+        n = mv.export_world(mv.chunked_world.world, CAM, os.path.join(out_dir, f"world_{blend}"))
+        print(f"exported {n} points")
     json.dump(res, open(os.path.join(out_dir, "photo_cpu.json"), "w"), indent=1)

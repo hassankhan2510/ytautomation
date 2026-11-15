@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>World Viewer</title>
+<style>
+  :root { --bg: #0b0b0c; --ink: #f2f0ea; --muted: #9a978f; --accent: #d8263c; --panel: rgba(18,18,20,.82); }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; overflow: hidden; touch-action: none; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #hud { position: absolute; left: 12px; right: 12px; top: 12px; display: flex; justify-content: space-between; gap: 8px; pointer-events: none; }
+  #hud span { background: var(--panel); padding: 6px 10px; border-radius: 8px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  #bar { position: absolute; left: 12px; right: 12px; bottom: 16px; display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  button { background: var(--panel); color: var(--ink); border: 1px solid #333; border-radius: 10px; padding: 12px 16px; font: inherit; min-width: 64px; }
+  button.on { border-color: var(--accent); color: #fff; }
+  #msg { position: absolute; left: 16px; right: 16px; top: 45%; color: var(--muted); text-align: center; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"><span id="info">loading…</span><span id="fps"></span></div>
+<div id="bar">
+  <button id="play" class="on">Play walk</button>
+  <button id="fwd">Forward</button>
+  <button id="back">Back</button>
+  <button id="reset">Reset</button>
+</div>
+<div id="msg"></div>
+<script>
+// Persistent-world viewer: draws the exported point world (worldwalk/mv.py export_world) with WebGL2.
+// No server GPU: everything here runs on the phone. ?w=<name> picks <name>.bin/.json (default: world).
+const name = new URLSearchParams(location.search).get('w') || 'world';
+const cv = document.getElementById('c'), gl = cv.getContext('webgl2', { antialias: false });
+const msg = (t) => (document.getElementById('msg').textContent = t);
+// no WebGL2 (old phone, locked-down browser): draw the same world in software on the CPU
+const ctx = gl ? null : cv.getContext('2d');
+let F32 = null, U8 = null, SW = null;
+
+const VS = `#version 300 es
+in vec3 p; in float r; in vec4 c;
+uniform vec3 pos, fwd, right, up; uniform float th, asp, fy, near, far;
+out vec4 vc;
+void main() {
+  vec3 d = p - pos; float z = dot(d, fwd);
+  if (z < near) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; return; }
+  float x = dot(d, right) / (th * asp), y = dot(d, up) / th;
+  float zn = clamp((z - near) / (far - near), 0.0, 1.0) * 2.0 - 1.0;
+  gl_Position = vec4(x, y, zn * z, z);
+  gl_PointSize = clamp(2.0 * r * fy / z, 1.0, 96.0);
+  vc = c;
+}`;
+const FS = `#version 300 es
+precision mediump float; in vec4 vc; out vec4 o;
+void main() { vec2 q = gl_PointCoord * 2.0 - 1.0; if (dot(q, q) > 1.0) discard; o = vec4(vc.rgb, 1.0); }`;
+let prog = null; const U = {};
+function sh(t, s) { const o = gl.createShader(t); gl.shaderSource(o, s); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(o); return o; }
+if (gl) {
+  prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); gl.useProgram(prog);
+  for (const k of ['pos', 'fwd', 'right', 'up', 'th', 'asp', 'fy', 'near', 'far']) U[k] = gl.getUniformLocation(prog, k);
+}
+
+let N = 0, CAM = [], TH = Math.tan(Math.PI / 6);
+const cam = { pos: [0, 0, 0], yaw: 0, pitch: 0 };
+let playing = true, t0 = performance.now(), walkT = 0, move = 0;
+
+function camFromRow(row) {  // row = [pos3, fwd3, right3, up3, tan(fov/2)]
+  const f = row.slice(3, 6);
+  cam.pos = row.slice(0, 3); cam.yaw = Math.atan2(f[0], -f[2]); cam.pitch = Math.asin(Math.max(-1, Math.min(1, f[1]))); TH = row[12];
+}
+function basis() {
+  const cy = Math.cos(cam.yaw), sy = Math.sin(cam.yaw), cp = Math.cos(cam.pitch), sp = Math.sin(cam.pitch);
+  const fwd = [sy * cp, sp, -cy * cp];
+  let right = [-fwd[2], 0, fwd[0]]; const rl = Math.hypot(...right) || 1; right = right.map((v) => v / rl);
+  const up = [right[1] * fwd[2] - right[2] * fwd[1], right[2] * fwd[0] - right[0] * fwd[2], right[0] * fwd[1] - right[1] * fwd[0]];
+  return { fwd, right, up };
+}
+
+async function load() {
+  const meta = await (await fetch(`${name}.json`)).json();
+  const buf = await (await fetch(`${name}.bin`)).arrayBuffer();
+  N = meta.points; CAM = meta.cam; camFromRow(CAM[0]);
+  F32 = new Float32Array(buf); U8 = new Uint8Array(buf);
+  document.getElementById('info').textContent = `${(N / 1000).toFixed(0)}k points · ${(buf.byteLength / 1e6).toFixed(1)} MB · ${gl ? 'GPU' : 'software'}`;
+  if (!gl) { requestAnimationFrame(frame); return; }
+  const vbo = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vbo); gl.bufferData(gl.ARRAY_BUFFER, buf, gl.STATIC_DRAW);
+  const S = meta.stride || 20, L = (k) => gl.getAttribLocation(prog, k);
+  gl.enableVertexAttribArray(L('p')); gl.vertexAttribPointer(L('p'), 3, gl.FLOAT, false, S, 0);
+  gl.enableVertexAttribArray(L('r')); gl.vertexAttribPointer(L('r'), 1, gl.FLOAT, false, S, 12);
+  gl.enableVertexAttribArray(L('c')); gl.vertexAttribPointer(L('c'), 4, gl.UNSIGNED_BYTE, true, S, 16);
+  requestAnimationFrame(frame);
+}
+
+let last = performance.now(), fpsAcc = 0, fpsN = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  fpsAcc += dt; fpsN++; if (fpsAcc > 0.5) { document.getElementById('fps').textContent = `${Math.round(fpsN / fpsAcc)} fps`; fpsAcc = 0; fpsN = 0; }
+  if (playing && CAM.length > 1) {  // ping-pong along the walk: out and back (the revisit)
+    walkT += dt * 12; const n = CAM.length - 1, k = walkT % (2 * n), u = k <= n ? k : 2 * n - k;
+    const i = Math.min(n - 1, Math.floor(u)), a = u - i, A = CAM[i], B = CAM[i + 1];
+    camFromRow(A.map((v, j) => v + (B[j] - v) * a));
+  }
+  const { fwd, right, up } = basis();
+  if (move) cam.pos = cam.pos.map((v, j) => v + fwd[j] * move * dt * 0.8);
+  if (!gl) { swDraw(fwd, right, up); requestAnimationFrame(frame); return; }
+  const dpr = Math.min(2, window.devicePixelRatio || 1), w = Math.round(cv.clientWidth * dpr), h = Math.round(cv.clientHeight * dpr);
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+  gl.viewport(0, 0, w, h); gl.clearColor(0.043, 0.043, 0.047, 1); gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT); gl.enable(gl.DEPTH_TEST);
+  gl.uniform3fv(U.pos, cam.pos); gl.uniform3fv(U.fwd, fwd); gl.uniform3fv(U.right, right); gl.uniform3fv(U.up, up);
+  gl.uniform1f(U.th, TH); gl.uniform1f(U.asp, w / h); gl.uniform1f(U.fy, h / (2 * TH)); gl.uniform1f(U.near, 0.05); gl.uniform1f(U.far, 60);
+  gl.drawArrays(gl.POINTS, 0, N);
+  requestAnimationFrame(frame);
+}
+
+function swDraw(fwd, right, up) {
+  const sc = 0.5, w = Math.max(1, Math.round(cv.clientWidth * sc)), h = Math.max(1, Math.round(cv.clientHeight * sc));
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; SW = null; }
+  if (!SW) SW = { img: ctx.createImageData(w, h), z: new Float32Array(w * h) };
+  const px = SW.img.data, zb = SW.z; zb.fill(1e9);
+  for (let i = 0; i < px.length; i += 4) { px[i] = 11; px[i + 1] = 11; px[i + 2] = 12; px[i + 3] = 255; }
+  const [cx, cy, cz] = cam.pos, asp = w / h, fy = h / (2 * TH);
+  for (let i = 0; i < N; i++) {
+    const b = i * 5, dx = F32[b] - cx, dy = F32[b + 1] - cy, dz = F32[b + 2] - cz;
+    const z = dx * fwd[0] + dy * fwd[1] + dz * fwd[2]; if (z < 0.05) continue;
+    const X = ((dx * right[0] + dy * right[1] + dz * right[2]) / (z * TH * asp) + 1) * 0.5 * w;
+    const Y = (1 - (dx * up[0] + dy * up[1] + dz * up[2]) / (z * TH)) * 0.5 * h;
+    const r = Math.min(24, Math.max(0.5, F32[b + 3] * fy / z));
+    const x0 = Math.max(0, (X - r) | 0), x1 = Math.min(w - 1, (X + r) | 0), y0 = Math.max(0, (Y - r) | 0), y1 = Math.min(h - 1, (Y + r) | 0);
+    const c = i * 20 + 16;
+    for (let yy = y0; yy <= y1; yy++) for (let xx = x0; xx <= x1; xx++) {
+      const k = yy * w + xx; if (z < zb[k]) { zb[k] = z; const q = k * 4; px[q] = U8[c]; px[q + 1] = U8[c + 1]; px[q + 2] = U8[c + 2]; }
+    }
+  }
+  ctx.putImageData(SW.img, 0, 0);
+}
+
+// touch / mouse: drag = look around (stops the walk); buttons move
+let drag = null;
+cv.addEventListener('pointerdown', (e) => { drag = [e.clientX, e.clientY]; setPlay(false); });
+addEventListener('pointerup', () => (drag = null));
+addEventListener('pointermove', (e) => {
+  if (!drag) return; const s = (2 * Math.atan(TH)) / cv.clientHeight;
+  cam.yaw += (e.clientX - drag[0]) * s; cam.pitch = Math.max(-1.4, Math.min(1.4, cam.pitch - (e.clientY - drag[1]) * s)); drag = [e.clientX, e.clientY];
+});
+function setPlay(v) { playing = v; document.getElementById('play').classList.toggle('on', v); }
+document.getElementById('play').onclick = () => setPlay(!playing);
+document.getElementById('reset').onclick = () => { walkT = 0; camFromRow(CAM[0]); setPlay(false); };
+for (const [id, v] of [['fwd', 1], ['back', -1]]) {
+  const b = document.getElementById(id);
+  b.onpointerdown = (e) => { e.preventDefault(); setPlay(false); move = v; };
+  b.onpointerup = b.onpointerleave = () => (move = 0);
+}
+addEventListener('keydown', (e) => { if (e.key === 'w' || e.key === 'ArrowUp') move = 1; if (e.key === 's' || e.key === 'ArrowDown') move = -1; });
+addEventListener('keyup', () => (move = 0));
+load().catch((e) => msg(`Could not load ${name}.bin / ${name}.json — ${e}`));
+</script>
+</body>
+</html>

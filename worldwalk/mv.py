@@ -393,6 +393,7 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
         m = imagined[f] & cov
         if m.sum() > 50:
             ps.append(10 * math.log10(1 / max(float(np.mean((img[m] - final[f][m]) ** 2)), 1e-10)))
+    chunked_world.world = world  # the built persistent state (for export / the phone viewer)
     back, back_holes = walk_back(world, CAM)
     out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), **seam_parts(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
            "imagined_pct": 100 * float(imagined[1:].mean()),
@@ -530,3 +531,18 @@ def walk_back(world, CAM):
         img, _, cov = world.render(f)
         frames.append(img); holes.append(float((~cov).mean()))
     return np.array(frames), float(np.mean(holes))
+
+
+def export_world(world, CAM, path, frames=None):
+    """Write the persistent world for the phone viewer: <path>.bin = N x (xyz float32, radius float32,
+    rgb uint8 + pad) and <path>.json = point count + camera path (+ optional shown-frame count)."""
+    import json as _json
+    C = np.clip(ww.tonemap(world.C), 0, 1)
+    n = len(world.P)
+    rec = np.zeros(n, dtype=[("p", "<f4", 3), ("r", "<f4"), ("c", "u1", 4)])
+    rec["p"] = world.P.astype(np.float32); rec["r"] = world.R.astype(np.float32)
+    rec["c"][:, :3] = (C * 255).astype(np.uint8); rec["c"][:, 3] = 255
+    rec.tofile(path + ".bin")
+    _json.dump({"points": int(n), "stride": 20, "cam": np.asarray(CAM, float).round(5).tolist(), "W": world.W, "H": world.H},
+               open(path + ".json", "w"))
+    return n
