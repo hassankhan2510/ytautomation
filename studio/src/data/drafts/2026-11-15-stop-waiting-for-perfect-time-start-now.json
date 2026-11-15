@@ -1,0 +1,234 @@
+{
+  "id": "2026-11-15-stop-waiting-for-perfect-time-start-now",
+  "title": "Stop waiting for perfect time, start now",
+  "subject": "Cohort Zero founder mentorship",
+  "theme": "crimson",
+  "seed": 1061,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "Stop waiting for perfect time, start now",
+    "Harvard panels and Zaydan Khan await you",
+    "Zero to impact with real mentorship"
+  ],
+  "caption": "Execution abhi shuru karo, perfect time ka wait mat karo. 👇\nComment 'READY' to join the next cohort!\n\n#CohortZero #FounderLife #StartupGrowth #ZeroToOne #GenZBusiness\n🎵 Music: \"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-undaunted.mp3",
+  "musicCredit": "\"Undaunted\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8.5,
+    "unique": 13,
+    "total": 13,
+    "families": 5,
+    "plain": 2,
+    "doc": 2,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Idea to har kisi ke paas hota hai, lekin execution ka koi roadmap nahi milta.",
+      "primitive": "errorPopups",
+      "energy": 3,
+      "speak": "Idea تو ہر کسی کے پاس ہوتا ہے، لیکن execution کا کوئی roadmap نہیں ملتا۔",
+      "emphasis": [
+        "roadmap"
+      ],
+      "props": {
+        "errors": [
+          "Idea.exe has stopped",
+          "Roadmap not found",
+          "Execution failed",
+          "Motivation.exe crashed"
+        ]
+      },
+      "why": "Visualizes execution failure chaos",
+      "bg": "messy whiteboard marker scribbles"
+    },
+    {
+      "text": "Perfect time ka wait karna band karein!",
+      "primitive": "prism",
+      "energy": 3,
+      "speak": "Perfect time کا wait کرنا بند کریں!",
+      "emphasis": [
+        "wait"
+      ],
+      "props": {
+        "faces": [
+          "Band",
+          "Karein",
+          "Abhi"
+        ]
+      },
+      "why": "Punchy words for urgent lesson",
+      "bg": "shattering glass clock closeup"
+    },
+    {
+      "text": "Cohort Zero mein khush aamdeed—ek aisa global ecosystem jahan aap ke ambition ko real-world mentorship milti hai.",
+      "primitive": "factCard",
+      "energy": 3,
+      "speak": "Cohort Zero میں خوش آمدید—ایک ایسا global ecosystem جہاں آپ کے ambition کو real-world mentorship ملتی ہے۔",
+      "emphasis": [
+        "global"
+      ],
+      "props": {
+        "fact": "Cohort Zero mein khush aamdeed—ek aisa global ecosystem jahan aap ke ambition ko real-world mentorship milti hai."
+      },
+      "why": "Shows global ecosystem reach"
+    },
+    {
+      "text": "Hum emerging founders ko brahe raast industry leaders aur global opportunities se",
+      "primitive": "roadmap",
+      "energy": 2,
+      "speak": "ہم emerging founders کو براہِ راست industry leaders اور global opportunities سے",
+      "emphasis": [
+        "founders"
+      ],
+      "props": {
+        "steps": [
+          "Emerging Founders",
+          "Industry Leaders",
+          "Global Opportunities"
+        ],
+        "done": 0
+      },
+      "why": "Visualizes founder journey path",
+      "bg": "young entrepreneur walking city"
+    },
+    {
+      "text": "connect kar rahe hain—jahan Zaydan Khan jaise speakers ke sessions aur Harvard",
+      "primitive": "museumFrame",
+      "energy": 3,
+      "speak": "connect کر رہے ہیں—جہاں Zaydan Khan جیسے speakers کے sessions اور Harvard",
+      "emphasis": [
+        "Zaydan Khan"
+      ],
+      "props": {
+        "name": "Zaydan Khan",
+        "prompt": "Portrait of a confident young male speaker in a suit, studio lighting, professional background"
+      },
+      "why": "Highlights prominent speaker role",
+      "bg": "university campus golden hour"
+    },
+    {
+      "text": "jaise global platforms ke panel discussions ke zariye aap ko asal insights milti hain,",
+      "primitive": "terminal",
+      "energy": 2,
+      "speak": "جیسے global platforms کے panel discussions کے ذریعے آپ کو اصل insights ملتی ہیں،",
+      "emphasis": [
+        "insights"
+      ],
+      "props": {
+        "lines": [
+          "$ join_panel --harvard",
+          "✓ Panel Discussion Active",
+          "✓ Real Insights Loaded"
+        ],
+        "title": "Panel Session"
+      },
+      "why": "Tech vibe for panel insights",
+      "bg": "conference stage audience clapping"
+    },
+    {
+      "text": "taake aap zero se start kar ke apna impact bana sakein.",
+      "primitive": "highlight",
+      "energy": 3,
+      "speak": "تاکہ آپ zero سے start کر کے اپنا impact بنا سکیں۔",
+      "emphasis": [
+        "impact"
+      ],
+      "why": "Shows growth from zero"
+    },
+    {
+      "text": "Yahan na koi excuses hain aur na hi koi fluff—sirf practical training, behtareen guidance,",
+      "primitive": "strike",
+      "energy": 2,
+      "speak": "یہاں نہ کوئی excuses ہیں اور نہ ہی کوئی fluff—صرف practical training، بہترین guidance،",
+      "emphasis": [
+        "practical"
+      ],
+      "props": {
+        "wrong": "Excuses + Fluff",
+        "right": "Practical Training"
+      },
+      "why": "Busts excuses and fluff",
+      "bg": "empty office desk minimal"
+    },
+    {
+      "text": "aur ek aisa platform jo aap ki growth ko next level par le jaye.",
+      "primitive": "orbit",
+      "energy": 2,
+      "speak": "اور ایک ایسا platform جو آپ کی growth کو next level پر لے جائے۔",
+      "emphasis": [
+        "growth"
+      ],
+      "props": {
+        "center": "Growth",
+        "items": [
+          "Mentorship",
+          "Network",
+          "Skills",
+          "Opportunities",
+          "Impact"
+        ]
+      },
+      "why": "Shows platform ecosystem",
+      "bg": "abstract data particles swirl"
+    },
+    {
+      "text": "Agar aap kuch bada build karne ke liye ready hain,",
+      "primitive": "spotlight",
+      "energy": 2,
+      "speak": "اگر آپ کچھ بڑا build کرنے کے لیے ready ہیں،",
+      "emphasis": [
+        "ready"
+      ],
+      "props": {
+        "word": "Build"
+      },
+      "why": "Direct serious call to action",
+      "bg": "dark stage spotlight beam"
+    },
+    {
+      "text": "to abhi follow karein aur bio mein mojood link check karein.",
+      "primitive": "commentCta",
+      "energy": 3,
+      "speak": "تو ابھی follow کریں اور bio میں موجود link چیک کریں۔",
+      "emphasis": [
+        "follow"
+      ],
+      "props": {
+        "keyword": "FOLLOW",
+        "line": "Bio link check karein"
+      },
+      "why": "Standard engagement CTA",
+      "bg": "phone screen social media"
+    },
+    {
+      "text": "Aaiye mil kar zero se aghaz karein!",
+      "primitive": "burst",
+      "energy": 3,
+      "speak": "آئیے مل کر zero سے آغاز کریں!",
+      "emphasis": [
+        "aghaz"
+      ],
+      "props": {
+        "word": "START",
+        "glyphs": [
+          "Zero",
+          "Aghaz"
+        ]
+      },
+      "why": "Energetic group finale",
+      "bg": "confetti explosion colorful"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 2"
+      },
+      "hold": 2.2
+    }
+  ]
+}
