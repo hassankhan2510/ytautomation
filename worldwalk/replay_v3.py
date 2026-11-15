@@ -18,8 +18,7 @@ depth = ww.MonoDepth()
 res = {}
 modes = sys.argv[2].split(",") if len(sys.argv) > 2 else ["hard", "affine", "field"]
 for blend in modes:
-    it = iter(chunks)
-    out, shown, back = mv.chunked_world(lambda fr, m, idx: next(it), CAM, W, H, gt_rgb, gt_z, "single", depth, chunk=CHUNK, lift="last", blend=blend)
+    out, shown, back = mv.chunked_world(lambda fr, m, idx: chunks[idx[0] // (CHUNK - 1)], CAM, W, H, gt_rgb, gt_z, "single", depth, chunk=CHUNK, lift="last", blend=blend)
     g = shown[F // 2:, :, W // 2:].mean(-1)
     out["stripe_dx_dy"] = float(np.abs(np.diff(g, axis=2)).mean() / np.abs(np.diff(g, axis=1)).mean())
     res[blend] = out

@@ -296,7 +296,7 @@ def plane_sweep_conf(frames, CAM, t, nbrs, z_prior, dev="cpu", **kw):
     return np.where(conf, z_mv, z_prior), conf
 
 
-def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None, blend="hard"):
+def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None, blend="hard", gate=0.001):
     """World-locked generation: chunks of `chunk` frames (overlapping by one). Each chunk is rendered
     from the CURRENT world — so content imagined in earlier chunks is already on screen and moves
     correctly with the camera — then the generator fills only what is still unknown, and every frame
@@ -309,6 +309,7 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
     final[0] = gt_rgb[0]
     st = (1.0, 0.0)
     lift_err, conf_frac = [], []
+    tok, gen_calls, chunks = [], 0, 0
     s = 0
     while s < F - 1:
         idx = list(range(s, min(s + chunk, F)))
@@ -317,6 +318,16 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
             img, zr, cov = world.render(f)
             frames.append(img); masks.append(~cov)
         frames, masks = np.array(frames), np.array(masks)
+        chunks += 1
+        tok.append(token_novelty(masks))
+        if masks[1:].mean() < gate:
+            # NOVELTY GATE: nothing new in this chunk -> pure render from the world, no generator call
+            for j, f in enumerate(idx):
+                if f:
+                    final[f] = frames[j]
+            s = idx[-1]
+            continue
+        gen_calls += 1
         gen = gen_fn(frames, masks, idx).astype(np.float32)
         if raw_out is not None:
             raw_out.append(gen.copy())
@@ -384,10 +395,27 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
             ps.append(10 * math.log10(1 / max(float(np.mean((img[m] - final[f][m]) ** 2)), 1e-10)))
     back, back_holes = walk_back(world, CAM)
     out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), **seam_parts(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
-           "imagined_pct": 100 * float(imagined[1:].mean()), "trusted_triangulation_pct": 100 * float(np.mean(conf_frac)) if conf_frac else None}
+           "imagined_pct": 100 * float(imagined[1:].mean()),
+           "generator_calls": gen_calls, "chunks": chunks, "token_frac_per_chunk": [round(t, 4) for t in tok],
+           "token_frac_mean": float(np.mean(tok)) if tok else float("nan"), "trusted_triangulation_pct": 100 * float(np.mean(conf_frac)) if conf_frac else None}
     log(f"  {method:6s}/{lift:5s}: world reproduces shown frames {out['world_psnr']:.2f} dB · seam ratio {out['seam_ratio']:.2f} · walk-back holes {out['walk_back_holes_pct']:.2f}% · lift depth err {out['median_lift_err']:.3f}"
         + (f" · triangulation trusted on {out['trusted_triangulation_pct']:.0f}% of new px" if conf_frac else ""))
     return out, final, back
+
+
+def token_novelty(masks, sp=16, tf=4, halo=1):
+    """Fraction of the video model's tokens that touch new content in this chunk. Wan2.1: VAE 8x
+    spatial + 2x2 patches = one token per 16x16 px; 4x temporal (first frame alone) -> latent frames
+    = 1 + (k-1)/4. A token is 'novel' if any pixel of its block in any of its frames is a hole, grown
+    by `halo` tokens of context. Token pruning (DreamStereo-style) costs ~ this fraction of full."""
+    k, H, W = masks.shape
+    groups = [[0]] + [list(range(i, min(i + tf, k))) for i in range(1, k, tf)]
+    gh, gw = H // sp, W // sp
+    out = []
+    for g in groups:
+        m = masks[g].any(0)[: gh * sp, : gw * sp].reshape(gh, sp, gw, sp).any((1, 3))
+        out.append(ww.dilate(m, halo) if halo else m)
+    return float(np.mean(out))
 
 
 def feather(gen, known, hole, band=8):
