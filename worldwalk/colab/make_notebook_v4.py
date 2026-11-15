@@ -127,6 +127,7 @@ for name, CAM, rgb, z, emb in (('room', CAM_A, rgb_A, z_A, 'room'), ('photo', CA
     out['minutes_total'] = (time.time() - t0) / 60; out['minutes_per_chunk'] = float(np.mean(times)) / 60 if times else 0.0
     res[name] = out
     save(f'shown_{name}.mp4', shown); save(f'walkback_{name}.mp4', back)
+    mv.export_world(mv.chunked_world.world, CAM, f'world_{name}')   # opens in worldwalk/viewer (phone)
     if raw:
         save(f'raw_{name}.mp4', np.concatenate(raw), q=9)   # lets us replay the real model output on CPU
     print({k: v for k, v in out.items() if k != 'token_frac_per_chunk'})
@@ -134,7 +135,7 @@ json.dump(res, open('results_v4.json', 'w'), indent=1)
 """)
 code("""
 # 9. download (send results_v4.zip back)
-!zip -q results_v4.zip results_v4.json photo_start.png shown_*.mp4 walkback_*.mp4 raw_*.mp4
+!zip -q results_v4.zip results_v4.json photo_start.png shown_*.mp4 walkback_*.mp4 raw_*.mp4 world_*.bin world_*.json
 from google.colab import files; files.download('results_v4.zip')
 """)
 nb = {"cells": cells, "metadata": {"accelerator": "GPU", "colab": {"gpuType": "T4", "provenance": []}, "kernelspec": {"display_name": "Python 3", "name": "python3"}, "language_info": {"name": "python"}}, "nbformat": 4, "nbformat_minor": 0}
