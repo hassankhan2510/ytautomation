@@ -251,6 +251,9 @@ def room_path(F, fov=60.0, deg=70.0):
 
 def scene_truth(CAM, W, H, tex=1.0):
     SPH, BOX, MAT, LGT = T.studio_scene("hard")
+    import os
+    if os.environ.get("WW_MATTE") == "1":  # all surfaces diffuse: no view-dependent reflections
+        MAT = MAT.copy(); MAT[(MAT[:, 3] == T.METAL) | (MAT[:, 3] == T.GLASS), 3] = T.DIFFUSE
     GT = [ww.gt_frame(CAM, f, W, H, SPH, BOX, MAT, LGT, tex) for f in range(len(CAM))]
     return np.array([ww.tonemap(g[0]) for g in GT], np.float32), np.array([g[1] for g in GT], np.float32)
 
@@ -266,6 +269,32 @@ class World:
     def render(self, f):
         img, zr, cov, _, _ = ww.splat(self.P, self.C, self.R.astype(np.float64), self.CAM, f, self.W, self.H, np.ones(len(self.P)))
         return ww.tonemap(img).astype(np.float32), zr, cov
+
+    def render_q(self, f):
+        """render + per-pixel MAGNIFICATION: how many times closer we now are than when the winning
+        point was captured (its splat now covers mag x its native ~1 px footprint). mag >> 1 = the
+        world holds less detail than the screen shows -> blurry blocks / rubber streaks."""
+        img, zr, cov, _, Im = ww.splat(self.P, self.C, self.R.astype(np.float64), self.CAM, f, self.W, self.H, np.ones(len(self.P)))
+        fy = self.H / (2 * self.CAM[f, 12])
+        mag = np.zeros((self.H, self.W), np.float32)
+        mag[cov] = self.R[Im[cov]] * fy / zr[cov] / 0.575
+        return ww.tonemap(img).astype(np.float32), zr, cov, mag
+
+    def replace(self, f, z, mask, rgb):
+        """REFINE: drop the (magnified) points that currently show in `mask` from view f and write the
+        model's sharper pixels there at this view's native density, keeping the known geometry z."""
+        _, _, cov, _, Im = ww.splat(self.P, self.C, self.R.astype(np.float64), self.CAM, f, self.W, self.H, np.ones(len(self.P)))
+        drop = np.unique(Im[mask & cov]); drop = drop[drop >= 0]
+        # the dropped (big) splats also covered pixels OUTSIDE mask: re-write their whole footprint,
+        # or whatever was behind them shows through
+        foot = cov & np.isin(Im, drop)
+        keep = np.ones(len(self.P), bool); keep[drop] = False
+        self.P, self.R, self.C = self.P[keep], self.R[keep], self.C[keep]
+        n0 = len(self.P)
+        self.add(f, z, foot & np.isfinite(z), rgb)
+        import os
+        self.R[n0:] *= float(os.environ.get("REFINE_R", "1.0"))  # splat overlap of refined points
+        return int((~keep).sum())
 
     def add(self, f, z, mask, rgb):
         Pn, Rn, yn, xn = ww.unproject(self.CAM, f, self.W, self.H, z, mask)
@@ -296,7 +325,7 @@ def plane_sweep_conf(frames, CAM, t, nbrs, z_prior, dev="cpu", **kw):
     return np.where(conf, z_mv, z_prior), conf
 
 
-def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None, blend="hard", gate=0.001):
+def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None, blend="hard", gate=0.001, refine=0.0, stride=1):
     """World-locked generation: chunks of `chunk` frames (overlapping by one). Each chunk is rendered
     from the CURRENT world — so content imagined in earlier chunks is already on screen and moves
     correctly with the camera — then the generator fills only what is still unknown, and every frame
@@ -309,17 +338,27 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
     final[0] = gt_rgb[0]
     st = (1.0, 0.0)
     lift_err, conf_frac = [], []
-    tok, gen_calls, chunks = [], 0, 0
+    tok, tok_holes, gen_calls, chunks, ref_frac, replaced = [], [], 0, 0, [], 0
+    pre_cov, disp_holes = {}, []
+    def refine_mask(cov, mag):
+        # regenerate where the world is too coarse for this view (refine=0 -> off)
+        if refine <= 0:
+            return np.zeros_like(cov)
+        return ww.dilate(cov & (mag > refine), 2) & cov
     s = 0
     while s < F - 1:
-        idx = list(range(s, min(s + chunk, F)))
+        # stride > 1 = GENERATE AHEAD, BIG: one generator chunk spans chunk*stride frames of motion, so the
+        # new area per call is large (the model draws objects instead of stretching thin edge strips);
+        # the frames in between are pure renders of the world.
+        idx = list(range(s, F, stride))[:chunk]
         frames, masks = [], []
         for f in idx:
-            img, zr, cov = world.render(f)
-            frames.append(img); masks.append(~cov)
+            img, zr, cov, mag = world.render_q(f)
+            frames.append(img); masks.append(~cov | refine_mask(cov, mag))
         frames, masks = np.array(frames), np.array(masks)
         chunks += 1
         tok.append(token_novelty(masks))
+        ref_frac.append(float(np.mean([m.mean() for m in masks[1:]])))
         if masks[1:].mean() < gate:
             # NOVELTY GATE: nothing new in this chunk -> pure render from the world, no generator call
             for j, f in enumerate(idx):
@@ -328,6 +367,9 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
             s = idx[-1]
             continue
         gen_calls += 1
+        if stride > 1 and lift == "last":  # what each in-between view could see BEFORE this chunk
+            for f in range(idx[0] + 1, idx[-1] + 1):
+                pre_cov[f] = world.render(f)[2]
         gen = gen_fn(frames, masks, idx).astype(np.float32)
         if raw_out is not None:
             raw_out.append(gen.copy())
@@ -350,14 +392,38 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
                 final[f] = gen[j]
                 imagined[f] |= masks[j]
             f = idx[-1]
-            img, zr, cov = world.render(f)
+            img, zr, cov, mag = world.render_q(f)
             hole = ~cov
+            rm = refine_mask(cov, mag)
+            if rm.any():
+                replaced += world.replace(f, refine_depth(zr, cov, mag), rm, gen[-1])
+                img, zr, cov = world.render(f)
+                hole = ~cov
             if hole.mean() > tau:
                 z1, st = single_view_depth(gen[-1], zr, cov, depth_model, st)
                 ok = hole & np.isfinite(gt_z[f])
                 if ok.sum():
                     lift_err.append(float(np.median(np.abs(z1[ok] - gt_z[f][ok]) / gt_z[f][ok])))
                 world.add(f, z1, hole, gen[-1])
+            if stride > 1:
+                # earlier generated frames fill what the keyframe could not see (translation parallax)
+                for j in range(len(idx) - 2, 0, -1):
+                    img, zr, cov = world.render(idx[j])
+                    hole = ~cov
+                    if hole.mean() > tau:
+                        z1, st = single_view_depth(gen[j], zr, cov, depth_model, st)
+                        world.add(idx[j], z1, hole, gen[j])
+                # every frame of the stretch is shown as a render of the world (no generator);
+                # tiny leftover holes take the nearest known colour (counted in display_hole_pct)
+                from scipy.ndimage import distance_transform_edt
+                for f in range(idx[0] + 1, idx[-1] + 1):
+                    img, zr, cov = world.render(f)
+                    if not cov.all():
+                        disp_holes.append(float((~cov).mean()))
+                        _, (iy, ix) = distance_transform_edt(~cov, return_indices=True)
+                        img = img[iy, ix]
+                    final[f] = img
+                    imagined[f] |= ~pre_cov[f]
             s = idx[-1]
             continue
         for j, f in enumerate(idx):
@@ -398,10 +464,32 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
     out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), **seam_parts(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
            "imagined_pct": 100 * float(imagined[1:].mean()),
            "generator_calls": gen_calls, "chunks": chunks, "token_frac_per_chunk": [round(t, 4) for t in tok],
-           "token_frac_mean": float(np.mean(tok)) if tok else float("nan"), "trusted_triangulation_pct": 100 * float(np.mean(conf_frac)) if conf_frac else None}
+           "token_frac_mean": float(np.mean(tok)) if tok else float("nan"),
+           "refine": refine, "regen_pixel_frac": float(np.mean(ref_frac)) if ref_frac else float("nan"), "points_replaced": replaced,
+           "points_final": int(len(world.P)),
+           "stride": stride, "display_hole_pct": 100 * float(np.sum(disp_holes)) / max(1, F - 1), "trusted_triangulation_pct": 100 * float(np.mean(conf_frac)) if conf_frac else None}
     log(f"  {method:6s}/{lift:5s}: world reproduces shown frames {out['world_psnr']:.2f} dB · seam ratio {out['seam_ratio']:.2f} · walk-back holes {out['walk_back_holes_pct']:.2f}% · lift depth err {out['median_lift_err']:.3f}"
         + (f" · triangulation trusted on {out['trusted_triangulation_pct']:.0f}% of new px" if conf_frac else ""))
     return out, final, back
+
+
+def refine_depth(zr, cov, mag):
+    """Depth for refined pixels. The z-buffer of magnified square splats is a STAIRCASE (one flat depth
+    per big splat); writing sharp colour onto it puts points at the wrong depth. REFINE_Z: raw | median
+    (edge-preserving, window ~ splat size) | gauss (normalised Gaussian in disparity)."""
+    import os
+    mode = os.environ.get("REFINE_Z", "median")
+    if mode == "raw":
+        return zr
+    from scipy.ndimage import median_filter, gaussian_filter
+    disp = np.where(cov, 1.0 / np.maximum(zr, 1e-6), 0.0).astype(np.float32)
+    k = int(np.clip(np.percentile(mag[cov], 90) * 2 + 1, 3, 15)) if cov.any() else 5
+    if mode == "median":
+        d = median_filter(disp, size=k)
+    else:
+        w = gaussian_filter(cov.astype(np.float32), k / 3)
+        d = gaussian_filter(disp, k / 3) / np.maximum(w, 1e-4)
+    return np.where(cov & (d > 1e-6), 1.0 / np.maximum(d, 1e-6), zr).astype(np.float32)
 
 
 def token_novelty(masks, sp=16, tf=4, halo=1):
