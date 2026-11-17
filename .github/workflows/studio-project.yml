@@ -181,9 +181,9 @@ jobs:
         continue-on-error: true
         run: python scripts/music_apply.py out/props.json
 
-      - name: ④ Render the reel
+      - name: ④ Render the reel (scene-by-scene, cached — falls back to a full render)
         run: |
-          npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+          node scripts/render_incremental.mjs out/props.json out/reel.mp4 out/segcache             || { echo "::warning::incremental render failed — full render"; npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info; }
           npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
 
       - name: ⑤ Self-check — watch the render, fix the edit, render again
@@ -193,8 +193,8 @@ jobs:
           code=$?
           set -e
           if [ "$code" = "3" ]; then
-            echo "↻ scene fixes applied — rendering again" | tee -a "$GITHUB_STEP_SUMMARY"
-            npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=error
+            echo "↻ scene fixes applied — re-rendering only the changed scenes" | tee -a "$GITHUB_STEP_SUMMARY"
+            node scripts/render_incremental.mjs out/props.json out/reel.mp4 out/segcache               || npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=error
             python scripts/critic.py out/reel.mp4 out/props.json out/critic2.json --apply || true
           elif [ "$code" != "0" ]; then
             echo "::warning::self-check crashed (exit $code) — keeping the first render"
