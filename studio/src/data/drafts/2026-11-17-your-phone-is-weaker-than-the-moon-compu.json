@@ -1,0 +1,156 @@
+{
+  "id": "2026-11-17-your-phone-is-weaker-than-the-moon-compu",
+  "title": "Your phone is weaker than the moon computer.",
+  "subject": "media creation history",
+  "theme": "crimson",
+  "seed": 8516,
+  "handle": "",
+  "language": "english",
+  "hooks": [
+    "Your phone is weaker than the moon computer."
+  ],
+  "caption": "Small start, new build. 🚀\nWhat’s the smallest thing that changed your life? 👇\n#history #tech #buildinpublic #genz #factcheck\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-stay-the-course.mp3",
+  "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 7,
+    "unique": 11,
+    "total": 11,
+    "families": 4,
+    "plain": 4,
+    "doc": 1,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Okay, quick question, what if one person could run an entire media company from a laptop?",
+      "primitive": "spotlight",
+      "energy": 3,
+      "emphasis": [
+        "laptop"
+      ],
+      "props": {
+        "word": "LAPTOP"
+      },
+      "why": "Direct question, high energy hook",
+      "bg": "messy desk laptop close-up"
+    },
+    {
+      "text": "Sounds crazy, but here is the thing, most of the history we get shifts marked as small,",
+      "primitive": "strike",
+      "energy": 2,
+      "emphasis": [
+        "shifts marked"
+      ],
+      "props": {
+        "wrong": "Small history",
+        "right": "Massive shifts"
+      },
+      "why": "Myth-busting the 'small history' claim",
+      "bg": "blurred historical montage fast cuts"
+    },
+    {
+      "text": "a garage, a notebook, a single idea that nobody took seriously.",
+      "primitive": "stickyNotes",
+      "energy": 2,
+      "emphasis": [
+        "garage",
+        "notebook"
+      ],
+      "props": {
+        "notes": [
+          "Garage",
+          "Notebook",
+          "Idea"
+        ]
+      },
+      "why": "List of three simple items",
+      "bg": "empty garage notebook lightbulb"
+    },
+    {
+      "text": "In 1969, a computer with less power than your phone landed a human on the moon.",
+      "primitive": "factCard",
+      "energy": 3,
+      "emphasis": [
+        "less power",
+        "moon"
+      ],
+      "props": {
+        "fact": "In 1969, a computer with less power than your phone landed a human on the moon."
+      },
+      "why": "Visualizes power difference vs moon landing"
+    },
+    {
+      "text": "Think about that for a second.",
+      "primitive": "blob",
+      "energy": 1,
+      "emphasis": [
+        "Think"
+      ],
+      "props": {
+        "word": "Think"
+      },
+      "why": "Calm pause, emotional reflection beat",
+      "bg": "soft abstract liquid motion"
+    },
+    {
+      "text": "So today, I am building something new in the public.",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "building"
+      ],
+      "why": "Building something new, process"
+    },
+    {
+      "text": "Every single day, someday it works, someday everything breaks.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "emphasis": [
+        "breaks"
+      ],
+      "why": "Struggle, breaking, daily chaos"
+    },
+    {
+      "text": "And honestly, that's the fun part, if you are curious about history,",
+      "primitive": "auroraType",
+      "energy": 2,
+      "emphasis": [
+        "fun part"
+      ],
+      "props": {
+        "word": "Curious"
+      },
+      "why": "Premium statement, curiosity hook",
+      "bg": "aurora gradient light ribbons"
+    },
+    {
+      "text": "science and technology or just how the world really works,",
+      "primitive": "maskReveal",
+      "energy": 2,
+      "emphasis": [
+        "science",
+        "technology"
+      ],
+      "why": "Topics orbiting the main subject"
+    },
+    {
+      "text": "so you are at the right place, stay tuned.",
+      "primitive": "quote",
+      "energy": 3,
+      "emphasis": [
+        "stay tuned"
+      ],
+      "why": "Call to action, stay tuned"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
