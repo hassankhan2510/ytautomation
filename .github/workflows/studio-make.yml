@@ -33,9 +33,9 @@ on:
         options: [english, urdu]
         default: english
       voice:
-        description: "Narration: mine = your clone (English) · omnivoice = your clone (Urdu+English, slower) · '…-sufyan' / '…-pariya' = Sufyan's / Pariya's voice · kokoro / edge = AI voices · none"
+        description: "Narration: mine = your clone (English) · omnivoice = your clone (Urdu+English, slower) · '…-sufyan' / '…-pariya' / '…-sabeha' = their voices · kokoro / edge = AI voices · none"
         type: choice
-        options: [mine, mine-sufyan, mine-pariya, omnivoice, omnivoice-sufyan, omnivoice-pariya, kokoro, edge, none]
+        options: [mine, mine-sufyan, mine-pariya, mine-sabeha, omnivoice, omnivoice-sufyan, omnivoice-pariya, omnivoice-sabeha, kokoro, edge, none]
         default: mine
       verbatim:
         description: "no = AI writes the script (default) · yes = read my text word-for-word"
