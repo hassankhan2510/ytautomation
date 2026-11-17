@@ -1,0 +1,222 @@
+name: "Studio — Make from Project"
+
+# Your OWN photos + clips (+ optional voiceover + optional script) -> finished reel.
+# Put them in studio/projects/<name>/ (see studio/projects/README.md), then run this with <name>.
+# Every asset is analysed (subject position, faces, a clip's most interesting seconds) and placed by
+# MEANING where the script talks about it. Your voiceover is used as-is: speech recognition + our
+# script<->voice aligner put every caption word on your real delivery. Nothing is posted anywhere.
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: "Folder name inside studio/projects/ (e.g. demo)"
+        required: true
+        type: string
+      script:
+        description: "as-written = script.txt word-for-word · ai-rewrite = AI writes from script.txt · from-voiceover = what you SAY in voiceover.* becomes the script"
+        type: choice
+        options: [as-written, ai-rewrite, from-voiceover]
+        default: as-written
+      voice:
+        description: "upload = YOUR voiceover file from the project · or a cloned / AI voice reads the script"
+        type: choice
+        options: [upload, mine, mine-sufyan, mine-pariya, mine-sabeha, omnivoice, omnivoice-sufyan, omnivoice-pariya, omnivoice-sabeha, kokoro, edge, none]
+        default: upload
+      language:
+        description: "english · urdu (Urdu script voice, Roman Urdu captions)"
+        type: choice
+        options: [english, urdu]
+        default: english
+      style:
+        description: "Format"
+        type: choice
+        options: [explainer, techNews, breakdown, story, buildInPublic]
+        default: explainer
+      theme:
+        description: "Colour theme"
+        type: choice
+        options: [crimson, ocean, grape, sunrise, lagoon, mango, mint, neon, acid, electric, paper, taxi]
+        default: crimson
+      channel:
+        description: "End card: none · cohort_zero (logo + @cohort_zero)"
+        type: choice
+        options: ["none", cohort_zero]
+        default: "none"
+      backgrounds:
+        description: "For scenes WITHOUT one of your assets: video = stock footage · photo = stock photos · off = generated"
+        type: choice
+        options: [video, photo, "off"]
+        default: video
+      music:
+        description: "Background music"
+        type: choice
+        options: [auto, none]
+        default: auto
+      sfx:
+        description: "Sound effects"
+        type: choice
+        options: ["on", "off"]
+        default: "on"
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: studio
+    env:
+      PROJECT_DIR: projects/${{ github.event.inputs.project }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Find the project files
+        id: proj
+        run: |
+          test -d "$PROJECT_DIR" || { echo "::error::studio/$PROJECT_DIR not found — create it (see studio/projects/README.md)"; exit 1; }
+          VO=$(ls "$PROJECT_DIR"/voiceover.* 2>/dev/null | head -1 || true)
+          echo "voiceover=$VO" >> "$GITHUB_OUTPUT"
+          echo "script=$( [ -f "$PROJECT_DIR/script.txt" ] && echo "$PROJECT_DIR/script.txt" )" >> "$GITHUB_OUTPUT"
+          echo "### 📁 Project \`${{ github.event.inputs.project }}\`" >> "$GITHUB_STEP_SUMMARY"
+          ls -la "$PROJECT_DIR" | tail -n +4 | awk '{print "- " $NF " (" $5 " bytes)"}' >> "$GITHUB_STEP_SUMMARY"
+      - name: Install system libraries (headless Chrome, ffmpeg, espeak)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng ffmpeg
+      - run: npm install --no-audit --no-fund
+      - name: Install analysis + voice engines
+        run: |
+          pip install numpy soundfile scipy pillow opencv-python-headless
+          VOICE="${{ github.event.inputs.voice }}"
+          if [ -n "${{ steps.proj.outputs.voiceover }}" ] && { [ "$VOICE" = "upload" ] || [ "${{ github.event.inputs.script }}" = "from-voiceover" ]; }; then
+            pip install faster-whisper
+          fi
+          if [ "$VOICE" != "upload" ] && [ "$VOICE" != "none" ]; then
+            pip install edge-tts kokoro
+            if [[ "${{ github.event.inputs.language }}" = "urdu" || "$VOICE" = omnivoice* ]]; then
+              pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+              pip install omnivoice
+            elif [[ "$VOICE" = mine* ]]; then
+              pip install chatterbox-tts peft resemble-perth
+            fi
+          fi
+
+      - name: ⓪ Understand your assets (subject, faces, best clip seconds)
+        run: python scripts/analyze_assets.py "$PROJECT_DIR" out/analysis.json
+
+      - name: ⓪b Transcribe your voiceover (word timings)
+        if: ${{ steps.proj.outputs.voiceover != '' && (github.event.inputs.voice == 'upload' || github.event.inputs.script == 'from-voiceover') }}
+        env:
+          WHISPER_MODEL: ${{ github.event.inputs.language == 'urdu' && 'medium' || 'small' }}
+        run: python scripts/transcribe.py "${{ steps.proj.outputs.voiceover }}" out/transcript.json ${{ github.event.inputs.language }}
+
+      - name: ① Script + scenes (AI director)
+        id: draft
+        env:
+          STYLE: ${{ github.event.inputs.style }}
+          VERBATIM: ${{ github.event.inputs.script == 'ai-rewrite' && 'no' || 'yes' }}
+          LANGUAGE: ${{ github.event.inputs.language }}
+          HANDLE: ${{ github.event.inputs.channel == 'cohort_zero' && '@cohort_zero' || '' }}
+          THEME: ${{ github.event.inputs.theme }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
+        run: |
+          if [ "${{ github.event.inputs.script }}" != "from-voiceover" ] && [ -n "${{ steps.proj.outputs.script }}" ]; then
+            PARAGRAPH="$(cat "${{ steps.proj.outputs.script }}")"
+          elif [ -f out/transcript.json ]; then
+            PARAGRAPH="$(python -c "import json;print(json.load(open('out/transcript.json',encoding='utf-8'))['text'])")"
+            echo "📝 Script = what you said in your voiceover" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::No script.txt and no voiceover to transcribe in studio/$PROJECT_DIR"; exit 1
+          fi
+          # the director knows which assets exist, so it can write lines the photos/clips can illustrate
+          export ASSET_HINTS="$(python -c "import json;print('; '.join(a['description'] for a in json.load(open('out/analysis.json',encoding='utf-8'))['assets']))")"
+          PARAGRAPH="$PARAGRAPH" node scripts/draft.mjs
+
+      - name: ② Place your assets + backgrounds, music, sound
+        env:
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+          PROJECT_ANALYSIS: out/analysis.json
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          BG_MODE: ${{ github.event.inputs.backgrounds }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          MUSIC: ${{ github.event.inputs.music }}
+          SFX: ${{ github.event.inputs.sfx }}
+          SHADERS: "off"
+        run: node scripts/props.mjs "$JOB_FILE" out/props.json
+
+      - name: ②b 2.5D — bring photos to life (never fails the run)
+        continue-on-error: true
+        run: |
+          python -c "import torch" 2>/dev/null || pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers
+          python scripts/depth25d.py out/props.json
+
+      - name: ③ Narration (your voiceover, aligned — or a voice)
+        env:
+          VOICE: ${{ github.event.inputs.voice }}
+          LANGUAGE: ${{ github.event.inputs.language }}
+          VOICEOVER: ${{ steps.proj.outputs.voiceover }}
+          TRANSCRIPT: out/transcript.json
+        run: python scripts/narrate.py out/props.json
+
+      - name: ④ Render the reel
+        run: |
+          npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+          npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
+
+      - name: ⑤ Caption file
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync("out/props.json", "utf8")).job;
+            const lines = [p.title || "", "", p.caption || ""];
+            const img = (p.credits || []).filter((c) => c.beat !== "music" && !/Pexels/i.test(c.license || ""));
+            if (img.length) lines.push("", "Images: " + img.map((c) => `${c.title} — ${c.artist} (${c.license})`).join("; "));
+            if (p.hooks && p.hooks.length) lines.push("", "--- alternative hooks ---", ...p.hooks);
+            fs.writeFileSync("out/caption.txt", lines.join("\n").trim() + "\n");
+          '
+
+      - name: Deliver
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-project-run${{ github.run_number }}
+          path: |
+            studio/out/reel.mp4
+            studio/out/poster.jpg
+            studio/out/caption.txt
+            studio/out/*.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 📱 Phone link
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+        run: bash scripts/phone_link.sh "$(basename "$JOB_FILE" .json | cut -c12-)"
+
+      - name: Save the draft
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add studio/src/data/drafts/ 2>/dev/null || true
+          git commit -m "studio: project draft ${{ steps.draft.outputs.draft }} [skip ci]" || { echo "nothing to commit"; exit 0; }
+          git pull --rebase --autostash || true
+          git push || echo "push skipped"

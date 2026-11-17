@@ -181,6 +181,97 @@ Return ONLY JSON: {"place":[{"scene":n,"photo":k,"as":"slot|background|photo","w
     if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [msg, ...placed.map((p) => `- ${p}`), ""].join("\n"));
   }
 }
+
+/**
+ * PROJECT ASSETS (PROJECT_ANALYSIS=<json from scripts/analyze_assets.py>): the creator's own photos AND
+ * clips, each with a DESCRIPTION (assets.txt) and machine understanding (subject position, orientation,
+ * clip length + per-second interest). One LLM call places them by MEANING; every asset is used at least
+ * once (the creator uploaded it on purpose). Photos -> the scene's image slot / a full photo scene /
+ * subject-centred background; clips -> full-screen background trimmed to their most interesting window,
+ * with a light scrim so the creator's footage is actually seen.
+ */
+if (process.env.PROJECT_ANALYSIS && fs.existsSync(process.env.PROJECT_ANALYSIS)) {
+  const an = JSON.parse(fs.readFileSync(process.env.PROJECT_ANALYSIS, "utf8"));
+  const projDir = an.project;
+  const assets = (an.assets || []).map((a, k) => ({ ...a, n: k + 1 }));
+  const reg = fs.readFileSync(path.join("src", "engine", "registry.ts"), "utf8");
+  const withSlot = new Set([...reg.matchAll(/id: "([A-Za-z0-9]+)"[^\n]*?props: "([^"]*)"/g)].filter((m) => /\b(src|prompt|search)\b/.test(m[2])).map((m) => m[1]));
+  const beats = job.beats.map((b, i) => ({ i, b })).filter(({ b }) => String(b.text || "").trim() && b.primitive !== "outro");
+  const estSec = (b) => 0.3 + 0.38 * String(b.text || "").split(/\s+/).filter(Boolean).length;
+  const bestStart = (a, len) => {
+    const v = a.interest_per_second || [];
+    const k = Math.max(1, Math.round(len));
+    if (v.length <= k) return 0;
+    let best = 0, bs = -Infinity;
+    for (let s = 0; s + k <= v.length; s++) {
+      const sum = v.slice(s, s + k).reduce((x, y) => x + y, 0);
+      if (sum > bs) { bs = sum; best = s; }
+    }
+    return best;
+  };
+  let res = null;
+  if (assets.length) {
+    try {
+      if (process.env.PROJECT_PLAN) res = JSON.parse(process.env.PROJECT_PLAN);
+      else {
+        const { groqJSON } = await import("../../theranos-doc/scripts/lib_groq.mjs");
+        res = await groqJSON(
+          `You are the editor placing the CREATOR'S OWN media into their narrated vertical video. Each asset has the creator's DESCRIPTION, a kind (photo or clip), orientation and (clips) length. Put each asset on the scene(s) whose spoken line is about what it shows — the person, place, object, event or idea. Strong matches first. EVERY asset must be used at least once (the creator chose them); an asset may be used in several scenes if it fits; at most one asset per scene; prefer spreading assets across the video over clustering them.
+Placement: photos -> "slot" if the scene is marked [slot], else "photo" (full photo scene) when the line is mainly about that subject, else "background". Clips -> always "background" (full-screen footage behind the scene).
+Return ONLY JSON: {"place":[{"scene":n,"asset":k,"as":"slot|photo|background","why":"max 8 words"}]}`,
+          `ASSETS:\n${assets.map((a) => `${a.n}. [${a.kind}${a.kind === "clip" ? ` ${a.duration}s` : ""}, ${a.orientation}] ${a.description}`).join("\n")}\n\nSCENES:\n${beats.map(({ i, b }) => `${i + 1}. [${b.primitive}${withSlot.has(b.primitive) ? " slot" : ""}] "${b.text}"`).join("\n")}`,
+          { maxTokens: 1800, temperature: 0.1 },
+        );
+      }
+    } catch (e) {
+      console.warn(`  project placement failed (${e.message})`);
+    }
+  }
+  // safety net: an asset the model forgot goes to the free scene whose line shares the most words with its description
+  const plan = [...(res?.place || [])];
+  const used = new Set(plan.map((p) => Number(p.asset)));
+  const words = (s) => new Set(String(s).toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || []);
+  for (const a of assets.filter((x) => !used.has(x.n))) {
+    const dw = words(a.description);
+    const taken = new Set(plan.map((p) => Number(p.scene)));
+    const cand = beats.filter(({ i }) => !taken.has(i + 1)).map(({ i, b }) => ({ i, s: [...words(b.text)].filter((w) => dw.has(w)).length }));
+    cand.sort((x, y) => y.s - x.s || x.i - y.i);
+    if (cand[0]) plan.push({ scene: cand[0].i + 1, asset: a.n, as: "background", why: "auto: unplaced asset" });
+  }
+  const placed = [];
+  const takenScenes = new Set();
+  const OWN_BACKDROP_P = new Set(["museumFrame", "redString", "photo", "parallax", "outro"]);
+  fs.mkdirSync(path.join("public", "gen"), { recursive: true });
+  for (const p of plan) {
+    const i = Number(p.scene) - 1, a = assets[Number(p.asset) - 1], b = job.beats[i];
+    if (!b || !a || takenScenes.has(i) || b.primitive === "outro") continue;
+    const ext = path.extname(a.file).toLowerCase();
+    const safe = `gen/proj-${a.n}-${path.basename(a.file, ext).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "asset"}${ext}`;
+    if (!fs.existsSync(path.join("public", safe))) fs.copyFileSync(path.join(projDir, a.file), path.join("public", safe));
+    let as = a.kind === "clip" ? "background" : String(p.as || "background");
+    if (as === "slot" && !withSlot.has(b.primitive)) as = "photo";
+    // edit rhythm: never two full photo cards back to back — the second keeps its scene, photo goes behind
+    if (as === "photo" && (job.beats[i - 1]?.primitive === "photo" || job.beats[i + 1]?.primitive === "photo")) as = "background";
+    if (as === "slot") {
+      b.props = { ...(b.props || {}), src: safe };
+      delete b.props.search; delete b.props.prompt;
+    } else if (as === "photo") {
+      b.primitive = "photo";
+      b.props = { src: safe, caption: a.description.length <= 40 ? a.description : "" };
+    } else {
+      // scenes that paint their own full backdrop would hide the footage -> a kinetic-type scene over it
+      if (OWN_BACKDROP_P.has(b.primitive)) { b.primitive = "stomp"; b.props = {}; }
+      Object.assign(b, { bgSrc: safe, bgKind: a.kind === "clip" ? "video" : "image", bgFocus: a.focus, bgHero: true,
+        ...(a.kind === "clip" ? { bgStart: bestStart(a, estSec(b)) } : {}) });
+    }
+    takenScenes.add(i);
+    placed.push(`scene ${i + 1} ← ${a.kind} "${a.description.slice(0, 40)}" as ${as}${a.kind === "clip" ? ` from ${b.bgStart || 0}s` : ""} (${String(p.why || "").slice(0, 50)})`);
+  }
+  const msg = `🎬 **Your assets:** ${placed.length} placement(s) from ${assets.length} asset(s)`;
+  console.log(msg);
+  for (const s of placed) console.log(`  ${s}`);
+  if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [msg, ...placed.map((s) => `- ${s}`), ""].join("\n"));
+}
 {
   const slots = [];
   for (const [i, b] of job.beats.entries()) {

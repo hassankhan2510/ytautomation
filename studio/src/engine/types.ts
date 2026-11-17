@@ -33,6 +33,13 @@ export type Beat = {
   /** Resolved background file under public/ (set by scripts/props.mjs) and its kind. */
   bgSrc?: string;
   bgKind?: "video" | "image";
+  /** Where the subject is in the background media (0..1), from scripts/analyze_assets.py — crops and
+   *  camera moves centre on it instead of the frame centre. */
+  bgFocus?: { x: number; y: number };
+  /** Seconds into a background CLIP to start from (its most interesting window). */
+  bgStart?: number;
+  /** The creator's OWN media: lighter scrim so it is actually seen. */
+  bgHero?: boolean;
   /** 2.5D depth layers for an image background (set by scripts/depth25d.py). */
   layers?: { far: string; mid: string; near: string };
 };

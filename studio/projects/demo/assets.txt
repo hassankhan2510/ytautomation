@@ -1,0 +1,5 @@
+# one line per file:  file name | what it shows (the AI places each one where the script talks about it)
+lab.jpg | a scientist working in a crowded laboratory
+office.jpg | a huge open-plan office full of people at desks
+money.jpg | a hand holding a phone calculator over financial papers
+blood_drop.mp4 | a single drop of blood falling in slow motion

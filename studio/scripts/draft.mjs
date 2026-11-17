@@ -32,6 +32,8 @@ const handle = (process.env.HANDLE || "").trim();
 // Channel brand mark (public/ path). Cohort Zero's original logo lives in cohort_zero/02_Brand_Assets/logos
 // and is copied to public/brand/cohortzero-mark.png; other channels pass LOGO.
 const logo = process.env.LOGO || (handle === "@cohort_zero" ? "brand/cohortzero-mark.png" : "");
+// Project runs: descriptions of the creator's own photos/clips (studio-project.yml)
+const assetHints = String(process.env.ASSET_HINTS || "").slice(0, 1200);
 const verbatimInput = /^(yes|true|1)$/i.test(process.env.VERBATIM || "");
 const briefReport = []; // what the brief stages did, shown in the run summary
 // LANGUAGE: english (default) | urdu. Urdu reels: the voice reads Urdu SCRIPT (English tech words kept
@@ -180,7 +182,8 @@ ${language === "urdu" ? `LANGUAGE: "Urdish" for a Pakistani Gen-Z audience — M
 - The hook leads with the single most surprising fact or tension in the SOURCE.
 - energy: 3 hook/reveals/wins, 2 explanation, 1 reflective. Never three 1s in a row.
 FACTS (strict): every number, date, name, place, material, weight, cause and "that's why" reason in the script must come from the SOURCE. Do NOT add outside knowledge — even well-known true facts. Never invent statistics, quotes, studies or sources. Make it gripping through framing, questions and pacing, not extra facts.
-STYLE: ${STYLES[style] || STYLES.explainer}${directionsText}`;
+STYLE: ${STYLES[style] || STYLES.explainer}${directionsText}${assetHints && !verbatim ? `
+CREATOR'S OWN VISUALS (photos/clips that will be placed where the script talks about them — where it is natural and TRUE to the source, give each one a line it can illustrate; never invent facts about them): ${assetHints}` : ""}`;
 const segments = verbatim ? segment(paragraph).slice(0, 24) : [];
 const writerUser = verbatim ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
 

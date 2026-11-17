@@ -279,6 +279,38 @@ def speakable(text):
     return re.sub(r"\s+", " ", t).strip()
 
 
+def use_voiceover(props_path, props):
+    """VOICE=upload: the creator's own voiceover (ElevenLabs / phone / studio mic) IS the narration.
+    No TTS. The script's words are placed on the real audio by align.py (cross-script aware), so captions
+    and scene cuts follow the actual delivery — ad-libs, skipped words and Urdu/Roman spelling included."""
+    from align import timed_script
+    src = os.environ.get("VOICEOVER", "")
+    if not src or not os.path.exists(src):
+        raise SystemExit(f"VOICE=upload but VOICEOVER file not found: {src!r}")
+    job = props["job"]
+    tr_path = os.environ.get("TRANSCRIPT", "out/transcript.json")
+    if os.path.exists(tr_path):
+        tr = json.load(open(tr_path, encoding="utf-8"))
+    else:
+        from transcribe import transcribe
+        tr = transcribe(src, {"urdu": "ur", "english": "en"}.get((os.environ.get("LANGUAGE") or "").lower()))
+    os.makedirs(os.path.dirname(OUT), exist_ok=True)
+    # broadcast-level loudness, mono, 48 kHz; nothing else touched (it's the creator's own sound)
+    subprocess.run(["ffmpeg", "-y", "-v", "error", "-i", src, "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+                    "-ar", "48000", "-ac", "1", OUT], check=True)
+    tokens = [w for b in job["beats"] for w in b.get("text", "").split()]
+    words, rate = timed_script(tokens, tr["words"])
+    job["audio"] = OUT_REL
+    job["words"] = words
+    job["voice"] = "upload"
+    json.dump(props, open(props_path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+    msg = (f"🎙️ Narration: your voiceover · {tr.get('duration', 0):.1f}s · {len(words)} script words placed on it "
+           f"({100 * rate:.0f}% matched to spoken words, the rest interpolated)")
+    print(msg)
+    if os.environ.get("GITHUB_STEP_SUMMARY"):
+        open(os.environ["GITHUB_STEP_SUMMARY"], "a", encoding="utf-8").write(msg + "\n")
+
+
 def main():
     props_path = sys.argv[1] if len(sys.argv) > 1 else "out/props.json"
     global REF
@@ -291,13 +323,15 @@ def main():
             print(f"voice sample: {speaker} ({cand})")
         else:
             print(f"! voice/{speaker}.wav missing — using the default voice_ref.wav")
-    if (os.environ.get("LANGUAGE") or "").lower() == "urdu" and mode != "none":
+    if (os.environ.get("LANGUAGE") or "").lower() == "urdu" and mode not in ("none", "upload"):
         mode = "omnivoice"  # Urdu reels always use OmniVoice (the Chatterbox clone is English-only)
     props = json.load(open(props_path, encoding="utf-8"))
     job = props["job"]
     if mode == "none":
         print("VOICE=none — rendering without narration")
         return
+    if mode == "upload":
+        return use_voiceover(props_path, props)
 
     engines = {
         "mine": [synth_mine, synth_kokoro, synth_edge],
