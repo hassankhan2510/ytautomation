@@ -1,0 +1,190 @@
+{
+  "id": "2026-11-17-your-phone-is-stronger-than-the-moon-com",
+  "title": "Your phone is stronger than the moon computer.",
+  "subject": "Media Creation History",
+  "theme": "ocean",
+  "seed": 356,
+  "handle": "",
+  "language": "english",
+  "hooks": [
+    "Your phone is stronger than the moon computer.",
+    "One person, one laptop, entire media empire?"
+  ],
+  "caption": "From garage ideas to lunar landings 🚀\nWhat’s one tech fact that still blows your mind?\n#TechHistory #MoonLanding #CreatorEconomy #GenZ #FutureTech\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-stay-the-course.mp3",
+  "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8.5,
+    "unique": 12,
+    "total": 12,
+    "families": 5,
+    "plain": 2,
+    "doc": 3,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Okay, quick question, what if one person could run an entire media company from a laptop?",
+      "primitive": "search",
+      "energy": 3,
+      "emphasis": [
+        "quick question"
+      ],
+      "props": {
+        "query": "run media company from laptop",
+        "suggestions": [
+          "solo creator setup",
+          "freelance media company",
+          "laptop productivity hacks"
+        ],
+        "pick": 0
+      },
+      "why": "Visualizes the 'quick question' hook",
+      "bg": "dark room laptop keyboard closeup"
+    },
+    {
+      "text": "Sounds crazy.",
+      "primitive": "verdict",
+      "energy": 1,
+      "emphasis": [
+        "crazy"
+      ],
+      "props": {
+        "claim": "One laptop runs a company",
+        "verdict": "MYTH",
+        "good": false
+      },
+      "why": "Dramatic stamp on skeptical claim",
+      "bg": "skeptical face closeup shallow depth"
+    },
+    {
+      "text": "But here is the thing, most of the history we get shifts marked as small,",
+      "primitive": "archiveFilm",
+      "energy": 2,
+      "emphasis": [
+        "history"
+      ],
+      "props": {
+        "prompt": "grainy black and white footage of 1960s newsroom",
+        "place": "Newsroom"
+      },
+      "why": "Matches grainy historical news clips idea",
+      "bg": "old film projector spinning reel"
+    },
+    {
+      "text": "a garage, a notebook, a single idea that nobody took seriously.",
+      "primitive": "list",
+      "energy": 2,
+      "emphasis": [
+        "garage"
+      ],
+      "props": {
+        "items": [
+          "A garage",
+          "A notebook",
+          "A single idea"
+        ],
+        "title": "Origins"
+      },
+      "why": "Punches in the three origin items",
+      "bg": "empty garage concrete floor dust"
+    },
+    {
+      "text": "In 1969, a computer with less power than your phone landed a human on the moon.",
+      "primitive": "factCard",
+      "energy": 3,
+      "emphasis": [
+        "1969"
+      ],
+      "props": {
+        "fact": "In 1969, a computer with less power than your phone landed a human on the moon."
+      },
+      "why": "Direct comparison of 1969 vs phone"
+    },
+    {
+      "text": "Think about that for a second.",
+      "primitive": "pov",
+      "energy": 1,
+      "emphasis": [
+        "realized"
+      ],
+      "props": {
+        "text": "You just realized tech is insane"
+      },
+      "why": "Matches 'POV' visual idea directly",
+      "bg": "abstract digital particles flowing"
+    },
+    {
+      "text": "So today, I am building something new in the public.",
+      "primitive": "zoomThrough",
+      "energy": 2,
+      "emphasis": [
+        "building"
+      ],
+      "props": {
+        "word": "BUILDING",
+        "reveal": "In the public"
+      },
+      "why": "Dynamic transition into new project",
+      "bg": "modern studio space wide shot"
+    },
+    {
+      "text": "Every single day, someday it works, someday everything breaks.",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "breaks"
+      ],
+      "why": "Visualizes success vs breaking chaos"
+    },
+    {
+      "text": "And honestly, that's the fun part, if you are curious about history,",
+      "primitive": "redString",
+      "energy": 2,
+      "emphasis": [
+        "curious"
+      ],
+      "props": {
+        "cards": [
+          "Curiosity",
+          "History",
+          "Fun"
+        ]
+      },
+      "why": "Connects curiosity to history topic",
+      "bg": "corkboard with pinned notes"
+    },
+    {
+      "text": "science and technology or just how the world really works,",
+      "primitive": "flip3d",
+      "energy": 2,
+      "emphasis": [
+        "science"
+      ],
+      "why": "Shows scope of sci/tech/world"
+    },
+    {
+      "text": "so you are at the right place, stay tuned.",
+      "primitive": "commentCta",
+      "energy": 3,
+      "emphasis": [
+        "stay tuned"
+      ],
+      "props": {
+        "keyword": "STAY TUNED",
+        "line": "Follow for more"
+      },
+      "why": "Standard engagement closing call",
+      "bg": "studio lights bokeh background"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
