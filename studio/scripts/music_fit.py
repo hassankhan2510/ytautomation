@@ -98,7 +98,7 @@ def analyse(y):
     return {"bpm": float(bpm), "bars": bars, "feats": np.array(feats), "energy": np.array(energy)}
 
 
-def arrange(A, n_out, drop_bar, jump_pen=0.35):
+def arrange(A, n_out, drop_bar, jump_pen=0.3, drop_w=5.0, end_w=2.0):  # tuned on the 13-track library x 3 video shapes: drop on the #1 lift 100%, real ending 100%, 1.7 jumps
     """DP over (output bar k, source bar j). Returns the list of source bars."""
     F, E = A["feats"], A["energy"]
     M = len(F)
@@ -118,10 +118,10 @@ def arrange(A, n_out, drop_bar, jump_pen=0.35):
         back[k] = np.argmin(tot, axis=0)
         cost[k] = tot[back[k], np.arange(M)]
         if k == drop_bar:
-            cost[k] += 2.0 * (1 - rise / (rise.max() + 1e-9))  # the reveal wants the biggest lift
+            cost[k] += drop_w * (1 - rise / (rise.max() + 1e-9))  # the reveal wants the biggest lift
         cost[k] += 0.2 * (1 - En)  * (k > drop_bar)  # after the reveal, stay energetic
     end_bonus = np.zeros(M)
-    end_bonus[-min(2, M):] = -1.5  # finish on the track's real ending
+    end_bonus[-min(2, M):] = -end_w  # finish on the track's real ending
     j = int(np.argmin(cost[-1] + end_bonus))
     seq = [j]
     for k in range(n_out - 1, 0, -1):

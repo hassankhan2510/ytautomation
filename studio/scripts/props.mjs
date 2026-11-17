@@ -216,7 +216,7 @@ if (process.env.PROJECT_ANALYSIS && fs.existsSync(process.env.PROJECT_ANALYSIS))
       else {
         const { groqJSON } = await import("../../theranos-doc/scripts/lib_groq.mjs");
         res = await groqJSON(
-          `You are the editor placing the CREATOR'S OWN media into their narrated vertical video. Each asset has the creator's DESCRIPTION, a kind (photo or clip), orientation and (clips) length. Put each asset on the scene(s) whose spoken line is about what it shows — the person, place, object, event or idea. Strong matches first. EVERY asset must be used at least once (the creator chose them); an asset may be used in several scenes if it fits; at most one asset per scene; prefer spreading assets across the video over clustering them.
+          `You are the editor placing the CREATOR'S OWN media into their narrated vertical video. Each asset has the creator's DESCRIPTION, a kind (photo or clip), orientation and (clips) length. Put each asset on the scene(s) whose spoken line is about what it shows — the person, place, object, event or idea. Strong matches first. EVERY asset must be used at least once (the creator chose them); use an asset a SECOND time only if that line is clearly about the same subject; never more than twice; at most one asset per scene; leave the other scenes free (they get their own visuals) — variety matters; spread assets across the video.
 Placement: photos -> "slot" if the scene is marked [slot], else "photo" (full photo scene) when the line is mainly about that subject, else "background". Clips -> always "background" (full-screen footage behind the scene).
 Return ONLY JSON: {"place":[{"scene":n,"asset":k,"as":"slot|photo|background","why":"max 8 words"}]}`,
           `ASSETS:\n${assets.map((a) => `${a.n}. [${a.kind}${a.kind === "clip" ? ` ${a.duration}s` : ""}, ${a.orientation}] ${a.description}`).join("\n")}\n\nSCENES:\n${beats.map(({ i, b }) => `${i + 1}. [${b.primitive}${withSlot.has(b.primitive) ? " slot" : ""}] "${b.text}"`).join("\n")}`,
@@ -227,16 +227,40 @@ Return ONLY JSON: {"place":[{"scene":n,"asset":k,"as":"slot|photo|background","w
       console.warn(`  project placement failed (${e.message})`);
     }
   }
-  // safety net: an asset the model forgot goes to the free scene whose line shares the most words with its description
-  const plan = [...(res?.place || [])];
-  const used = new Set(plan.map((p) => Number(p.asset)));
+  // Variety + coverage, enforced in code (not just asked for):
+  //  1. the model's plan, first use of each asset before any repeat, <= 2 uses per asset, one asset per scene
+  //  2. every unused asset gets a scene: a free one whose line shares the most words with its description,
+  //     else it takes over a scene that only held a REPEAT
+  //  3. assets on <= max(#assets, 60% of scenes): repeats are dropped first
   const words = (s) => new Set(String(s).toLowerCase().match(/[\p{L}\p{N}]{3,}/gu) || []);
-  for (const a of assets.filter((x) => !used.has(x.n))) {
+  const raw = (res?.place || []).filter((p) => assets[Number(p.asset) - 1] && job.beats[Number(p.scene) - 1]);
+  const firstsP = [], repeatsP = [], seenA = new Set();
+  for (const p of raw) (seenA.has(Number(p.asset)) ? repeatsP : firstsP).push(p), seenA.add(Number(p.asset));
+  const plan = [], uses = {}, sceneOf = new Map();
+  for (const p of [...firstsP, ...repeatsP]) {
+    const a = Number(p.asset), sc = Number(p.scene);
+    if (sceneOf.has(sc) || (uses[a] || 0) >= 2) continue;
+    uses[a] = (uses[a] || 0) + 1; sceneOf.set(sc, p); plan.push({ ...p, repeat: uses[a] > 1 });
+  }
+  for (const a of assets.filter((x) => !uses[x.n])) {
     const dw = words(a.description);
-    const taken = new Set(plan.map((p) => Number(p.scene)));
-    const cand = beats.filter(({ i }) => !taken.has(i + 1)).map(({ i, b }) => ({ i, s: [...words(b.text)].filter((w) => dw.has(w)).length }));
-    cand.sort((x, y) => y.s - x.s || x.i - y.i);
-    if (cand[0]) plan.push({ scene: cand[0].i + 1, asset: a.n, as: "background", why: "auto: unplaced asset" });
+    const score = (i) => [...words(job.beats[i].text)].filter((w) => dw.has(w)).length;
+    const free = beats.filter(({ i }) => !sceneOf.has(i + 1)).map(({ i }) => i).sort((x, y) => score(y) - score(x) || x - y);
+    let sc = free.length ? free[0] + 1 : null;
+    if (sc === null) {
+      const rep = plan.filter((p) => p.repeat).sort((x, y) => score(Number(y.scene) - 1) - score(Number(x.scene) - 1))[0];
+      if (!rep) continue;
+      plan.splice(plan.indexOf(rep), 1); sceneOf.delete(Number(rep.scene)); uses[Number(rep.asset)]--;
+      sc = Number(rep.scene);
+    }
+    const p = { scene: sc, asset: a.n, as: "background", why: "auto: unplaced asset", repeat: false };
+    plan.push(p); sceneOf.set(sc, p); uses[a.n] = 1;
+  }
+  const capScenes = Math.max(assets.length, Math.ceil(0.6 * beats.length));
+  while (plan.length > capScenes) {
+    const k = plan.findIndex((p) => p.repeat);
+    if (k < 0) break;
+    plan.splice(k, 1);
   }
   const placed = [];
   const takenScenes = new Set();
