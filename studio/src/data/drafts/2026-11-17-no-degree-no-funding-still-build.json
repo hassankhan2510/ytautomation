@@ -1,0 +1,411 @@
+{
+  "id": "2026-11-17-no-degree-no-funding-still-build",
+  "title": "No degree? No funding? Still build.",
+  "subject": "Cohort Zero Founder Community",
+  "theme": "crimson",
+  "seed": 8414,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "No degree? No funding? Still build."
+  ],
+  "caption": "No degree? No funding? Join 100+ people building for free.\nAre you ready to start at zero?\n\n#CohortZero #StartupPakistan #FounderLife #ZeroToOne #BuildInPublic\n🎵 Music: \"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-inspired.mp3",
+  "musicCredit": "\"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 7.5,
+    "unique": 23,
+    "total": 23,
+    "families": 5,
+    "plain": 4,
+    "doc": 1,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "30.3753",
+    "69.3451"
+  ],
+  "beats": [
+    {
+      "text": "Idea نہیں ہے؟",
+      "primitive": "search",
+      "energy": 3,
+      "speak": "Idea نہیں ہے؟",
+      "emphasis": [
+        "Idea",
+        "nahi"
+      ],
+      "props": {
+        "query": "startup idea",
+        "suggestions": [
+          "no results",
+          "blank page",
+          "stuck"
+        ],
+        "pick": 0
+      },
+      "why": "Visualizes the lack of an idea",
+      "bg": "dark desktop screen close up"
+    },
+    {
+      "text": "Degree نہیں ہے؟",
+      "primitive": "spotlight",
+      "energy": 2,
+      "speak": "Degree نہیں ہے؟",
+      "emphasis": [
+        "Degree",
+        "nahi"
+      ],
+      "props": {
+        "word": "DEGREE"
+      },
+      "why": "Highlights the missing credential",
+      "bg": "empty classroom desk wood texture"
+    },
+    {
+      "text": "Funding بھی نہیں؟",
+      "primitive": "iceberg",
+      "energy": 2,
+      "speak": "Funding بھی نہیں؟",
+      "emphasis": [
+        "Funding",
+        "nahi"
+      ],
+      "props": {
+        "top": "Empty Pocket",
+        "below": [
+          "No Capital",
+          "No Investors",
+          "Zero Cash"
+        ]
+      },
+      "why": "Shows hidden financial reality",
+      "bg": "dark office empty chair"
+    },
+    {
+      "text": "پھر بھی founder بننا ہے؟",
+      "primitive": "pov",
+      "energy": 3,
+      "speak": "پھر بھی founder بننا ہے؟",
+      "emphasis": [
+        "founder",
+        "banna"
+      ],
+      "props": {
+        "text": "You want to be a founder?"
+      },
+      "why": "Directs viewer to the challenge",
+      "bg": "creator silhouette against window light"
+    },
+    {
+      "text": "تو یہ video آپ کے لیے ہے۔",
+      "primitive": "highlight",
+      "energy": 2,
+      "speak": "تو یہ video آپ کے لیے ہے۔",
+      "emphasis": [
+        "aap ke",
+        "liye"
+      ],
+      "props": {},
+      "why": "Personalizes the video target",
+      "bg": "soft bokeh city lights night"
+    },
+    {
+      "text": "سیدھی بات کرتے ہیں۔",
+      "primitive": "flowField",
+      "energy": 1,
+      "speak": "سیدھی بات کرتے ہیں۔",
+      "emphasis": [
+        "seedhi",
+        "baat"
+      ],
+      "props": {
+        "word": "REAL TALK"
+      },
+      "why": "Sets calm, serious tone",
+      "bg": "abstract flowing smoke particles"
+    },
+    {
+      "text": "Cohort Zero ایک global founder ecosystem ہے، جو Pakistan سے شروع ہوا ہے۔",
+      "primitive": "globe",
+      "energy": 3,
+      "speak": "Cohort Zero ایک global founder ecosystem ہے، جو Pakistan سے شروع ہوا ہے۔",
+      "emphasis": [
+        "global",
+        "ecosystem"
+      ],
+      "props": {
+        "pins": [
+          {
+            "name": "Pakistan",
+            "lat": 30.3753,
+            "lon": 69.3451
+          },
+          {
+            "name": "Global",
+            "lat": 0,
+            "lon": 0
+          }
+        ],
+        "label": "Cohort Zero"
+      },
+      "why": "Visualizes global ecosystem reach",
+      "bg": "rotating earth night lights satellite view"
+    },
+    {
+      "text": "اس کا ایک ہی mission ہے: آپ کو zero سے one تک لے جانا۔",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "اس کا ایک ہی mission ہے: آپ کو zero سے one تک لے جانا۔",
+      "emphasis": [
+        "zero",
+        "one"
+      ],
+      "why": "Represents the 0 to 1 journey"
+    },
+    {
+      "text": "یعنی صرف ambition سے لے کر آپ کی پہلی startup، پہلا product، یا پہلی بڑی opportunity تک۔",
+      "primitive": "roadmap",
+      "energy": 3,
+      "speak": "یعنی صرف ambition سے لے کر آپ کی پہلی startup، پہلا product، یا پہلی بڑی opportunity تک۔",
+      "emphasis": [
+        "startup",
+        "product"
+      ],
+      "props": {
+        "steps": [
+          "Ambition",
+          "Idea",
+          "Product",
+          "Launch"
+        ],
+        "done": 0
+      },
+      "why": "Maps the startup creation path",
+      "bg": "blueprint paper grid texture"
+    },
+    {
+      "text": "اور نہیں یار، یہ کوئی boring course نہیں ہے۔",
+      "primitive": "strike",
+      "energy": 2,
+      "speak": "اور نہیں یار، یہ کوئی boring course نہیں ہے۔",
+      "emphasis": [
+        "boring",
+        "course"
+      ],
+      "props": {
+        "wrong": "Boring Course",
+        "right": "Live Community"
+      },
+      "why": "Debunks the boring course myth",
+      "bg": "old lecture hall empty seats"
+    },
+    {
+      "text": "یہ ایک community ہے، جہاں آپ کو ملتے ہیں live sessions،",
+      "primitive": "list",
+      "energy": 2,
+      "speak": "یہ ایک community ہے، جہاں آپ کو ملتے ہیں live sessions،",
+      "emphasis": [
+        "live",
+        "sessions"
+      ],
+      "props": {
+        "items": [
+          "Live Sessions"
+        ],
+        "title": "COMMUNITY"
+      },
+      "why": "Lists the first community benefit",
+      "bg": "video conference screen grid"
+    },
+    {
+      "text": "free mentorship، fellowships اور grants کی updates، اور global connections۔",
+      "primitive": "orbit",
+      "energy": 3,
+      "speak": "free mentorship، fellowships اور grants کی updates، اور global connections۔",
+      "emphasis": [
+        "mentorship",
+        "grants"
+      ],
+      "props": {
+        "center": "Community",
+        "items": [
+          "Mentorship",
+          "Fellowships",
+          "Grants",
+          "Connections"
+        ]
+      },
+      "why": "Shows supporting ecosystem elements",
+      "bg": "abstract orbital motion graphics"
+    },
+    {
+      "text": "Student ہوں، fresh graduate ہوں، job چھوڑ کر کچھ build کرنا چاہتے ہوں،",
+      "primitive": "photo",
+      "energy": 2,
+      "speak": "Student ہوں، fresh graduate ہوں، job چھوڑ کر کچھ build کرنا چاہتے ہوں،",
+      "emphasis": [
+        "student",
+        "graduate"
+      ],
+      "props": {
+        "search": "young student graduate",
+        "prompt": "Diverse group of young students and graduates walking on a campus, bright daylight, energetic",
+        "caption": "For Everyone"
+      },
+      "why": "Represents the diverse audience",
+      "bg": "university campus student walking"
+    },
+    {
+      "text": "یا ابھی پتا ہی نہیں کہ کیا build کرنا ہے، سب کے لیے جگہ ہے۔",
+      "primitive": "decode",
+      "energy": 2,
+      "speak": "یا ابھی پتا ہی نہیں کہ کیا build کرنا ہے، سب کے لیے جگہ ہے۔",
+      "emphasis": [
+        "sab",
+        "ke"
+      ],
+      "why": "Symbolizes universal inclusivity",
+      "bg": "aerial view of diverse crowd"
+    },
+    {
+      "text": "اور یہ صرف باتیں نہیں ہیں۔",
+      "primitive": "magnifier",
+      "energy": 3,
+      "speak": "اور یہ صرف باتیں نہیں ہیں۔",
+      "emphasis": [
+        "baaten",
+        "nahi"
+      ],
+      "props": {
+        "detail": "Proof over Promises",
+        "label": "FACTS"
+      },
+      "why": "Emphasizes proof over words",
+      "bg": "document close up magnifying glass"
+    },
+    {
+      "text": "ابھی تک six sessions ہو چکے ہیں، Harvard speakers کے ساتھ panel بھی ہوا،",
+      "primitive": "headlines",
+      "energy": 3,
+      "speak": "ابھی تک six sessions ہو چکے ہیں، Harvard speakers کے ساتھ panel بھی ہوا،",
+      "emphasis": [
+        "six",
+        "sessions"
+      ],
+      "props": {
+        "clips": [
+          {
+            "source": "Tech Daily",
+            "title": "Harvard Panel Held"
+          },
+          {
+            "source": "Startup News",
+            "title": "6 Sessions Done"
+          }
+        ]
+      },
+      "why": "Highlights Harvard speaker event",
+      "bg": "newspaper print texture stack"
+    },
+    {
+      "text": "اور hundred سے زیادہ لوگ live join کر چکے ہیں۔",
+      "primitive": "maskReveal",
+      "energy": 3,
+      "speak": "اور hundred سے زیادہ لوگ live join کر چکے ہیں۔",
+      "emphasis": [
+        "hundred",
+        "live"
+      ],
+      "why": "Shows live attendance number"
+    },
+    {
+      "text": "اور سب کچھ بالکل free۔",
+      "primitive": "factCard",
+      "energy": 3,
+      "speak": "اور سب کچھ بالکل free۔",
+      "emphasis": [
+        "free",
+        "balakal"
+      ],
+      "props": {
+        "fact": "اور سب کچھ بالکل free۔"
+      },
+      "why": "Emphasizes the free cost"
+    },
+    {
+      "text": "آپ کو idea کی ضرورت نہیں، degree کی ضرورت نہیں۔",
+      "primitive": "verdict",
+      "energy": 2,
+      "speak": "آپ کو idea کی ضرورت نہیں، degree کی ضرورت نہیں۔",
+      "emphasis": [
+        "idea",
+        "degree"
+      ],
+      "props": {
+        "claim": "Need Idea & Degree",
+        "verdict": "MYTH",
+        "good": false
+      },
+      "why": "Confirms no prerequisites needed",
+      "bg": "red stamp ink texture"
+    },
+    {
+      "text": "بس drive چاہیے۔",
+      "primitive": "zoomThrough",
+      "energy": 2,
+      "speak": "بس drive چاہیے۔",
+      "emphasis": [
+        "drive",
+        "chahiye"
+      ],
+      "props": {
+        "word": "DRIVE",
+        "reveal": "Only Requirement"
+      },
+      "why": "Focuses on the only requirement",
+      "bg": "car engine starting up close"
+    },
+    {
+      "text": "ہر founder zero سے start کرتا ہے۔",
+      "primitive": "quote",
+      "energy": 1,
+      "speak": "ہر founder zero سے start کرتا ہے۔",
+      "emphasis": [
+        "zero",
+        "start"
+      ],
+      "props": {
+        "author": "Cohort Zero"
+      },
+      "why": "Reinforces the founder origin",
+      "bg": "empty road stretching to horizon"
+    },
+    {
+      "text": "Cohort Zero کو follow کریں، اور comments میں لکھیں ZERO اگر آپ ready ہیں۔",
+      "primitive": "commentCta",
+      "energy": 3,
+      "speak": "Cohort Zero کو follow کریں، اور comments میں لکھیں Zero اگر آپ ready ہیں۔",
+      "emphasis": [
+        "follow",
+        "comment"
+      ],
+      "props": {
+        "keyword": "ZERO",
+        "line": "Comment ZERO if ready"
+      },
+      "why": "Drives engagement and action",
+      "bg": "instagram interface blurred background"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 2"
+      },
+      "hold": 2.2
+    }
+  ]
+}
