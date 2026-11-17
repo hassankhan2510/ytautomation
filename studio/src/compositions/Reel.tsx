@@ -104,7 +104,7 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = false }) => {
         <Vignette strength={theme.vivid ? 0.18 : theme.dark ? 0.55 : 0.25} />
         <ProgressBar />
         {job.audio ? <Audio src={staticFile(job.audio)} /> : null}
-        {job.music ? <Audio src={staticFile(job.music)} volume={musicVolume} loop /> : null}
+        {job.music ? <Audio src={staticFile(job.music)} volume={musicVolume} loop={!job.musicFit} /> : null}
         {job.sfx !== false ? <SoundLayer timeline={timeline} cuts={cuts} voiced={voiced} /> : null}
       </AbsoluteFill>
     </RenderProvider>

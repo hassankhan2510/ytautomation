@@ -59,6 +59,8 @@ export type Job = {
   audio?: string;
   /** Music bed under public/ — mixed low under the voice. Optional. */
   music?: string;
+  /** true when scripts/music_fit.py re-arranged the bed to this video's exact length (don't loop it). */
+  musicFit?: boolean;
   /** Word timings for `audio`. If absent, timing is estimated from the text. */
   words?: Word[];
   /** Cap on real GPU shader cuts when the render enables shaders (slow on CPU runners). Default: no cap. */

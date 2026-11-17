@@ -177,6 +177,10 @@ jobs:
           TRANSCRIPT: out/transcript.json
         run: python scripts/narrate.py out/props.json
 
+      - name: ③b Fit the music to the story (drop on the reveal, ends on the beat)
+        continue-on-error: true
+        run: python scripts/music_apply.py out/props.json
+
       - name: ④ Render the reel
         run: |
           npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
