@@ -283,6 +283,7 @@ def use_voiceover(props_path, props):
     """VOICE=upload: the creator's own voiceover (ElevenLabs / phone / studio mic) IS the narration.
     No TTS. The script's words are placed on the real audio by align.py (cross-script aware), so captions
     and scene cuts follow the actual delivery — ad-libs, skipped words and Urdu/Roman spelling included."""
+    import subprocess
     from align import timed_script
     src = os.environ.get("VOICEOVER", "")
     if not src or not os.path.exists(src):
