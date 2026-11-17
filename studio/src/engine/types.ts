@@ -40,6 +40,9 @@ export type Beat = {
   bgStart?: number;
   /** The creator's OWN media: lighter scrim so it is actually seen. */
   bgHero?: boolean;
+  /** Caption band for this beat (default "low"). Set by the self-check loop (scripts/critic.py) when
+   *  the default band would cover a face / the subject. */
+  captionPos?: "low" | "mid" | "high";
   /** 2.5D depth layers for an image background (set by scripts/depth25d.py). */
   layers?: { far: string; mid: string; near: string };
 };

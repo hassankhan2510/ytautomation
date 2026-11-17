@@ -184,5 +184,6 @@ if __name__ == "__main__":
     proj = sys.argv[1]
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(proj, "_analysis.json")
     items = analyze_project(proj)
+    os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     json.dump({"project": proj, "assets": items}, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     print(f"analysed {len(items)} assets -> {out}")

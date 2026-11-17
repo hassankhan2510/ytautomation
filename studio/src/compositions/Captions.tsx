@@ -26,6 +26,14 @@ const chunkWords = (words: TimedWord[]): Chunk[] => {
   return out.map((c, i) => ({ ...c, to: Math.min(out[i + 1]?.from ?? c.to + 12, c.to + 12) }));
 };
 
+/** Where the caption block sits. "low" = the classic Reels band (clear of the like/comment rail);
+ *  "high" / "mid" are used by the self-check loop when "low" would cover a face or the subject. */
+export const CAPTION_BAND: Record<"low" | "mid" | "high", React.CSSProperties> = {
+  low: { justifyContent: "flex-end", paddingBottom: 400 },
+  mid: { justifyContent: "center", paddingTop: 120 },
+  high: { justifyContent: "flex-start", paddingTop: 300 },
+};
+
 /**
  * KARAOKE CAPTIONS — one global layer over every beat. Each chunk pops in; the word being spoken
  * gets the accent box. Hidden automatically on beats whose primitive already shows the words.
@@ -43,7 +51,7 @@ export const Captions: React.FC = () => {
   if (beat.primitive === "photo" && !beat.props?.src) return null;
   const s = spring({ frame: frame - chunk.from, fps, config: { damping: 14, stiffness: 260, mass: 0.6 } });
   return (
-    <AbsoluteFill style={{ justifyContent: "flex-end", alignItems: "center", paddingBottom: 400, pointerEvents: "none" }}>
+    <AbsoluteFill style={{ alignItems: "center", pointerEvents: "none", ...CAPTION_BAND[beat.captionPos || "low"] }}>
       <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "8px 18px", maxWidth: 940, transform: `scale(${interpolate(s, [0, 1], [0.7, 1])}) translateY(${(1 - s) * 30}px)`, opacity: Math.min(1, s * 2) }}>
         {chunk.words.map((w, i) => {
           const active = frame >= w.from && frame < (chunk.words[i + 1]?.from ?? chunk.to);

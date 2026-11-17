@@ -180,7 +180,21 @@ jobs:
           npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
           npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
 
-      - name: ⑤ Caption file
+      - name: ⑤ Self-check — watch the render, fix the edit, render again
+        run: |
+          set +e
+          python scripts/critic.py out/reel.mp4 out/props.json out/critic1.json --apply
+          code=$?
+          set -e
+          if [ "$code" = "3" ]; then
+            echo "↻ scene fixes applied — rendering again" | tee -a "$GITHUB_STEP_SUMMARY"
+            npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=error
+            python scripts/critic.py out/reel.mp4 out/props.json out/critic2.json --apply || true
+          elif [ "$code" != "0" ]; then
+            echo "::warning::self-check crashed (exit $code) — keeping the first render"
+          fi
+
+      - name: ⑥ Caption file
         run: |
           node -e '
             const fs = require("fs");
