@@ -251,21 +251,36 @@ if (language === "urdu") {
   const scriptLines = lines.map((l, i) => ({ i, t: l.text })).filter((x) => urduLetterCount(x.t) >= 3);
   if (scriptLines.length) {
     for (const x of scriptLines) { lines[x.i].speak = clean(x.t); fromScript.add(x.i); }
+    // Run 21 (22 short lines) came back with every line rejected: told "same words, copy exactly", the
+    // model returned the Urdu unchanged. So: explicit "no Urdu letters" rule + examples, small batches,
+    // position fallback when "i" is missing, one-line retries, and the first rejection is logged.
+    const ROMAN_RULES = `Convert Urdu SCRIPT to ROMAN Urdu (Latin letters), the way Pakistanis text casually. Every Urdu-script word MUST be rewritten in Latin letters — the output must contain NO Urdu/Arabic letters at all. Keep English words, names and numbers exactly as they are. Same words, same order, same meaning — never translate to English, never add or drop words.
+Examples: "Idea نہیں ہے؟" → "Idea nahi hai?" · "Cohort Zero ایک global ecosystem ہے۔" → "Cohort Zero ek global ecosystem hai." · "اور سب کچھ بالکل free۔" → "Aur sab kuch bilkul free."`;
+    let loggedReject = false;
+    const accept = (k, t) => {
+      if (!fromScript.has(k) || !clean(t)) return;
+      if (urduLetterCount(t) === 0) lines[k].text = clean(t);
+      else if (!loggedReject) { loggedReject = true; console.log(`  ! romanise rejected (still Urdu letters): "${clean(t).slice(0, 70)}"`); }
+    };
     const romanize = async (todo) => {
-      const r = await groqJSON(
-        `Write each numbered line in ROMAN Urdu (Latin letters), the way Pakistanis text casually ("ye", "hai", "mein", "unhone"). TRANSLITERATE ONLY: same words, same order, same meaning; copy every English word, name and number exactly; never translate, add or drop anything.
-Return ONLY JSON: {"lines":[{"i":n,"text":"..."}]}`,
-        todo.map((x) => `${x.i + 1}. ${x.t}`).join("\n"),
-        { maxTokens: 2500, temperature: 0.1 },
-      ).catch(() => null);
-      for (const o of r?.lines || []) {
-        const k = Number(o?.i) - 1;
-        if (fromScript.has(k) && clean(o?.text) && urduLetterCount(o.text) === 0) lines[k].text = clean(o.text);
+      for (let b = 0; b < todo.length; b += 8) {
+        const batch = todo.slice(b, b + 8);
+        const r = await groqJSON(`${ROMAN_RULES}\nReturn ONLY JSON: {"lines":[{"i":n,"text":"..."}]} — one entry per numbered line.`,
+          batch.map((x) => `${x.i + 1}. ${x.t}`).join("\n"), { maxTokens: 2000, temperature: 0.1 }).catch(() => null);
+        (r?.lines || []).forEach((o, pos) => {
+          const n = Number(o?.i);
+          accept(Number.isFinite(n) && fromScript.has(n - 1) ? n - 1 : batch[pos]?.i, o?.text);
+        });
       }
     };
     await romanize(scriptLines);
-    const left = scriptLines.filter((x) => urduLetterCount(lines[x.i].text) > 0);
+    let left = scriptLines.filter((x) => urduLetterCount(lines[x.i].text) > 0);
     if (left.length) await romanize(left);
+    left = scriptLines.filter((x) => urduLetterCount(lines[x.i].text) > 0);
+    for (const x of left.slice(0, 30)) {
+      const one = await groqJSON(`${ROMAN_RULES}\nReturn ONLY JSON: {"text":"..."}`, x.t, { maxTokens: 400, temperature: 0 }).catch(() => null);
+      accept(x.i, one?.text);
+    }
     const stillScript = scriptLines.filter((x) => urduLetterCount(lines[x.i].text) > 0).length;
     urduReport.push(`${scriptLines.length} line(s) given in Urdu script: voice reads them as written, screen shows Roman Urdu${stillScript ? ` (${stillScript} could not be romanised)` : ""}`);
   }
