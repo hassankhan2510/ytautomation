@@ -18,7 +18,13 @@ def transcribe(path, lang=None):
     size = os.environ.get("WHISPER_MODEL", "small")
     model = WhisperModel(size, device="cpu", compute_type="int8", cpu_threads=os.cpu_count() or 2)
     t0 = time.time()
-    segs, info = model.transcribe(path, language=lang, word_timestamps=True, vad_filter=True,
+    # decode with ffmpeg ourselves (16 kHz mono float32): faster-whisper's PyAV path breaks whenever PyAV
+    # changes its API, and ffmpeg reads every format a phone / ElevenLabs produces
+    import subprocess
+    import numpy as np
+    raw = subprocess.run(["ffmpeg", "-v", "error", "-i", path, "-f", "f32le", "-ac", "1", "-ar", "16000", "-"], capture_output=True, check=True).stdout
+    audio = np.frombuffer(raw, np.float32).copy()
+    segs, info = model.transcribe(audio, language=lang, word_timestamps=True, vad_filter=True,
                                   vad_parameters={"min_silence_duration_ms": 300}, beam_size=5,
                                   condition_on_previous_text=False)
     words, text = [], []

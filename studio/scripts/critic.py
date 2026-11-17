@@ -24,11 +24,8 @@ import numpy as np
 W, H = 1080, 1920
 BANDS = {"low": (1180, 1560), "mid": (760, 1160), "high": (300, 640)}  # caption block y-ranges (1920 tall)
 
-try:
-    import cv2
-    _FACE = cv2.CascadeClassifier(os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml"))
-except Exception:
-    cv2, _FACE = None, None
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import faces as _faces  # noqa: E402
 
 
 def frames(path, fps, w, h):
@@ -86,12 +83,8 @@ def caption_chunks(job):
 
 
 def faces_in(img):
-    if _FACE is None:
-        return []
-    g = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     s = img.shape[0] / H
-    found = _FACE.detectMultiScale(g, scaleFactor=1.08, minNeighbors=5, minSize=(int(70 * s), int(70 * s)))
-    return [(x / s, y / s, w / s, h / s) for (x, y, w, h) in found]
+    return [(x / s, y / s, w / s, h / s) for (x, y, w, h) in _faces.detect(img, min_frac=0.06)]
 
 
 def overlap(face, band):
@@ -132,7 +125,9 @@ def critique(mp4, job):
                                "evidence": "no visible change for 2.5 s while narration continues", "fix": None})
     # faces under the caption band (only where captions are on screen)
     chunks = caption_chunks(job)
-    if _FACE is not None and chunks:
+    if not _faces.AVAILABLE:
+        issues.append({"t": None, "beat": None, "type": "check_skipped", "severity": "low", "evidence": "no face detector available: caption/face check skipped", "fix": None})
+    if _faces.AVAILABLE and chunks:
         big = frames(mp4, 2, 540, 960)
         per_beat = {}
         for i, f in enumerate(big):

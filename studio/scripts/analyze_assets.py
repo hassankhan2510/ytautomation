@@ -24,11 +24,7 @@ from scipy.ndimage import gaussian_filter, uniform_filter
 IMG_EXT = (".jpg", ".jpeg", ".png", ".webp")
 VID_EXT = (".mp4", ".mov", ".m4v", ".webm", ".mkv")
 
-try:
-    import cv2  # optional
-    _FACE = cv2.CascadeClassifier(os.path.join(cv2.data.haarcascades, "haarcascade_frontalface_default.xml"))
-except Exception:  # no OpenCV -> saliency only
-    cv2, _FACE = None, None
+import faces as _faces  # YuNet / Haar / none (see faces.py)
 
 
 def saliency(rgb):
@@ -52,12 +48,9 @@ def saliency(rgb):
 
 
 def faces(rgb):
-    if _FACE is None:
-        return []
-    g = (rgb.mean(-1) * 255).astype(np.uint8)
-    H, W = g.shape
-    found = _FACE.detectMultiScale(g, scaleFactor=1.1, minNeighbors=6, minSize=(max(24, W // 25), max(24, W // 25)))
-    return [{"x": float((x + w / 2) / W), "y": float((y + h / 2) / H), "w": float(w / W), "h": float(h / H)} for (x, y, w, h) in found]
+    u8 = (np.clip(rgb, 0, 1) * 255).astype(np.uint8)
+    H, W = u8.shape[:2]
+    return [{"x": (x + w / 2) / W, "y": (y + h / 2) / H, "w": w / W, "h": h / H} for (x, y, w, h) in _faces.detect(u8)]
 
 
 def focus_point(rgb):
@@ -183,6 +176,8 @@ def analyze_project(project):
 if __name__ == "__main__":
     proj = sys.argv[1]
     out = sys.argv[2] if len(sys.argv) > 2 else os.path.join(proj, "_analysis.json")
+    if not _faces.AVAILABLE:
+        print("  ! no face detector available (install opencv<5 or provide the YuNet model) — subject = saliency only")
     items = analyze_project(proj)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)
     json.dump({"project": proj, "assets": items}, open(out, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
