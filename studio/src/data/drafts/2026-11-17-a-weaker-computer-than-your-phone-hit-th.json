@@ -1,0 +1,185 @@
+{
+  "id": "2026-11-17-a-weaker-computer-than-your-phone-hit-th",
+  "title": "A weaker computer than your phone hit the moon.",
+  "subject": "Moon landing tech comparison",
+  "theme": "ocean",
+  "seed": 1783,
+  "handle": "",
+  "language": "english",
+  "hooks": [
+    "A weaker computer than your phone hit the moon.",
+    "One laptop could run a media empire?"
+  ],
+  "caption": "Your phone is stronger than the computer that landed us on the moon 🌕\nWhat’s one tiny tech change you can’t live without? 👇\n#techtok #history #moonlanding #futurism #genz\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/doc-stay-the-course.mp3",
+  "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 11,
+    "total": 11,
+    "families": 5,
+    "plain": 3,
+    "doc": 1,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Okay, quick question, what if one person could run an entire media company from a laptop?",
+      "primitive": "search",
+      "energy": 3,
+      "emphasis": [
+        "laptop",
+        "media company"
+      ],
+      "props": {
+        "query": "one person media company",
+        "suggestions": [
+          "start from scratch",
+          "laptop only",
+          "solopreneur success"
+        ],
+        "pick": 0
+      },
+      "why": "Visualizes the 'what if' question",
+      "bg": "close up laptop glowing screen"
+    },
+    {
+      "text": "Sounds crazy, but here is the thing, most of the history we get shifts marked as small,",
+      "primitive": "strike",
+      "energy": 2,
+      "emphasis": [
+        "history",
+        "shifts"
+      ],
+      "props": {
+        "wrong": "History is small",
+        "right": "History is massive"
+      },
+      "why": "Debunks the 'small history' myth",
+      "bg": "old newspaper clippings texture"
+    },
+    {
+      "text": "a garage, a notebook, a single idea that nobody took seriously.",
+      "primitive": "stickyNotes",
+      "energy": 1,
+      "emphasis": [
+        "garage",
+        "notebook"
+      ],
+      "props": {
+        "notes": [
+          "Garage",
+          "Notebook",
+          "Single Idea"
+        ]
+      },
+      "why": "Lists the humble starting tools",
+      "bg": "wooden workbench notebook pen"
+    },
+    {
+      "text": "In 1969, a computer with less power than your phone landed a human on the moon.",
+      "primitive": "factCard",
+      "energy": 3,
+      "emphasis": [
+        "less power",
+        "moon"
+      ],
+      "props": {
+        "fact": "In 1969, a computer with less power than your phone landed a human on the moon."
+      },
+      "why": "Shows power difference visually"
+    },
+    {
+      "text": "Think about that for a second.",
+      "primitive": "auroraType",
+      "energy": 1,
+      "emphasis": [
+        "Think",
+        "second"
+      ],
+      "props": {
+        "word": "Think About It"
+      },
+      "why": "Calm pause for reflection",
+      "bg": "grainy moon surface close up"
+    },
+    {
+      "text": "So today, I am building something new in the public.",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "building",
+        "public"
+      ],
+      "why": "Announces the new build publicly"
+    },
+    {
+      "text": "Every single day, someday it works, someday everything breaks.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "emphasis": [
+        "breaks",
+        "works"
+      ],
+      "why": "Shows the daily technical chaos"
+    },
+    {
+      "text": "And honestly, that's the fun part, if you are curious about history,",
+      "primitive": "blob",
+      "energy": 2,
+      "emphasis": [
+        "fun",
+        "curious"
+      ],
+      "props": {
+        "word": "Curiosity"
+      },
+      "why": "Conveys warm, organic curiosity",
+      "bg": "warm golden hour light blur"
+    },
+    {
+      "text": "science and technology or just how the world really works,",
+      "primitive": "orbit",
+      "energy": 1,
+      "emphasis": [
+        "science",
+        "technology"
+      ],
+      "props": {
+        "center": "World",
+        "items": [
+          "Science",
+          "Technology",
+          "History",
+          "How It Works"
+        ]
+      },
+      "why": "Groups the content pillars",
+      "bg": "abstract geometric shapes rotating"
+    },
+    {
+      "text": "so you are at the right place, stay tuned.",
+      "primitive": "commentCta",
+      "energy": 3,
+      "emphasis": [
+        "right place",
+        "stay tuned"
+      ],
+      "props": {
+        "keyword": "STAY TUNED",
+        "line": "Follow for updates"
+      },
+      "why": "Directs user to follow/stay",
+      "bg": "bright clean minimal background"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
