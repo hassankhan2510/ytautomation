@@ -20,7 +20,7 @@ on:
       voice:
         description: "upload = YOUR voiceover file from the project · or a cloned / AI voice reads the script"
         type: choice
-        options: [upload, mine, mine-sufyan, mine-pariya, mine-sabeha, omnivoice, omnivoice-sufyan, omnivoice-pariya, omnivoice-sabeha, kokoro, edge, none]
+        options: [upload, mine, mine-sufyan, mine-pariya, mine-sabeha, mine-saher, omnivoice, omnivoice-sufyan, omnivoice-pariya, omnivoice-sabeha, omnivoice-saher, kokoro, edge, none]
         default: upload
       language:
         description: "english · urdu (Urdu script voice, Roman Urdu captions)"

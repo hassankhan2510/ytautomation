@@ -71,7 +71,7 @@ export async function gh(path, init = {}) {
 // Whitelists — the workflow re-validates, but bad input is rejected here first.
 export const CHOICES = {
   scriptMode: ["as-written", "ai-rewrite", "from-voiceover"],
-  voice: ["upload", "mine", "mine-sufyan", "mine-pariya", "mine-sabeha", "omnivoice", "omnivoice-sufyan", "omnivoice-pariya", "omnivoice-sabeha", "kokoro", "edge", "none"],
+  voice: ["upload", "mine", "mine-sufyan", "mine-pariya", "mine-sabeha", "mine-saher", "omnivoice", "omnivoice-sufyan", "omnivoice-pariya", "omnivoice-sabeha", "omnivoice-saher", "kokoro", "edge", "none"],
   language: ["english", "urdu"],
   style: ["explainer", "techNews", "breakdown", "story", "buildInPublic"],
   theme: ["crimson", "ocean", "grape", "sunrise", "lagoon", "mango", "mint", "neon", "acid", "electric", "paper", "taxi"],
