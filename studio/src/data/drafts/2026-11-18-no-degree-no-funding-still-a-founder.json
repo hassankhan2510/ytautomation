@@ -1,0 +1,368 @@
+{
+  "id": "2026-11-18-no-degree-no-funding-still-a-founder",
+  "title": "No degree, no funding, still a founder?",
+  "subject": "Startup founder community",
+  "theme": "crimson",
+  "seed": 7271,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "No degree, no funding, still a founder?"
+  ],
+  "caption": "No degree? No funding? No problem.\nWho is ready to start from zero? 👇 #CohortZero #StartupPakistan #FounderLife #ZeroToOne #BuildInPublic\n🎵 Music: \"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-inspired.mp3",
+  "musicCredit": "\"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 23,
+    "total": 23,
+    "families": 6,
+    "plain": 4,
+    "doc": 1,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Idea nahi hai?",
+      "primitive": "search",
+      "energy": 3,
+      "speak": "Idea نہیں ہے؟",
+      "emphasis": [
+        "Idea"
+      ],
+      "props": {
+        "query": "startup idea",
+        "suggestions": [
+          "no idea",
+          "what to build",
+          "help"
+        ],
+        "pick": 0
+      },
+      "why": "Visualizes the 'no idea' question",
+      "bg": "empty whiteboard classroom"
+    },
+    {
+      "text": "Degree nahi hai?",
+      "primitive": "spotlight",
+      "energy": 2,
+      "speak": "Degree نہیں ہے؟",
+      "emphasis": [
+        "Degree"
+      ],
+      "props": {
+        "word": "DEGREE"
+      },
+      "why": "Isolates the missing credential",
+      "bg": "university diploma frame"
+    },
+    {
+      "text": "Funding bhi nahi?",
+      "primitive": "iceberg",
+      "energy": 2,
+      "speak": "Funding بھی نہیں؟",
+      "emphasis": [
+        "Funding"
+      ],
+      "props": {
+        "top": "No Money",
+        "below": [
+          "No Grants",
+          "No Investors",
+          "Zero Cash"
+        ]
+      },
+      "why": "Shows hidden financial reality",
+      "bg": "empty wallet close up"
+    },
+    {
+      "text": "Phir bhi founder banna hai?",
+      "primitive": "zoomThrough",
+      "energy": 3,
+      "speak": "پھر بھی founder بننا ہے؟",
+      "emphasis": [
+        "founder"
+      ],
+      "props": {
+        "word": "ZERO",
+        "reveal": "FOUNDER"
+      },
+      "why": "Intense transition to determination",
+      "bg": "close up eye focus"
+    },
+    {
+      "text": "To yeh video aap ke liye hai.",
+      "primitive": "stomp",
+      "energy": 3,
+      "speak": "تو یہ video آپ کے لیے ہے۔",
+      "emphasis": [
+        "aap ke liye"
+      ],
+      "props": {},
+      "why": "Direct hook punch",
+      "bg": "direct camera lens light"
+    },
+    {
+      "text": "Seedhi baat karte hain.",
+      "primitive": "flowField",
+      "energy": 1,
+      "speak": "سیدھی بات کرتے ہیں۔",
+      "emphasis": [
+        "Seedhi baat"
+      ],
+      "props": {
+        "word": "REALITY"
+      },
+      "why": "Calm serious statement backdrop",
+      "bg": "abstract particle motion"
+    },
+    {
+      "text": "Cohort Zero ek global founder ecosystem hai, jo Pakistan se shuru hua hai.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "Cohort Zero ایک global founder ecosystem ہے، جو Pakistan سے شروع ہوا ہے۔",
+      "emphasis": [
+        "Pakistan"
+      ],
+      "why": "Shows global start from PK"
+    },
+    {
+      "text": "Us ka ek hi mission hai: aap ko zero se one tak le jana.",
+      "primitive": "highlight",
+      "energy": 3,
+      "speak": "اس کا ایک ہی mission ہے: آپ کو zero سے one تک لے جانا۔",
+      "emphasis": [
+        "zero se one"
+      ],
+      "props": {},
+      "why": "Emphasizes the core mission",
+      "bg": "minimalist studio light"
+    },
+    {
+      "text": "Yani sirf ambition se le kar aap ki pehli startup, pehla product, ya pehli badi opportunity tak.",
+      "primitive": "roadmap",
+      "energy": 2,
+      "speak": "یعنی صرف ambition سے لے کر آپ کی پہلی startup، پہلا product، یا پہلی بڑی opportunity تک۔",
+      "emphasis": [
+        "startup"
+      ],
+      "props": {
+        "steps": [
+          "Ambition",
+          "Idea",
+          "Product",
+          "Startup"
+        ]
+      },
+      "why": "Visualizes the journey path",
+      "bg": "path drawing animation"
+    },
+    {
+      "text": "Aur nahi yaar, yeh koi boring course nahi hai.",
+      "primitive": "strike",
+      "energy": 2,
+      "speak": "اور نہیں یار، یہ کوئی boring course نہیں ہے۔",
+      "emphasis": [
+        "boring course"
+      ],
+      "props": {
+        "wrong": "Boring Course",
+        "right": "Live Ecosystem"
+      },
+      "why": "Debunks the boring course myth",
+      "bg": "crossed out text texture"
+    },
+    {
+      "text": "Yeh ek community hai, jahan aap ko milte hain live sessions,",
+      "primitive": "list",
+      "energy": 2,
+      "speak": "یہ ایک community ہے، جہاں آپ کو ملتے ہیں live sessions،",
+      "emphasis": [
+        "live sessions"
+      ],
+      "props": {
+        "items": [
+          "Live Sessions"
+        ],
+        "title": "Community"
+      },
+      "why": "Introduces the first benefit",
+      "bg": "video call grid blur"
+    },
+    {
+      "text": "free mentorship, fellowships aur grants ki updates, aur global connections.",
+      "primitive": "burst",
+      "energy": 3,
+      "speak": "free mentorship، fellowships اور grants کی updates، اور global connections۔",
+      "emphasis": [
+        "mentorship",
+        "grants"
+      ],
+      "props": {
+        "word": "PERKS",
+        "glyphs": [
+          "Mentorship",
+          "Fellowships",
+          "Grants",
+          "Global"
+        ]
+      },
+      "why": "Explosive reveal of perks",
+      "bg": "confetti particles burst"
+    },
+    {
+      "text": "Student hon, fresh graduate hon, job chhor kar kuch build karna chahate hon,",
+      "primitive": "cardFan",
+      "energy": 2,
+      "speak": "Student ہوں، fresh graduate ہوں، job چھوڑ کر کچھ build کرنا چاہتے ہوں،",
+      "emphasis": [
+        "Student",
+        "graduate"
+      ],
+      "props": {
+        "cards": [
+          "Student",
+          "Graduate",
+          "Ex-Employee",
+          "Dreamer"
+        ]
+      },
+      "why": "Shows diverse audience types",
+      "bg": "fanned out cards"
+    },
+    {
+      "text": "ya abhi pata hi nahi ke kya build karna hai, sab ke liye jagah hai.",
+      "primitive": "blob",
+      "energy": 2,
+      "speak": "یا ابھی پتا ہی نہیں کہ کیا build کرنا ہے، سب کے لیے جگہ ہے۔",
+      "emphasis": [
+        "sab ke liye"
+      ],
+      "props": {
+        "word": "EVERYONE"
+      },
+      "why": "Soft inclusive message",
+      "bg": "liquid morphing shapes"
+    },
+    {
+      "text": "Aur yeh sirf baatein nahi hain.",
+      "primitive": "magnifier",
+      "energy": 2,
+      "speak": "اور یہ صرف باتیں نہیں ہیں۔",
+      "emphasis": [
+        "sirf baatein"
+      ],
+      "props": {
+        "detail": "Real Results",
+        "text": "Not just words, but action."
+      },
+      "why": "Focus on proof not talk",
+      "bg": "document close up"
+    },
+    {
+      "text": "Abhi tak six sessions ho chuke hain, Harvard speakers ke saath panel bhi hua,",
+      "primitive": "maskReveal",
+      "energy": 3,
+      "speak": "ابھی تک six sessions ہو چکے ہیں، Harvard speakers کے ساتھ panel بھی ہوا،",
+      "emphasis": [
+        "Harvard",
+        "panel"
+      ],
+      "why": "News style proof of events"
+    },
+    {
+      "text": "Aur hundred se zyada log live join kar chuke hain.",
+      "primitive": "quote",
+      "energy": 3,
+      "speak": "اور hundred سے زیادہ لوگ live join کر چکے ہیں۔",
+      "emphasis": [
+        "100+"
+      ],
+      "why": "Big number impact"
+    },
+    {
+      "text": "Aur sab kuch bilkul free.",
+      "primitive": "price",
+      "energy": 3,
+      "speak": "اور سب کچھ بالکل free۔",
+      "emphasis": [
+        "free"
+      ],
+      "props": {
+        "was": "Expensive",
+        "now": "FREE"
+      },
+      "why": "Slashes the cost to zero",
+      "bg": "price tag close up"
+    },
+    {
+      "text": "Aap ko idea ki zaroorat nahi, degree ki zaroorat nahi.",
+      "primitive": "verdict",
+      "energy": 2,
+      "speak": "آپ کو idea کی ضرورت نہیں، degree کی ضرورت نہیں۔",
+      "emphasis": [
+        "zaroorat nahi"
+      ],
+      "props": {
+        "claim": "Idea & Degree",
+        "verdict": "NOT NEEDED",
+        "good": true
+      },
+      "why": "Stamping out prerequisites",
+      "bg": "stamped document"
+    },
+    {
+      "text": "Bas drive chahiye.",
+      "primitive": "factCard",
+      "energy": 3,
+      "speak": "بس drive چاہیے۔",
+      "emphasis": [
+        "drive"
+      ],
+      "why": "Zoom in on the key trait",
+      "props": {
+        "fact": "Bas drive chahiye."
+      }
+    },
+    {
+      "text": "Har founder zero se start karta hai.",
+      "primitive": "tape",
+      "energy": 1,
+      "speak": "ہر founder zero سے start کرتا ہے۔",
+      "emphasis": [
+        "zero"
+      ],
+      "props": {
+        "tape": "ZERO TO ONE",
+        "word": "START"
+      },
+      "why": "Reinforcing the core truth",
+      "bg": "scrolling marquee text"
+    },
+    {
+      "text": "Cohort Zero ko follow karein, aur comments mein likhein ZERO agar aap ready hain.",
+      "primitive": "commentCta",
+      "energy": 3,
+      "speak": "Cohort Zero کو follow کریں، اور comments میں لکھیں Zero اگر آپ ready ہیں۔",
+      "emphasis": [
+        "ZERO"
+      ],
+      "props": {
+        "keyword": "ZERO",
+        "line": "Comment ZERO below"
+      },
+      "why": "Direct engagement prompt",
+      "bg": "comment section interface"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 2"
+      },
+      "hold": 2.2
+    }
+  ]
+}
