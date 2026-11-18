@@ -26,7 +26,11 @@ export const BgMedia: React.FC<{ beat: TimedBeat; seed: number }> = ({ beat, see
   const fy = beat.bgFocus ? Math.min(0.9, Math.max(0.1, beat.bgFocus.y)) : 0.5;
   const pos = `${(fx * 100).toFixed(1)}% ${(fy * 100).toFixed(1)}%`;
   const kb = beat.bgKind === "image"
-    ? beat.bgFocus
+    ? beat.bgMove === "out"
+      ? `scale(${interpolate(t, [0, 1], [1.24, 1.06])})`
+      : beat.bgMove === "left" || beat.bgMove === "right"
+      ? `scale(1.16) translate(${(beat.bgMove === "left" ? 1 : -1) * interpolate(t, [0, 1], [-3.5, 3.5])}%, 0%)`
+      : beat.bgFocus
       ? `scale(${interpolate(t, [0, 1], [1.06, 1.22])})`
       : `scale(${interpolate(t, [0, 1], [1.08, 1.2])}) translate(${dir * interpolate(t, [0, 1], [-1.5, 1.5])}%, ${interpolate(t, [0, 1], [1, -1])}%)`
     : `scale(${interpolate(t, [0, 1], [1.04, 1.1])})`;

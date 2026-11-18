@@ -38,6 +38,8 @@ export type Beat = {
   bgFocus?: { x: number; y: number };
   /** Seconds into a background CLIP to start from (its most interesting window). */
   bgStart?: number;
+  /** Camera move on a background PHOTO (only-my-media gives repeats a different move). Default: push in. */
+  bgMove?: "in" | "out" | "left" | "right";
   /** The creator's OWN media: lighter scrim so it is actually seen. */
   bgHero?: boolean;
   /** Caption band for this beat (default "low"). Set by the self-check loop (scripts/critic.py) when

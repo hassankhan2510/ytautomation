@@ -125,6 +125,13 @@
       <input type="file" id="files" accept="image/*,video/*" multiple class="hidden">
       <p class="hint">Describe each one (who / what / where) — the AI places it where your script talks about it.</p>
       <div class="grid" id="assets"></div>
+      <div class="field"><label for="backgrounds">What the video is made of</label>
+        <select id="backgrounds">
+          <option value="video">My media + animations + stock video</option>
+          <option value="photo">My media + animations + stock photos</option>
+          <option value="off">My media + animations — no stock</option>
+          <option value="mine">Only my media (re-cut across every scene) + animations</option>
+        </select></div>
     </section>
 
     <section class="card">
@@ -163,8 +170,6 @@
         <div class="row field">
           <div><label for="channel">End card</label>
             <select id="channel"><option value="none">Follow prompt</option><option value="cohort_zero">Cohort Zero logo</option></select></div>
-          <div><label for="backgrounds">Scenes without your media</label>
-            <select id="backgrounds"><option value="video">Stock video</option><option value="photo">Stock photos</option><option value="off">Generated</option></select></div>
         </div>
         <div class="row field">
           <div><label for="music">Music</label><select id="music"><option value="auto">On</option><option value="none">Off</option></select></div>

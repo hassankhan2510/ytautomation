@@ -76,7 +76,7 @@ export const CHOICES = {
   style: ["explainer", "techNews", "breakdown", "story", "buildInPublic"],
   theme: ["crimson", "ocean", "grape", "sunrise", "lagoon", "mango", "mint", "neon", "acid", "electric", "paper", "taxi"],
   channel: ["none", "cohort_zero"],
-  backgrounds: ["video", "photo", "off"],
+  backgrounds: ["video", "photo", "off", "mine"],
   music: ["auto", "none"],
   sfx: ["on", "off"],
   pace: ["fast", "normal", "turbo"],

@@ -75,3 +75,11 @@ Finished videos: `https://github.com/hassankhan2510/ytautomation/releases/tag/re
 - **Pace** (page + all studio workflows, default **fast**): normal 1.08× / pauses ×1 · fast 1.2× / pauses ×0.55 ·
   turbo 1.32× / pauses ×0.35. Uses each engine's own speed control (natural pitch); the Chatterbox clone has none,
   so it gets a pitch-preserving ffmpeg atempo.
+
+## 2026-11-18 — Media choice: what the video is made of
+Page section "2 · Photos & clips" → *What the video is made of* (BG_MODE): `video`/`photo` = my media + animations +
+stock (as before) · `off` = my media + animations, **no stock and no AI images** (scene image slots use their designed
+no-image look) · `mine` = **only my media** in every scene: per-scene pick by meaning minus recency (never the same asset
+twice in a row) minus wear; a clip returns as a different, non-overlapping high-interest window; a photo returns with a
+different camera move (`bgMove`: in/out/left/right in bgmedia.tsx). No uploads + `mine` → falls back to `off`.
+Tested on projects/demo (4 assets → 22 scenes, clip windows 36/33/26/40/15/12 s, photo moves rotate). preview.js rebuilt.

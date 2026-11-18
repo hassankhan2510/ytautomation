@@ -43,9 +43,9 @@ on:
         options: ["none", cohort_zero]
         default: "none"
       backgrounds:
-        description: "For scenes WITHOUT one of your assets: video = stock footage · photo = stock photos · off = generated"
+        description: "Media: video/photo = yours + animations + stock · off = yours + animations, no stock · mine = ONLY your media in every scene"
         type: choice
-        options: [video, photo, "off"]
+        options: [video, photo, "off", mine]
         default: video
       music:
         description: "Background music"

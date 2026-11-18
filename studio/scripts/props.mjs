@@ -190,6 +190,13 @@ Return ONLY JSON: {"place":[{"scene":n,"photo":k,"as":"slot|background|photo","w
  * subject-centred background; clips -> full-screen background trimmed to their most interesting window,
  * with a light scrim so the creator's footage is actually seen.
  */
+/* MEDIA MODE (the page's "Media" choice, passed as BG_MODE):
+ *   video | photo = your media + our animation library + stock footage/photos (stock fills the gaps)
+ *   off           = your media + our animation library — NO stock, NO AI images
+ *   mine          = ONLY your media: every scene runs on your photos/clips (re-cut so repeats look new),
+ *                   our animations on top — NO stock, NO AI images */
+let MEDIA_MODE = (process.env.BG_MODE || "video").toLowerCase();
+const NO_STOCK = () => MEDIA_MODE === "off" || MEDIA_MODE === "mine";
 if (process.env.PROJECT_ANALYSIS && fs.existsSync(process.env.PROJECT_ANALYSIS)) {
   const an = JSON.parse(fs.readFileSync(process.env.PROJECT_ANALYSIS, "utf8"));
   const projDir = an.project;
@@ -291,10 +298,65 @@ Return ONLY JSON: {"place":[{"scene":n,"asset":k,"as":"slot|photo|background","w
     takenScenes.add(i);
     placed.push(`scene ${i + 1} ← ${a.kind} "${a.description.slice(0, 40)}" as ${as}${a.kind === "clip" ? ` from ${b.bgStart || 0}s` : ""} (${String(p.why || "").slice(0, 50)})`);
   }
+  /* ONLY MY MEDIA — every remaining scene gets one of the creator's assets. Repeats must not LOOK repeated:
+   *  - pick per scene by meaning (line ↔ description word overlap) minus a recency penalty (never the same
+   *    asset twice in a row, avoid it for 2 scenes) minus a wear penalty (least-used first);
+   *  - a CLIP comes back as a DIFFERENT moment: its best-interest window that does not overlap any window
+   *    already shown (falls back to the least-overlapping one);
+   *  - a PHOTO comes back with a different camera move (push in → pull out → pan left → pan right). */
+  if (MEDIA_MODE === "mine" && assets.length) {
+    const shown = {}, moves = ["in", "out", "left", "right"];
+    for (const b of job.beats) if (b.bgHero && b.bgSrc) shown[b.bgSrc] = [...(shown[b.bgSrc] || []), [b.bgStart || 0, (b.bgStart || 0) + 4]];
+    const window = (a, len, used) => {
+      const v = a.interest_per_second || [], k = Math.max(1, Math.round(len));
+      if (v.length <= k) return { s: 0, ov: used.length };
+      let best = null;
+      for (let st = 0; st + k <= v.length; st++) {
+        const ov = used.reduce((n, [x, y]) => n + Math.max(0, Math.min(y, st + k) - Math.max(x, st)), 0);
+        const sc = v.slice(st, st + k).reduce((x, y) => x + y, 0) / k - 10 * ov;
+        if (!best || sc > best.sc) best = { s: st, sc, ov };
+      }
+      return best;
+    };
+    const lastUse = {}, useN = { ...uses };
+    for (const [i, b] of job.beats.entries()) for (const a of assets) if (b.bgSrc && b.bgSrc.includes(`proj-${a.n}-`)) lastUse[a.n] = i;
+    let filled = 0;
+    for (const [i, b] of job.beats.entries()) {
+      if (takenScenes.has(i) || b.primitive === "outro" || !String(b.text || "").trim()) continue;
+      const lw = words(b.text);
+      const score = (a) => [...words(a.description)].filter((w) => lw.has(w)).length * 2
+        - (lastUse[a.n] === i - 1 ? 100 : lastUse[a.n] === i - 2 ? 4 : 0) - 1.5 * (useN[a.n] || 0);
+      const a = [...assets].sort((x, y) => score(y) - score(x) || x.n - y.n)[0];
+      const ext = path.extname(a.file).toLowerCase();
+      const safe = `gen/proj-${a.n}-${path.basename(a.file, ext).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40) || "asset"}${ext}`;
+      if (!fs.existsSync(path.join("public", safe))) fs.copyFileSync(path.join(projDir, a.file), path.join("public", safe));
+      if (OWN_BACKDROP_P.has(b.primitive)) { b.primitive = "stomp"; b.props = {}; }
+      if (b.props) { delete b.props.search; delete b.props.prompt; delete b.props.search2; delete b.props.prompt2; }
+      const n = useN[a.n] || 0;
+      Object.assign(b, { bgSrc: safe, bgKind: a.kind === "clip" ? "video" : "image", bgFocus: a.focus, bgHero: true });
+      if (a.kind === "clip") {
+        const len = estSec(b), w = window(a, len, shown[safe] || []);
+        b.bgStart = w.s;
+        shown[safe] = [...(shown[safe] || []), [w.s, w.s + Math.max(1, Math.round(len))]];
+      } else b.bgMove = moves[n % moves.length];
+      useN[a.n] = n + 1; lastUse[a.n] = i; takenScenes.add(i); filled++;
+      placed.push(`scene ${i + 1} ← ${a.kind} "${a.description.slice(0, 40)}" (only-my-media${a.kind === "clip" ? `, from ${b.bgStart}s` : `, move ${b.bgMove}`})`);
+    }
+    console.log(`  only my media: ${filled} more scene(s) filled from your ${assets.length} asset(s) — no stock`);
+  }
   const msg = `🎬 **Your assets:** ${placed.length} placement(s) from ${assets.length} asset(s)`;
   console.log(msg);
   for (const s of placed) console.log(`  ${s}`);
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [msg, ...placed.map((s) => `- ${s}`), ""].join("\n"));
+}
+if (MEDIA_MODE === "mine" && !job.beats.some((b) => b.bgHero)) {
+  console.warn("  media = only mine, but no photos/clips were uploaded → our animation library only (no stock)");
+  MEDIA_MODE = "off";
+}
+if (NO_STOCK()) {
+  // no stock / AI images inside scenes either: each scene uses its own designed no-image look
+  for (const b of job.beats) if (b.props) for (const k of ["search", "prompt", "search2", "prompt2"]) delete b.props[k];
+  console.log(`  media: ${MEDIA_MODE === "mine" ? "only your media" : "your media + our animation library"} — no stock footage, photos or AI images`);
 }
 {
   const slots = [];
@@ -371,7 +433,7 @@ async function download(url, file) {
   fs.mkdirSync(path.dirname(file), { recursive: true });
   fs.writeFileSync(file, buf);
 }
-if (BG_MODE !== "off" && PEXELS) {
+if (!NO_STOCK() && PEXELS) {
   /* FOOTAGE JUDGE — never take the first stock result blindly. Gather several candidates per scene
    * (with their real descriptions: photo alt text / the video's descriptive URL slug), then ONE LLM call
    * picks, for every scene, only footage that clearly shows that line's subject/context — or none.
@@ -444,7 +506,7 @@ if (BG_MODE !== "off" && PEXELS) {
   const msg = `🎞️ Footage judge: ${got} scene(s) got matching footage · ${rejected} kept the generated backdrop (nothing fit)`;
   console.log(msg);
   if (process.env.GITHUB_STEP_SUMMARY) fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, msg + "\n");
-} else if (BG_MODE !== "off") {
+} else if (!NO_STOCK()) {
   console.warn("PEXELS_API_KEY not set — scenes use the generated backdrop");
 }
 
