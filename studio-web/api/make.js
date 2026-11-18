@@ -44,12 +44,11 @@ export default async function handler(req, res) {
       }))),
     };
     const saved = await put(`${prefix}manifest.json`, JSON.stringify(manifest), { access: ACCESS, contentType: "application/json", addRandomSuffix: true });
-    const manifestUrl = ACCESS === "private" ? await link(saved) : saved.url;
 
     const title = (manifest.title || manifest.script.slice(0, 60) || "web reel").replace(/\s+/g, " ");
     const run = await gh(`/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
       method: "POST",
-      body: JSON.stringify({ ref: "main", inputs: { manifest_url: manifestUrl, title, stage, project_id: b.projectId }, return_run_details: true }),
+      body: JSON.stringify({ ref: "main", inputs: { manifest_path: saved.pathname, title, stage, project_id: b.projectId }, return_run_details: true }),
     });
     return json(res, 200, { ok: true, runId: run?.workflow_run_id ?? run?.id ?? null, runUrl: run?.html_url ?? null });
   } catch (e) {

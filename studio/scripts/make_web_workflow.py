@@ -17,8 +17,8 @@ run-name: "${{ inputs.title }} [${{ inputs.project_id }}]"
 on:
   workflow_dispatch:
     inputs:
-      manifest_url:
-        description: "Manifest link from the web page"
+      manifest_path:
+        description: "Manifest name in the studio's storage (projects/<id>/manifest-…json) — never a link"
         required: true
         type: string
       title:
@@ -37,7 +37,10 @@ jobs = src[src.index("jobs:"):]
 jobs = jobs.replace("PROJECT_DIR: projects/${{ github.event.inputs.project }}", "PROJECT_DIR: projects/web-${{ github.run_id }}")
 fetch = '''      - name: Fetch the project from the web page
         id: cfg
-        run: python scripts/fetch_manifest.py "${{ inputs.manifest_url }}" "$PROJECT_DIR"
+        env:
+          RUNNER_KEY: ${{ secrets.RUNNER_KEY }}
+          STUDIO_URL: ${{ secrets.STUDIO_URL }}
+        run: python scripts/fetch_manifest.py "${{ inputs.manifest_path }}" "$PROJECT_DIR"
 '''
 anchor = "      - name: Find the project files\n"
 assert anchor in jobs
@@ -79,7 +82,8 @@ for n in ("③ Narration", "③b Fit the music", "④ Render", "⑤ Self-check",
 publish = '''      - name: 📝 Publish the draft for the editor
         if: ${{ steps.cfg.outputs.stage == 'draft' }}
         env:
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          RUNNER_KEY: ${{ secrets.RUNNER_KEY }}
+          STUDIO_URL: ${{ secrets.STUDIO_URL }}
           DRAFT_SETTINGS: ${{ steps.cfg.outputs.settings_json }}
         run: |
           npm install --prefix ../studio-web --no-audit --no-fund --silent
@@ -89,7 +93,8 @@ publish = '''      - name: 📝 Publish the draft for the editor
 pull = '''      - name: 📥 Pull your edited draft
         if: ${{ steps.cfg.outputs.stage == 'final' }}
         env:
-          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          RUNNER_KEY: ${{ secrets.RUNNER_KEY }}
+          STUDIO_URL: ${{ secrets.STUDIO_URL }}
         run: |
           npm install --prefix ../studio-web --no-audit --no-fund --silent
           node ../studio-web/tools/blob_sync.mjs pull "${{ steps.cfg.outputs.project_id }}" out/props.json public

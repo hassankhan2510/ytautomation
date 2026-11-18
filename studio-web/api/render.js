@@ -23,14 +23,9 @@ export default async function handler(req, res) {
     const manifest = { version: 1, stage: "final", projectId, title, script: "", settings: got.draft.settings || {}, voiceover, assets: [] };
     const saved = await put(`projects/${projectId}/final-manifest.json`, JSON.stringify(manifest),
       { access: ACCESS, contentType: "application/json", addRandomSuffix: true });
-    let url = saved.url;
-    if (ACCESS === "private") {
-      const tok = await issueSignedToken({ pathname: "*", operations: ["get"], validUntil: Date.now() + 6 * 3600e3 });
-      url = (await presignUrl(tok, { operation: "get", pathname: saved.pathname, access: "private" })).presignedUrl;
-    }
     const run = await gh(`/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
       method: "POST",
-      body: JSON.stringify({ ref: "main", inputs: { manifest_url: url, title, stage: "final", project_id: projectId }, return_run_details: true }),
+      body: JSON.stringify({ ref: "main", inputs: { manifest_path: saved.pathname, title, stage: "final", project_id: projectId }, return_run_details: true }),
     });
     return json(res, 200, { ok: true, runId: run?.workflow_run_id ?? run?.id ?? null });
   } catch (e) {

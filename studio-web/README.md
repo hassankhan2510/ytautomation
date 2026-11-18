@@ -30,7 +30,13 @@ phone ─ page (Vercel) ─┬─ uploads ────────────�
    | `GITHUB_TOKEN` | the token from step 4 |
    | `GITHUB_REPO` | `hassankhan2510/ytautomation` |
    Then *Deployments → ⋯ → Redeploy*.
-6. Open the Vercel URL on your phone → enter the password → browser menu → **Add to Home Screen**.
+6. **Runner key (for drafts & the editor)** — invent a long random key (30+ characters, e.g. from a password
+   generator). Put the SAME value in two places (it lets GitHub fetch/publish drafts through this page,
+   without ever holding the storage key, and keeps every file link out of the public Actions logs):
+   - Vercel → *Settings → Environment Variables* → `RUNNER_KEY` = your key → Redeploy
+   - GitHub → repo *Settings → Secrets and variables → Actions → New repository secret*:
+     `RUNNER_KEY` = the same key, and `STUDIO_URL` = your page's address, e.g. `https://myaistudio.vercel.app`
+7. Open the Vercel URL on your phone → enter the password → browser menu → **Add to Home Screen**.
 
 If something is missing, the page shows a yellow "Setup needed" box naming it.
 

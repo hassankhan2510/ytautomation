@@ -44,6 +44,16 @@ export function checkPassword(given) {
   return Boolean(process.env.STUDIO_PASSWORD) && crypto.timingSafeEqual(a, b);
 }
 
+// The GitHub runner proves itself with RUNNER_KEY (a long random string YOU create and put in both Vercel
+// and GitHub). It never needs the Blob storage key, and no file link ever appears in the public logs.
+export function isRunner(given) {
+  const k = process.env.RUNNER_KEY;
+  if (!k || k.length < 20 || !given) return false;
+  const a = crypto.createHash("sha256").update(String(given)).digest();
+  const b = crypto.createHash("sha256").update(k).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
 export async function gh(path, init = {}) {
   const token = process.env.GITHUB_TOKEN;
   if (!token) throw new Error("GITHUB_TOKEN is not set in Vercel");

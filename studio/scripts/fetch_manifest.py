@@ -64,8 +64,26 @@ def safe_name(name, k, exts, default_ext):
     return f"{k:02d}-{base}{ext}"
 
 
+def manifest_link(path_or_url):
+    """The workflow gets only the manifest's NAME (projects/<id>/…): the link is fetched from the studio page
+    with RUNNER_KEY at run time, so no link appears in the public Actions logs."""
+    if not str(path_or_url).startswith("projects/"):
+        return path_or_url  # (old runs passed a full link)
+    studio = os.environ.get("STUDIO_URL", "").rstrip("/")
+    key = os.environ.get("RUNNER_KEY", "")
+    if not studio.startswith("https://") or len(key) < 20:
+        raise SystemExit("STUDIO_URL / RUNNER_KEY GitHub secrets are missing (see studio-web/README.md)")
+    req = urllib.request.Request(f"{studio}/api/runner", data=json.dumps({"key": key, "paths": [path_or_url]}).encode(),
+                                 headers={"Content-Type": "application/json", "User-Agent": "studio-runner"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        url = json.loads(r.read().decode())["urls"].get(path_or_url)
+    if not url:
+        raise SystemExit("manifest not found in storage")
+    return url
+
+
 def main(url, pdir):
-    m = json.loads(fetch(url).decode("utf-8"))
+    m = json.loads(fetch(manifest_link(url)).decode("utf-8"))
     os.makedirs(pdir, exist_ok=True)
     s = {**DEFAULTS, **{k: v for k, v in (m.get("settings") or {}).items() if k in CHOICES and v in CHOICES[k]}}
     lines = ["# downloaded from the web page"]

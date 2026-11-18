@@ -1,5 +1,5 @@
 import { handleUpload } from "@vercel/blob/client";
-import { isAuthed, json, safeId } from "./_lib.js";
+import { isAuthed, isRunner, json, safeId } from "./_lib.js";
 
 // Client uploads: the browser sends files STRAIGHT to Vercel Blob (no 4.5 MB function limit).
 // This route only hands out a short-lived token — and only to a logged-in session, only for
@@ -10,7 +10,12 @@ export default async function handler(req, res) {
     const result = await handleUpload({
       body: req.body,
       request: req,
-      onBeforeGenerateToken: async (pathname) => {
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        if (isRunner(clientPayload)) {   // the GitHub runner publishing a draft
+          const d = /^projects\/([a-z0-9-]+)\/draft\/[A-Za-z0-9._\/-]+$/.exec(pathname);
+          if (!d || !safeId(d[1]) || pathname.includes("..")) throw new Error("Bad draft path");
+          return { maximumSizeInBytes: 500 * 1024 * 1024, addRandomSuffix: false, allowOverwrite: true, validUntil: Date.now() + 3600e3 };
+        }
         if (!isAuthed(req)) throw new Error("Not logged in");
         const m = /^projects\/([a-z0-9-]+)\/[^/]+$/.exec(pathname);
         if (!m || !safeId(m[1])) throw new Error("Bad upload path");
