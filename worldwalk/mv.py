@@ -325,12 +325,15 @@ def plane_sweep_conf(frames, CAM, t, nbrs, z_prior, dev="cpu", **kw):
     return np.where(conf, z_mv, z_prior), conf
 
 
-def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None, blend="hard", gate=0.001, refine=0.0, stride=1):
+def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9, tau=0.002, dev="cpu", log=print, lift="every", raw_out=None, blend="hard", gate=0.001, refine=0.0, stride=1, depth_fn=None):
     """World-locked generation: chunks of `chunk` frames (overlapping by one). Each chunk is rendered
     from the CURRENT world — so content imagined in earlier chunks is already on screen and moves
     correctly with the camera — then the generator fills only what is still unknown, and every frame
     is lifted into the world before the next chunk is rendered.
     gen_fn(frames[k,H,W,3], masks[k,H,W]) -> filled frames. method: single | multi | hybrid."""
+    # depth for lifted pixels: default = mono depth + our scale/shift field; depth_fn(rgb, zr, cov, f, prev)
+    # swaps in another method (plane scaffold, depth completion, ...) with everything else identical
+    _lift = (lambda rgb, zr_, cov_, f_, st_: depth_fn(rgb, zr_, cov_, f_, st_)) if depth_fn else             (lambda rgb, zr_, cov_, f_, st_: single_view_depth(rgb, zr_, cov_, depth_model, st_))
     F = len(CAM)
     world = World(CAM, W, H, gt_rgb[0], gt_z[0])
     final = np.zeros((F, H, W, 3), np.float32)
@@ -400,7 +403,7 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
                 img, zr, cov = world.render(f)
                 hole = ~cov
             if hole.mean() > tau:
-                z1, st = single_view_depth(gen[-1], zr, cov, depth_model, st)
+                z1, st = _lift(gen[-1], zr, cov, f, st)
                 ok = hole & np.isfinite(gt_z[f])
                 if ok.sum():
                     lift_err.append(float(np.median(np.abs(z1[ok] - gt_z[f][ok]) / gt_z[f][ok])))
@@ -411,7 +414,7 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
                     img, zr, cov = world.render(idx[j])
                     hole = ~cov
                     if hole.mean() > tau:
-                        z1, st = single_view_depth(gen[j], zr, cov, depth_model, st)
+                        z1, st = _lift(gen[j], zr, cov, idx[j] if lift == 'last' else f, st)
                         world.add(idx[j], z1, hole, gen[j])
                 # every frame of the stretch is shown as a render of the world (no generator);
                 # tiny leftover holes take the nearest known colour (counted in display_hole_pct)
@@ -435,7 +438,7 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
             imagined[f] |= masks[j]
             if hole.mean() <= tau:
                 continue
-            z1, st = single_view_depth(gen[j], zr, cov, depth_model, st)
+            z1, st = _lift(gen[j], zr, cov, idx[j] if lift == 'last' else f, st)
             if method == "single":
                 z = z1
             else:
@@ -490,6 +493,73 @@ def refine_depth(zr, cov, mag):
         w = gaussian_filter(cov.astype(np.float32), k / 3)
         d = gaussian_filter(disp, k / 3) / np.maximum(w, 1e-4)
     return np.where(cov & (d > 1e-6), 1.0 / np.maximum(d, 1e-6), zr).astype(np.float32)
+
+
+def plane_grow_depth(rgb, zr, cov, CAM, f, z_fallback, thr=0.03, col_tol=0.07, max_iter=600, k_max=8, use_normals=True, normal_tol=0.85):
+    """OURS — structure-first depth for imagined pixels ("colour-guided plane growing").
+    1. fit the planes (walls/floor/tables) of the KNOWN geometry visible in this view
+    2. label known pixels by plane; grow labels into the hole, pixel by pixel, only where the generated
+       colour continues smoothly from the neighbour (a wall keeps going while the paint looks like that wall)
+    3. claimed hole pixels get EXACT depth from ray-plane intersection; unclaimed ones keep z_fallback.
+    Returns (z, fraction of hole pixels claimed)."""
+    H, W = zr.shape
+    hole = ~cov
+    if hole.mean() < 1e-4 or cov.sum() < 800:
+        return z_fallback, 0.0
+    P, _, ys, xs = ww.unproject(CAM, f, W, H, np.where(cov, zr, 1.0), cov)
+    sub = np.random.default_rng(0).choice(len(P), min(len(P), 20000), replace=False)
+    planes = ww.fit_planes(P[sub], k_max=k_max, iters=500, thr=thr)
+    if not planes:
+        return z_fallback, 0.0
+    th = CAM[f, 12]; asp = W / H
+    u = ((np.arange(W) + 0.5) / W * 2 - 1)[None, :] * th * asp
+    v = (1 - (np.arange(H) + 0.5) / H * 2)[:, None] * th
+    pos, fwd, right, up = CAM[f, 0:3], CAM[f, 3:6], CAM[f, 6:9], CAM[f, 9:12]
+    zp = []
+    for (n, c) in planes:
+        den = n @ fwd + u * (n @ right) + v * (n @ up)
+        z = (c - n @ pos) / np.where(np.abs(den) < 1e-6, 1e-6, den)
+        zp.append(np.where(z > 0.05, z, np.inf))
+    zp = np.array(zp)  # [K,H,W]
+    # surface ORIENTATION of every pixel from the fallback (mono) depth: its scale is unreliable in big holes,
+    # its orientation much less so -> a plane may only grow into pixels that face the same way
+    Pm, _, yy, xx = ww.unproject(CAM, f, W, H, np.where(np.isfinite(z_fallback), z_fallback, 1e3), np.ones((H, W), bool))
+    Pm = Pm.reshape(H, W, 3)
+    dx_ = np.roll(Pm, -1, 1) - np.roll(Pm, 1, 1); dy_ = np.roll(Pm, -1, 0) - np.roll(Pm, 1, 0)
+    nrm = np.cross(dx_, dy_); nrm /= np.linalg.norm(nrm, axis=-1, keepdims=True) + 1e-9
+    pn = np.array([n for n, _ in planes])
+    face = np.abs(np.einsum("hwc,kc->khw", nrm, pn)) > normal_tol  # [K,H,W]: pixel faces like plane k
+    lab = np.full((H, W), -1, int)
+    rel = np.abs(zp - zr[None]) / np.maximum(zr[None], 1e-6)
+    best = np.argmin(np.where(np.isfinite(rel), rel, 9), 0)
+    ok = cov & (np.take_along_axis(rel, best[None], 0)[0] < 0.03)
+    lab[ok] = best[ok]
+    # grow into the hole along colour continuity (4-neighbour, vectorised wavefront)
+    grow = hole.copy()
+    for _ in range(max_iter):
+        changed = False
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            src = np.roll(lab, (dy, dx), (0, 1))
+            srgb = np.roll(rgb, (dy, dx), (0, 1))
+            cand = grow & (lab < 0) & (src >= 0) & (np.abs(rgb - srgb).max(-1) < col_tol)
+            if use_normals:
+                cand &= np.take_along_axis(face, np.maximum(src, 0)[None], 0)[0]
+            if dy == 1: cand[0, :] = False
+            if dy == -1: cand[-1, :] = False
+            if dx == 1: cand[:, 0] = False
+            if dx == -1: cand[:, -1] = False
+            if cand.any():
+                lab[cand] = src[cand]; changed = True
+        if not changed:
+            break
+    claim = hole & (lab >= 0)
+    z = z_fallback.copy()
+    if claim.any():
+        zz = np.take_along_axis(zp, np.maximum(lab, 0)[None], 0)[0]
+        good = claim & np.isfinite(zz) & (zz < 50)
+        z[good] = zz[good]
+        claim = good
+    return z, float(claim.sum() / max(1, hole.sum()))
 
 
 def colour_glitch(final, imagined, ref):
