@@ -5,14 +5,15 @@
  * Perf rule (CPU runners): no full-screen blur / mix-blend-mode; colour filters only on the image layer.
  */
 import React from "react";
-import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { useRender } from "../engine/render-context";
 import { alpha } from "../engine/theme";
 import { easeInOut, easeOut, fitSize, pop } from "../engine/motion";
 import { hash01 } from "../engine/rng";
 import { localWords, prop, Safe, type PrimitiveProps } from "./common";
+import { asset } from "../engine/asset";
 
-const src = (p: string) => (/^https?:\/\//.test(p) ? p : staticFile(p));
+const src = (p: string) => asset(p);
 const PAPER = "#EFE7D6";
 const INK = "#1B1712";
 const serif = "Georgia, 'Times New Roman', serif";

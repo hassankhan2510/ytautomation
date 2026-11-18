@@ -5,12 +5,13 @@
  * falls back to a smooth Ken-Burns move; without any image, to a clean title card (never demo data).
  */
 import React from "react";
-import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { useRender } from "../engine/render-context";
 import { alpha } from "../engine/theme";
 import { easeOut, fitSize, pop } from "../engine/motion";
 import { Parallax25D, type DepthLayers } from "../engine/parallax";
 import { prop, Safe, type PrimitiveProps } from "./common";
+import { asset } from "../engine/asset";
 
 export const Parallax: React.FC<PrimitiveProps> = ({ beat }) => {
   const frame = useCurrentFrame();
@@ -38,7 +39,7 @@ export const Parallax: React.FC<PrimitiveProps> = ({ beat }) => {
         <Parallax25D layers={layers} t={t} seed={seed + beat.index} strength={1.15} />
       ) : (
         <AbsoluteFill style={{ transform: `scale(${interpolate(t, [0, 1], [1.06, 1.18])})` }}>
-          <Img src={file.startsWith("http") ? file : staticFile(file)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <Img src={asset(file)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
         </AbsoluteFill>
       )}
       {/* Readability: darker top/bottom for stamp + captions, the photo itself stays clear. */}

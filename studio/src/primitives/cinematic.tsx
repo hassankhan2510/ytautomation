@@ -1,12 +1,13 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { useRender } from "../engine/render-context";
 import { alpha } from "../engine/theme";
 import { easeInOut, easeOut, fitSize, pop } from "../engine/motion";
 import { hash01 } from "../engine/rng";
 import { localWords, prop, Safe, type PrimitiveProps } from "./common";
+import { asset } from "../engine/asset";
 
-const src = (p: string) => (/^https?:\/\//.test(p) ? p : staticFile(p));
+const src = (p: string) => asset(p);
 
 /* ─────────────────────────── FLIP3D ───────────────────────────
  * Each word rotates in on X like a cube face exactly as it's spoken; lines stack. */

@@ -1,13 +1,14 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { useRender } from "../engine/render-context";
 import { alpha } from "../engine/theme";
 import { easeOut, pop } from "../engine/motion";
 import { hash01 } from "../engine/rng";
 import { prop, Safe, type PrimitiveProps } from "./common";
 import { AuroraType, Blob, DotWave, FlowField, Warp } from "./generative";
+import { asset } from "../engine/asset";
 
-const src = (p: string) => (/^https?:\/\//.test(p) ? p : staticFile(p));
+const src = (p: string) => asset(p);
 
 /* ─────────────────────────── LIST ───────────────────────────
  * Numbered items punch in one by one; the current item is lit, the rest dim. */

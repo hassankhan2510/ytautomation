@@ -1,10 +1,11 @@
 import React, { useMemo } from "react";
-import { Audio, Sequence, staticFile } from "remotion";
+import { Audio, Sequence } from "remotion";
 import type { Timeline, TimedBeat } from "../engine/types";
+import { asset } from "../engine/asset";
 
 type Cut = { into: TimedBeat; name: string; frames: number };
 
-const sfx = (name: string) => staticFile(`sfx/${name}.wav`);
+const sfx = (name: string) => asset(`sfx/${name}.wav`);
 
 /** Which effect a transition gets — the sound matches what the eye sees. */
 const CUT_SFX: Record<string, string> = {

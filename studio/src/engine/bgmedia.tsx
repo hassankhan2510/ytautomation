@@ -1,10 +1,11 @@
 import React from "react";
-import { AbsoluteFill, Img, OffthreadVideo, interpolate, staticFile, useCurrentFrame, useVideoConfig } from "remotion";
+import { AbsoluteFill, Img, OffthreadVideo, interpolate, useCurrentFrame, useVideoConfig } from "remotion";
 import { useRender } from "./render-context";
 import { alpha } from "./theme";
 import { hash01 } from "./rng";
 import type { TimedBeat } from "./types";
 import { Parallax25D } from "./parallax";
+import { asset } from "./asset";
 
 /**
  * REAL BACKGROUND — stock video or photo matching what's being said, behind every scene.
@@ -16,7 +17,7 @@ export const BgMedia: React.FC<{ beat: TimedBeat; seed: number }> = ({ beat, see
   const { fps } = useVideoConfig();
   const { theme } = useRender();
   if (!beat.bgSrc) return null;
-  const src = staticFile(beat.bgSrc);
+  const src = asset(beat.bgSrc);
   const t = frame / Math.max(1, beat.frames);
   const dir = hash01(seed, beat.index) > 0.5 ? 1 : -1;
   // Subject-aware framing: crop keeps the subject in frame (object-position) and the slow push zooms

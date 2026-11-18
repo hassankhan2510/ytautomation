@@ -1,6 +1,7 @@
 import React from "react";
-import { AbsoluteFill, Img, interpolate, staticFile } from "remotion";
+import { AbsoluteFill, Img, interpolate } from "remotion";
 import { hash01 } from "./rng";
+import { asset } from "./asset";
 
 export type DepthLayers = { far: string; mid: string; near: string };
 
@@ -15,7 +16,7 @@ export const Parallax25D: React.FC<{ layers: DepthLayers; t: number; seed: numbe
   const ease = 1 - Math.pow(1 - p, 1.6); // starts moving immediately, settles gently
   const layer = (src: string, s0: number, s1: number, dx: number, dy: number) => (
     <AbsoluteFill style={{ transform: `translate(${dir * dx * ease * strength}%, ${dy * ease * strength}%) scale(${s0 + (s1 - s0) * ease * strength})` }}>
-      <Img src={staticFile(src)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      <Img src={asset(src)} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
     </AbsoluteFill>
   );
   return (

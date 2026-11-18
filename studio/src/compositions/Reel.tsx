@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { AbsoluteFill, Audio, isHtmlInCanvasSupported, staticFile, useVideoConfig } from "remotion";
+import { AbsoluteFill, Audio, isHtmlInCanvasSupported, useVideoConfig } from "remotion";
 import { TransitionSeries, linearTiming } from "@remotion/transitions";
 import { CameraMotionBlur } from "@remotion/motion-blur";
 import { buildTimeline } from "../engine/timeline";
@@ -14,6 +14,7 @@ import { Captions } from "./Captions";
 import { SoundLayer, useDuckedVolume } from "./Sound";
 import type { Job, TimedBeat } from "../engine/types";
 import "../engine/fonts";
+import { asset } from "../engine/asset";
 
 export type ReelProps = { job: Job; shaders?: boolean };
 
@@ -103,8 +104,8 @@ export const Reel: React.FC<ReelProps> = ({ job, shaders = false }) => {
         <Grain opacity={theme.vivid ? 0.05 : theme.dark ? 0.09 : 0.06} />
         <Vignette strength={theme.vivid ? 0.18 : theme.dark ? 0.55 : 0.25} />
         <ProgressBar />
-        {job.audio ? <Audio src={staticFile(job.audio)} /> : null}
-        {job.music ? <Audio src={staticFile(job.music)} volume={musicVolume} loop={!job.musicFit} /> : null}
+        {job.audio ? <Audio src={asset(job.audio)} /> : null}
+        {job.music ? <Audio src={asset(job.music)} volume={musicVolume} loop={!job.musicFit} /> : null}
         {job.sfx !== false ? <SoundLayer timeline={timeline} cuts={cuts} voiced={voiced} /> : null}
       </AbsoluteFill>
     </RenderProvider>

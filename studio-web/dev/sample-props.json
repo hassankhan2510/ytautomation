@@ -1,0 +1,220 @@
+{
+  "job": {
+    "id": "2026-11-13-your-stock-portfolio-isn-t-gambling-it-s",
+    "title": "Your stock portfolio isn't gambling, it's ownership.",
+    "subject": "stock market investing basics",
+    "theme": "ocean",
+    "seed": 1392,
+    "handle": "",
+    "language": "english",
+    "hooks": [
+      "Your stock portfolio isn't gambling, it's ownership.",
+      "Why panic crashes markets faster than you think.",
+      "Stop watching the screen, start owning business."
+    ],
+    "caption": "Stop stressing the daily dip. Own the business, not the noise.\nWhat's your biggest investing fear?\n\n#stockmarket #investing #finance #genz #money\n🎵 Music: \"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+    "musicCredit": "\"Stay the Course\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+    "quality": {
+      "score": 7,
+      "unique": 10,
+      "total": 10,
+      "families": 3,
+      "plain": 3,
+      "doc": 3,
+      "repeats": 0
+    },
+    "beats": [
+      {
+        "text": "Your stock portfolio isn't gambling, it's ownership.",
+        "primitive": "glitchTitle",
+        "energy": 3,
+        "emphasis": [
+          "ownership"
+        ],
+        "props": {
+          "title": "OWNERSHIP"
+        },
+        "why": "Hacker vibe for ownership hook",
+        "bgSrc": "gen/proj-1-blood-drop.mp4",
+        "bgKind": "video",
+        "bgFocus": {
+          "x": 0.488,
+          "y": 0.459
+        },
+        "bgHero": true,
+        "bgStart": 34
+      },
+      {
+        "text": "A stock market is just buying company shares.",
+        "primitive": "factCard",
+        "energy": 2,
+        "emphasis": [
+          "shares"
+        ],
+        "props": {
+          "fact": "Buying company shares",
+          "n": 1
+        },
+        "why": "Clear definition of stock market",
+        "bgSrc": "gen/proj-2-court.jpg",
+        "bgKind": "image",
+        "bgFocus": {
+          "x": 0.497,
+          "y": 0.456
+        },
+        "bgHero": true
+      },
+      {
+        "text": "When a company earns more, your slice grows.",
+        "primitive": "stomp",
+        "energy": 2,
+        "emphasis": [
+          "grows"
+        ],
+        "props": {},
+        "why": "Visual cause and effect chain",
+        "bgSrc": "gen/proj-3-lab.jpg",
+        "bgKind": "image",
+        "bgFocus": {
+          "x": 0.474,
+          "y": 0.376
+        },
+        "bgHero": true
+      },
+      {
+        "text": "But here's the catch: panic makes prices fall quickly.",
+        "primitive": "strike",
+        "energy": 3,
+        "emphasis": [
+          "panic"
+        ],
+        "props": {
+          "wrong": "Steady Growth",
+          "right": "Panic Drops Prices"
+        },
+        "why": "Myth busting panic reality",
+        "bgSrc": "gen/proj-5-office.jpg",
+        "bgKind": "image",
+        "bgFocus": {
+          "x": 0.495,
+          "y": 0.484
+        },
+        "bgHero": true
+      },
+      {
+        "text": "When investors panic, prices can fall quickly.",
+        "primitive": "roadmap",
+        "energy": 2,
+        "emphasis": [
+          "fall quickly"
+        ],
+        "props": {
+          "steps": [
+            "Fear Spreads",
+            "Selling Starts",
+            "Prices Drop"
+          ],
+          "done": 3
+        },
+        "why": "Process of market reaction"
+      },
+      {
+        "text": "Smart money ignores the daily noise completely.",
+        "primitive": "declassified",
+        "energy": 2,
+        "emphasis": [
+          "ignores"
+        ],
+        "props": {
+          "title": "STRATEGY",
+          "lines": [
+            "Daily Noise",
+            "Market Frenzy",
+            "Smart Money"
+          ],
+          "reveal": 2
+        },
+        "why": "Secret strategy reveal",
+        "bgSrc": "gen/proj-4-money.jpg",
+        "bgKind": "image",
+        "bgFocus": {
+          "x": 0.401,
+          "y": 0.44
+        },
+        "bgHero": true
+      },
+      {
+        "text": "They focus on strong businesses, not price moves.",
+        "primitive": "highlight",
+        "energy": 2,
+        "emphasis": [
+          "strong businesses"
+        ],
+        "props": {},
+        "why": "Calm focus on stability",
+        "bgSrc": "gen/proj-6-steve-jobs.jpg",
+        "bgKind": "image",
+        "bgFocus": {
+          "x": 0.505,
+          "y": 0.499
+        },
+        "bgHero": true
+      },
+      {
+        "text": "Long-term investors focus on strong businesses instead of daily moves.",
+        "primitive": "prism",
+        "energy": 3,
+        "emphasis": [
+          "long-term"
+        ],
+        "props": {
+          "faces": [
+            "Focus",
+            "Business",
+            "Growth"
+          ]
+        },
+        "why": "3D concept rotation",
+        "bgSrc": "gen/proj-7-sv-skyline.mp4",
+        "bgKind": "video",
+        "bgFocus": {
+          "x": 0.525,
+          "y": 0.542
+        },
+        "bgHero": true,
+        "bgStart": 11
+      },
+      {
+        "text": "Focus on strong businesses instead of daily price moves.",
+        "primitive": "auroraType",
+        "energy": 3,
+        "emphasis": [
+          "Focus"
+        ],
+        "props": {
+          "word": "FOCUS"
+        },
+        "why": "Premium confident closing statement",
+        "bgSrc": "gen/proj-8-walgreens.jpg",
+        "bgKind": "image",
+        "bgFocus": {
+          "x": 0.344,
+          "y": 0.54
+        },
+        "bgHero": true
+      },
+      {
+        "text": "",
+        "primitive": "outro",
+        "energy": 1,
+        "props": {
+          "cta": "Follow"
+        },
+        "hold": 2.2
+      }
+    ],
+    "sfx": false,
+    "credits": []
+  },
+  "shaders": false
+}

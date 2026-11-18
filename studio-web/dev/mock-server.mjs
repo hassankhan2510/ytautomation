@@ -19,6 +19,20 @@ http.createServer((req, res) => {
   req.on("end", () => {
     const u = req.url.split("?")[0];
     if (u === "/" || u === "/index.html") { res.writeHead(200, { "Content-Type": "text/html" }); return res.end(page()); }
+    // live-preview test: the bundled engine, a real props file, and the studio's public/ media
+    const TYPES = { ".js": "text/javascript", ".html": "text/html", ".json": "application/json", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+      ".png": "image/png", ".webp": "image/webp", ".mp4": "video/mp4", ".wav": "audio/wav", ".mp3": "audio/mpeg", ".m4a": "audio/mp4" };
+    const serve = (file) => {
+      if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) { res.writeHead(404); return res.end("missing " + file); }
+      res.writeHead(200, { "Content-Type": TYPES[path.extname(file).toLowerCase()] || "application/octet-stream" });
+      return fs.createReadStream(file).pipe(res);
+    };
+    const pub = path.join(here, "..", "..", "studio", "public");
+    if (u === "/preview.js") return serve(path.join(here, "..", "preview.js"));
+    if (u === "/preview-test.html") return serve(path.join(here, "preview-test.html"));
+    if (u === "/dev-props.json") return serve(process.env.PREVIEW_PROPS || path.join(here, "sample-props.json"));
+    if (u.startsWith("/studio-public/")) return serve(path.join(pub, decodeURIComponent(u.slice("/studio-public/".length))));
+    if (u.startsWith("/sfx/") || u.startsWith("/brand/")) return serve(path.join(pub, decodeURIComponent(u.slice(1))));
     if (u === "/api/config") return send(res, 200, { authed: true, access: "private", missing: [] });
     if (u === "/api/login") return send(res, 200, { ok: true });
     if (u === "/api/runs") return send(res, 200, { runs });
