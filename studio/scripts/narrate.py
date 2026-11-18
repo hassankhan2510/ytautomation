@@ -273,7 +273,13 @@ URDU_LETTERS = re.compile(r"[؀-ۿ]")
 
 def speakable(text):
     """Normalise symbols a TTS engine would stumble on (never changes meaning)."""
-    t = text.replace("→", " to ").replace("&", " and ").replace("%", " percent").replace("×", " times ")
+    # Urdu/Arabic punctuation -> plain punctuation for the VOICE only (captions keep the original):
+    # the Urdu full stop "۔" sits at the end of almost every Urdu sentence and the voice engine read it
+    # as a letter ("d") every time; "،" / "؟" / "؛" likewise. As . , ? ; they become natural pauses.
+    t = (text.replace("۔", ". ").replace("،", ", ").replace("؟", "? ").replace("؛", "; ").replace("٪", " percent")
+         .replace("—", ", ").replace("–", ", "))
+    t = re.sub(r"[​-‏⁦-⁩﻿]", "", t)  # invisible direction / zero-width marks
+    t = t.replace("→", " to ").replace("&", " and ").replace("%", " percent").replace("×", " times ")
     t = re.sub(r"[\U0001F000-\U0001FFFF☀-➿]", "", t)
     t = re.sub(r"[*_#`]", "", t)
     return re.sub(r"\s+", " ", t).strip()
