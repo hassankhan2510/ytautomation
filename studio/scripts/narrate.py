@@ -105,6 +105,7 @@ def load_omnivoice():
         params = inspect.signature(_omni.generate).parameters
         _omni_lang_arg = next((p for p in ("language", "language_id", "lang") if p in params), None)
         _omni_has_speed = "speed" in params
+        globals()["_omni_has_steps"] = "num_step" in params
         clip = os.path.join(tempfile.gettempdir(), "omni_ref_clip.wav")
         start = most_fluent_window(REF, 8.0)
         print(f"  reference: most fluent 8 s window starts at {start:.1f}s")
@@ -142,6 +143,10 @@ def synth_omnivoice(text):
         kw[_omni_lang_arg] = lang
     if _omni_has_speed:
         kw["speed"] = float(os.environ.get("VOICE_SPEED", "1.08"))  # a touch faster = more energy, fewer drags
+    if globals().get("_omni_has_steps"):
+        # 16 diffusion steps = the makers' documented "faster inference" setting: ~2x faster than the default
+        # 32 on CPU runners (Urdu reels: ~64 -> ~30-35 min of voice). VOICE_STEPS=32 for maximum quality.
+        kw["num_step"] = int(os.environ.get("VOICE_STEPS", "16"))
     audio = m.generate(**kw)
     return to_mono_24k(audio[0], 24000)
 
@@ -363,7 +368,7 @@ def main():
 
     def cache_path(eng_name, text):
         import hashlib
-        h = hashlib.sha1(f"{eng_name}|{ref_id}|{os.environ.get('VOICE_SPEED', '')}|{text}".encode("utf-8")).hexdigest()[:20]
+        h = hashlib.sha1(f"{eng_name}|{ref_id}|{os.environ.get('VOICE_SPEED', '')}|{os.environ.get('VOICE_STEPS', '16')}|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 
     for i, beat in enumerate(job["beats"]):
