@@ -87,11 +87,15 @@ def main(url, pdir):
         s["voice"] = "mine"
     if str(m.get("script") or "").strip():
         open(os.path.join(pdir, "script.txt"), "w", encoding="utf-8").write(m["script"].strip() + "\n")
+    stage = m.get("stage") if m.get("stage") in ("draft", "final", "direct") else "direct"
+    pid = str(m.get("projectId") or "")
+    pid = pid if re.fullmatch(r"[a-z0-9-]{6,40}", pid) else "web"
     out = os.environ.get("GITHUB_OUTPUT")
     with open(out, "a", encoding="utf-8") if out else sys.stdout as f:
         for k, v in s.items():
             f.write(f"{OUT_KEYS.get(k, k)}={v}\n")
-    print("settings:", s)
+        f.write(f"stage={stage}\nproject_id={pid}\nsettings_json={json.dumps(s)}\n")
+    print("settings:", s, "· stage:", stage, "· project:", pid)
 
 
 if __name__ == "__main__":

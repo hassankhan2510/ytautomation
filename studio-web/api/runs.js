@@ -16,11 +16,15 @@ export default async function handler(req, res) {
           step = (st.find((x) => x.status === "in_progress") || st.filter((x) => x.status === "completed").pop() || {}).name || null;
         } catch { /* status only */ }
       }
-      const done = r.status === "completed" && r.conclusion === "success";
+      const ok = r.status === "completed" && r.conclusion === "success";
+      const stage = (/ · (draft|final|direct) \[[a-z0-9-]+\]$/.exec(r.display_title || "") || [])[1] || "direct";
+      const done = ok && stage !== "draft";   // a draft has no video: it opens in the editor
       return {
+        stage, draftReady: ok && stage === "draft",
         id: r.id, title: r.display_title, status: r.status, conclusion: r.conclusion, step,
         created: r.created_at, updated: r.updated_at, url: r.html_url,
         projectId: (/\[([a-z0-9-]{6,40})\]$/.exec(r.display_title || "") || [])[1] || null,
+        cleanTitle: (r.display_title || "").replace(/ · (draft|final|direct) \[[a-z0-9-]+\]$/, "").replace(/ \[[a-z0-9-]+\]$/, ""),
         video: done ? `${base}/web-${r.id}.mp4` : null,
         caption: done ? `${base}/web-${r.id}-caption.txt` : null,
       };

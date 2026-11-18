@@ -29,16 +29,18 @@ export default async function handler(req, res) {
       const tok = await issueSignedToken({ pathname: "*", operations: ["get"], validUntil });
       link = async (a) => (await presignUrl(tok, { operation: "get", pathname: a.pathname, access: "private", validUntil })).presignedUrl;
     }
+    const stage = b.stage === "draft" ? "draft" : "direct";
     const manifest = {
       version: 1,
+      stage,
       projectId: b.projectId,
       title: String(b.title || "").slice(0, 80),
       script: String(b.script || "").slice(0, 8000),
       settings: s,
-      voiceover: b.voiceover ? { name: String(b.voiceover.name).slice(0, 80), url: await link(b.voiceover) } : null,
+      voiceover: b.voiceover ? { name: String(b.voiceover.name).slice(0, 80), pathname: b.voiceover.pathname, url: await link(b.voiceover) } : null,
       assets: await Promise.all(assets.map(async (a) => ({
         name: String(a.name).slice(0, 80), kind: a.kind === "clip" ? "clip" : "image",
-        description: String(a.description || "").slice(0, 200), url: await link(a),
+        description: String(a.description || "").slice(0, 200), pathname: a.pathname, url: await link(a),
       }))),
     };
     const saved = await put(`${prefix}manifest.json`, JSON.stringify(manifest), { access: ACCESS, contentType: "application/json", addRandomSuffix: true });
@@ -47,7 +49,7 @@ export default async function handler(req, res) {
     const title = (manifest.title || manifest.script.slice(0, 60) || "web reel").replace(/\s+/g, " ");
     const run = await gh(`/repos/${REPO}/actions/workflows/${WORKFLOW}/dispatches`, {
       method: "POST",
-      body: JSON.stringify({ ref: "main", inputs: { manifest_url: manifestUrl, title, project_id: b.projectId }, return_run_details: true }),
+      body: JSON.stringify({ ref: "main", inputs: { manifest_url: manifestUrl, title, stage, project_id: b.projectId }, return_run_details: true }),
     });
     return json(res, 200, { ok: true, runId: run?.workflow_run_id ?? run?.id ?? null, runUrl: run?.html_url ?? null });
   } catch (e) {

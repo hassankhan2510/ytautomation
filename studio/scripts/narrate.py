@@ -352,12 +352,34 @@ def main():
 
     used = None
     segments = []
+    # LINE-BY-LINE VOICE: every spoken line is cached by (engine, voice sample, speed, exact text). After an
+    # edit only the changed lines are synthesised again — the rest come from the cache (VOICE_CACHE dir,
+    # kept between runs of the same project by the workflow).
+    cache_dir = os.environ.get("VOICE_CACHE")
+    if cache_dir:
+        os.makedirs(cache_dir, exist_ok=True)
+    ref_id = f"{os.path.basename(REF)}:{os.path.getsize(REF)}" if os.path.exists(REF) else "noref"
+    hits = 0
+
+    def cache_path(eng_name, text):
+        import hashlib
+        h = hashlib.sha1(f"{eng_name}|{ref_id}|{os.environ.get('VOICE_SPEED', '')}|{text}".encode("utf-8")).hexdigest()[:20]
+        return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
+
     for i, beat in enumerate(job["beats"]):
         raw = beat.get("speak") or beat.get("text", "")
         # Urdu `speak` lines are already fixed by speakfix.mjs; everything else gets the English pass.
         text = speakable(raw if URDU_LETTERS.search(raw) else english_speech(raw))
         if not text:
             segments.append(np.zeros(int(0.4 * SR), dtype=np.float32))
+            continue
+        cp = cache_path(engines[0].__name__, text)
+        if cp and os.path.exists(cp):
+            wav = np.load(cp)
+            segments.append(wav)
+            used = used or engines[0].__name__
+            hits += 1
+            print(f"  beat {i + 1}/{len(job['beats'])}: {len(wav) / SR:4.1f}s  (cached)  {text[:60]}")
             continue
         wav = None
         for eng in engines:
@@ -374,7 +396,13 @@ def main():
         if wav is None:
             raise SystemExit("All TTS engines failed.")
         segments.append(wav)
+        cpu = cache_path(used or engines[0].__name__, text)
+        if cpu and (used or engines[0].__name__) == engines[0].__name__:  # only cache the primary voice
+            np.save(cpu, wav.astype(np.float32))
         print(f"  beat {i + 1}/{len(job['beats'])}: {len(wav) / SR:4.1f}s  {text[:70]}")
+    if cache_dir:
+        spoken = sum(1 for b in job["beats"] if (b.get("speak") or b.get("text", "")).strip())
+        print(f"  voice cache: {hits}/{spoken} spoken lines reused, {spoken - hits} synthesised")
 
     # Join with natural pauses and record each beat's speech window.
     audio, words, t = [], [], 0.18  # small lead-in so the first frame isn't mid-syllable

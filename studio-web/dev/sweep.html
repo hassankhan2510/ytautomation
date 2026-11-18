@@ -1,0 +1,25 @@
+<!doctype html><html><head><meta charset="utf-8"><title>sweep</title></head><body style="background:#111;color:#ddd;font:12px monospace">
+<div id="p" style="width:270px"></div><pre id="out"></pre>
+<script src="/preview.js"></script>
+<script>
+// every scene type with EMPTY props: does it render, or throw? -> the editor's swap-safe list
+(async () => {
+  const ids = StudioPreview.primitives().map((m) => m.id);
+  const job = (id) => ({ job: { id: "t", theme: "crimson", seed: 7, beats: [{ text: "Our first session is this Friday at seven", primitive: id, props: {}, energy: 2 }] } });
+  const P = StudioPreview.mount(document.getElementById("p"), job(ids[0]), {});
+  const bad = [];
+  const errs = [];
+  window.addEventListener("error", (e) => errs.push(String(e.message)));
+  for (const id of ids) {
+    errs.length = 0;
+    P.update(job(id));
+    await new Promise((r) => setTimeout(r, 120));
+    P.seek(25);
+    await new Promise((r) => setTimeout(r, 180));
+    const txt = document.getElementById("p").innerText;
+    if (errs.length || /error|undefined is not|cannot read/i.test(txt)) bad.push(id + " :: " + (errs[0] || txt.slice(0, 80)).replace(/\n/g, " "));
+  }
+  document.getElementById("out").textContent = `TOTAL ${ids.length} · FAIL ${bad.length}\n` + bad.join("\n");
+  window.SWEEP = { total: ids.length, bad };
+})();
+</script></body></html>

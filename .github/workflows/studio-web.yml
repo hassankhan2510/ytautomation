@@ -4,7 +4,7 @@ name: "Studio — Make from Web"
 # to Vercel Blob, writes a manifest and dispatches this workflow with its (time-limited) link.
 # Everything after "Fetch the project" is generated from studio-project.yml — edit that file and run
 # `python studio/scripts/make_web_workflow.py`, never this one by hand.
-run-name: "${{ inputs.title }} [${{ inputs.project_id }}]"
+run-name: "${{ inputs.title }} · ${{ inputs.stage }} [${{ inputs.project_id }}]"
 on:
   workflow_dispatch:
     inputs:
@@ -17,6 +17,11 @@ on:
         required: false
         type: string
         default: "web reel"
+      stage:
+        description: "draft | final | direct"
+        required: false
+        type: string
+        default: "direct"
       project_id:
         description: "Web project id (for cleanup)"
         required: false
@@ -55,6 +60,7 @@ jobs:
           echo "### 📁 Project \`web-${{ github.run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
           ls -la "$PROJECT_DIR" | tail -n +4 | awk '{print "- " $NF " (" $5 " bytes)"}' >> "$GITHUB_STEP_SUMMARY"
       - name: Install system libraries (headless Chrome, ffmpeg, espeak)
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         run: |
           sudo apt-get update
           sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
@@ -70,7 +76,7 @@ jobs:
           if [ -n "${{ steps.proj.outputs.voiceover }}" ] && { [ "$VOICE" = "upload" ] || [ "${{ steps.cfg.outputs.script_mode }}" = "from-voiceover" ]; }; then
             pip install faster-whisper
           fi
-          if [ "$VOICE" != "upload" ] && [ "$VOICE" != "none" ]; then
+          if [ "$VOICE" != "upload" ] && [ "$VOICE" != "none" ] && [ "${{ steps.cfg.outputs.stage }}" != "draft" ]; then
             pip install edge-tts kokoro
             if [[ "${{ steps.cfg.outputs.language }}" = "urdu" || "$VOICE" = omnivoice* ]]; then
               pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
@@ -81,15 +87,17 @@ jobs:
           fi
 
       - name: ⓪ Understand your assets (subject, faces, best clip seconds)
+        if: ${{ steps.cfg.outputs.stage != 'final' }}
         run: python scripts/analyze_assets.py "$PROJECT_DIR" out/analysis.json
 
       - name: ⓪b Transcribe your voiceover (word timings)
-        if: ${{ steps.proj.outputs.voiceover != '' && (steps.cfg.outputs.voice == 'upload' || steps.cfg.outputs.script_mode == 'from-voiceover') }}
+        if: ${{ (steps.proj.outputs.voiceover != '' && (steps.cfg.outputs.voice == 'upload' || steps.cfg.outputs.script_mode == 'from-voiceover')) && steps.cfg.outputs.stage != 'final' }}
         env:
           WHISPER_MODEL: ${{ steps.cfg.outputs.language == 'urdu' && 'medium' || 'small' }}
         run: python scripts/transcribe.py "${{ steps.proj.outputs.voiceover }}" out/transcript.json ${{ steps.cfg.outputs.language }}
 
       - name: ① Script + scenes (AI director)
+        if: ${{ steps.cfg.outputs.stage != 'final' }}
         id: draft
         env:
           STYLE: ${{ steps.cfg.outputs.style }}
@@ -116,6 +124,7 @@ jobs:
           PARAGRAPH="$PARAGRAPH" node scripts/draft.mjs
 
       - name: ② Place your assets + backgrounds, music, sound
+        if: ${{ steps.cfg.outputs.stage != 'final' }}
         env:
           JOB_FILE: ${{ steps.draft.outputs.draft }}
           PROJECT_ANALYSIS: out/analysis.json
@@ -131,30 +140,61 @@ jobs:
         run: node scripts/props.mjs "$JOB_FILE" out/props.json
 
       - name: ②b 2.5D — bring photos to life (never fails the run)
+        if: ${{ steps.cfg.outputs.stage != 'final' }}
         continue-on-error: true
         run: |
           python -c "import torch" 2>/dev/null || pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
           pip install transformers
           python scripts/depth25d.py out/props.json
 
+      - name: 📝 Publish the draft for the editor
+        if: ${{ steps.cfg.outputs.stage == 'draft' }}
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+          DRAFT_SETTINGS: ${{ steps.cfg.outputs.settings_json }}
+        run: |
+          npm install --prefix ../studio-web --no-audit --no-fund --silent
+          node ../studio-web/tools/blob_sync.mjs push "${{ steps.cfg.outputs.project_id }}" out/props.json public
+
+      - name: 📥 Pull your edited draft
+        if: ${{ steps.cfg.outputs.stage == 'final' }}
+        env:
+          BLOB_READ_WRITE_TOKEN: ${{ secrets.BLOB_READ_WRITE_TOKEN }}
+        run: |
+          npm install --prefix ../studio-web --no-audit --no-fund --silent
+          node ../studio-web/tools/blob_sync.mjs pull "${{ steps.cfg.outputs.project_id }}" out/props.json public
+
+      - name: Voice lines from earlier runs of this project (line-by-line regeneration)
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
+        uses: actions/cache@v4
+        with:
+          path: studio/out/voicecache
+          key: voice-${{ steps.cfg.outputs.project_id }}-${{ github.run_id }}
+          restore-keys: voice-${{ steps.cfg.outputs.project_id }}-
+
       - name: ③ Narration (your voiceover, aligned — or a voice)
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         env:
           VOICE: ${{ steps.cfg.outputs.voice }}
           LANGUAGE: ${{ steps.cfg.outputs.language }}
           VOICEOVER: ${{ steps.proj.outputs.voiceover }}
           TRANSCRIPT: out/transcript.json
+          VOICE_CACHE: out/voicecache
         run: python scripts/narrate.py out/props.json
 
       - name: ③b Fit the music to the story (drop on the reveal, ends on the beat)
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         continue-on-error: true
         run: python scripts/music_apply.py out/props.json
 
       - name: ④ Render the reel (scene-by-scene, cached — falls back to a full render)
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         run: |
           node scripts/render_incremental.mjs out/props.json out/reel.mp4 out/segcache             || { echo "::warning::incremental render failed — full render"; npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info; }
           npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
 
       - name: ⑤ Self-check — watch the render, fix the edit, render again
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         run: |
           set +e
           python scripts/critic.py out/reel.mp4 out/props.json out/critic1.json --apply
@@ -169,6 +209,7 @@ jobs:
           fi
 
       - name: ⑥ Caption file
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         run: |
           node -e '
             const fs = require("fs");
@@ -181,6 +222,7 @@ jobs:
           '
 
       - name: Deliver
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         uses: actions/upload-artifact@v4
         with:
           name: studio-project-run${{ github.run_number }}
@@ -193,6 +235,7 @@ jobs:
           if-no-files-found: warn
 
       - name: 📱 Phone link
+        if: ${{ steps.cfg.outputs.stage != 'draft' }}
         env:
           GH_TOKEN: ${{ github.token }}
           JOB_FILE: ${{ steps.draft.outputs.draft }}

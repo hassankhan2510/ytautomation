@@ -6,6 +6,7 @@ import { Player, PlayerRef } from "@remotion/player";
 import { Reel } from "../../studio/src/compositions/Reel";
 import { buildTimeline } from "../../studio/src/engine/timeline";
 import { setAssetMap } from "../../studio/src/engine/asset";
+import { REGISTRY } from "../../studio/src/engine/registry";
 
 type Props = { job: any; shaders?: boolean };
 const FPS = 30;
@@ -31,6 +32,8 @@ function Preview({ props, playerRef }: { props: Props; playerRef: React.RefObjec
 }
 
 (window as any).StudioPreview = {
+  // the scene library (id, category, description, props doc) for the editor's "change the look" picker
+  primitives() { return Object.values(REGISTRY).map((e) => e.meta); },
   mount(el: HTMLElement, props: Props, assetMap: Record<string, string> = {}) {
     setAssetMap(assetMap);
     const root = createRoot(el);
