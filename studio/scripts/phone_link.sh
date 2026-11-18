@@ -7,7 +7,7 @@
 # Needs GH_TOKEN with contents:write. Never fails the run.
 set -u
 SLUG=$(echo "${1:-reel}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/-/g; s/^-//; s/-$//' | cut -c1-50)
-NAME="$(date -u +%m%d)-run${GITHUB_RUN_NUMBER:-0}-${SLUG:-reel}"
+NAME="${PHONE_NAME:-$(date -u +%m%d)-run${GITHUB_RUN_NUMBER:-0}-${SLUG:-reel}}"  # PHONE_NAME: fixed name (web runs: web-<run id>)
 TAG=reels
 REPO="${GITHUB_REPOSITORY}"
 

@@ -1,0 +1,9 @@
+{
+  "name": "studio-web",
+  "private": true,
+  "type": "module",
+  "description": "Phone-first web page for the Studio: upload photos/clips/voiceover + script, press Make, get the reel. Static page + Vercel functions; the video itself is made by the GitHub workflow 'Studio — Make from Web'.",
+  "dependencies": {
+    "@vercel/blob": "2.9.0"
+  }
+}

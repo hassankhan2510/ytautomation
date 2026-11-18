@@ -1,0 +1,210 @@
+name: "Studio — Make from Web"
+
+# Started by the web page (studio-web/, hosted on Vercel): the page uploads your photos/clips/voiceover
+# to Vercel Blob, writes a manifest and dispatches this workflow with its (time-limited) link.
+# Everything after "Fetch the project" is generated from studio-project.yml — edit that file and run
+# `python studio/scripts/make_web_workflow.py`, never this one by hand.
+run-name: "${{ inputs.title }} [${{ inputs.project_id }}]"
+on:
+  workflow_dispatch:
+    inputs:
+      manifest_url:
+        description: "Manifest link from the web page"
+        required: true
+        type: string
+      title:
+        description: "Title shown in the page's 'My videos' list"
+        required: false
+        type: string
+        default: "web reel"
+      project_id:
+        description: "Web project id (for cleanup)"
+        required: false
+        type: string
+        default: "web"
+
+jobs:
+  make:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: studio
+    env:
+      PROJECT_DIR: projects/web-${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch the project from the web page
+        id: cfg
+        run: python scripts/fetch_manifest.py "${{ inputs.manifest_url }}" "$PROJECT_DIR"
+      - name: Find the project files
+        id: proj
+        run: |
+          test -d "$PROJECT_DIR" || { echo "::error::studio/$PROJECT_DIR not found — create it (see studio/projects/README.md)"; exit 1; }
+          VO=$(ls "$PROJECT_DIR"/voiceover.* 2>/dev/null | head -1 || true)
+          echo "voiceover=$VO" >> "$GITHUB_OUTPUT"
+          echo "script=$( [ -f "$PROJECT_DIR/script.txt" ] && echo "$PROJECT_DIR/script.txt" )" >> "$GITHUB_OUTPUT"
+          echo "### 📁 Project \`web-${{ github.run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          ls -la "$PROJECT_DIR" | tail -n +4 | awk '{print "- " $NF " (" $5 " bytes)"}' >> "$GITHUB_STEP_SUMMARY"
+      - name: Install system libraries (headless Chrome, ffmpeg, espeak)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnss3 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 libgbm1 \
+            libasound2t64 libxrandr2 libxkbcommon0 libxfixes3 libxcomposite1 libxdamage1 \
+            libpango-1.0-0 libcairo2 libcups2 fonts-liberation fonts-noto-color-emoji espeak-ng ffmpeg
+      - run: npm install --no-audit --no-fund
+      - name: Install analysis + voice engines
+        run: |
+          pip install numpy soundfile scipy pillow "opencv-python-headless<5"
+          # YuNet face detector (MIT, ~230 KB) — better than the Haar fallback; never fails the run
+          mkdir -p models && curl -fsSL -o models/face_detection_yunet.onnx             https://github.com/opencv/opencv_zoo/raw/main/models/face_detection_yunet/face_detection_yunet_2023mar.onnx             || { echo "YuNet download failed — Haar fallback"; rm -f models/face_detection_yunet.onnx; }
+          VOICE="${{ steps.cfg.outputs.voice }}"
+          if [ -n "${{ steps.proj.outputs.voiceover }}" ] && { [ "$VOICE" = "upload" ] || [ "${{ steps.cfg.outputs.script_mode }}" = "from-voiceover" ]; }; then
+            pip install faster-whisper
+          fi
+          if [ "$VOICE" != "upload" ] && [ "$VOICE" != "none" ]; then
+            pip install edge-tts kokoro
+            if [[ "${{ steps.cfg.outputs.language }}" = "urdu" || "$VOICE" = omnivoice* ]]; then
+              pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+              pip install omnivoice
+            elif [[ "$VOICE" = mine* ]]; then
+              pip install chatterbox-tts peft resemble-perth
+            fi
+          fi
+
+      - name: ⓪ Understand your assets (subject, faces, best clip seconds)
+        run: python scripts/analyze_assets.py "$PROJECT_DIR" out/analysis.json
+
+      - name: ⓪b Transcribe your voiceover (word timings)
+        if: ${{ steps.proj.outputs.voiceover != '' && (steps.cfg.outputs.voice == 'upload' || steps.cfg.outputs.script_mode == 'from-voiceover') }}
+        env:
+          WHISPER_MODEL: ${{ steps.cfg.outputs.language == 'urdu' && 'medium' || 'small' }}
+        run: python scripts/transcribe.py "${{ steps.proj.outputs.voiceover }}" out/transcript.json ${{ steps.cfg.outputs.language }}
+
+      - name: ① Script + scenes (AI director)
+        id: draft
+        env:
+          STYLE: ${{ steps.cfg.outputs.style }}
+          VERBATIM: ${{ steps.cfg.outputs.script_mode == 'ai-rewrite' && 'no' || 'yes' }}
+          LANGUAGE: ${{ steps.cfg.outputs.language }}
+          HANDLE: ${{ steps.cfg.outputs.channel == 'cohort_zero' && '@cohort_zero' || '' }}
+          THEME: ${{ steps.cfg.outputs.theme }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
+        run: |
+          if [ "${{ steps.cfg.outputs.script_mode }}" != "from-voiceover" ] && [ -n "${{ steps.proj.outputs.script }}" ]; then
+            PARAGRAPH="$(cat "${{ steps.proj.outputs.script }}")"
+          elif [ -f out/transcript.json ]; then
+            PARAGRAPH="$(python -c "import json;print(json.load(open('out/transcript.json',encoding='utf-8'))['text'])")"
+            echo "📝 Script = what you said in your voiceover" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::No script.txt and no voiceover to transcribe in studio/$PROJECT_DIR"; exit 1
+          fi
+          # the director knows which assets exist, so it can write lines the photos/clips can illustrate
+          export ASSET_HINTS="$(python -c "import json;print('; '.join(a['description'] for a in json.load(open('out/analysis.json',encoding='utf-8'))['assets']))")"
+          PARAGRAPH="$PARAGRAPH" node scripts/draft.mjs
+
+      - name: ② Place your assets + backgrounds, music, sound
+        env:
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+          PROJECT_ANALYSIS: out/analysis.json
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          BG_MODE: ${{ steps.cfg.outputs.backgrounds }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          MUSIC: ${{ steps.cfg.outputs.music }}
+          SFX: ${{ steps.cfg.outputs.sfx }}
+          SHADERS: "off"
+        run: node scripts/props.mjs "$JOB_FILE" out/props.json
+
+      - name: ②b 2.5D — bring photos to life (never fails the run)
+        continue-on-error: true
+        run: |
+          python -c "import torch" 2>/dev/null || pip install torch==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers
+          python scripts/depth25d.py out/props.json
+
+      - name: ③ Narration (your voiceover, aligned — or a voice)
+        env:
+          VOICE: ${{ steps.cfg.outputs.voice }}
+          LANGUAGE: ${{ steps.cfg.outputs.language }}
+          VOICEOVER: ${{ steps.proj.outputs.voiceover }}
+          TRANSCRIPT: out/transcript.json
+        run: python scripts/narrate.py out/props.json
+
+      - name: ③b Fit the music to the story (drop on the reveal, ends on the beat)
+        continue-on-error: true
+        run: python scripts/music_apply.py out/props.json
+
+      - name: ④ Render the reel (scene-by-scene, cached — falls back to a full render)
+        run: |
+          node scripts/render_incremental.mjs out/props.json out/reel.mp4 out/segcache             || { echo "::warning::incremental render failed — full render"; npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info; }
+          npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
+
+      - name: ⑤ Self-check — watch the render, fix the edit, render again
+        run: |
+          set +e
+          python scripts/critic.py out/reel.mp4 out/props.json out/critic1.json --apply
+          code=$?
+          set -e
+          if [ "$code" = "3" ]; then
+            echo "↻ scene fixes applied — re-rendering only the changed scenes" | tee -a "$GITHUB_STEP_SUMMARY"
+            node scripts/render_incremental.mjs out/props.json out/reel.mp4 out/segcache               || npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=error
+            python scripts/critic.py out/reel.mp4 out/props.json out/critic2.json --apply || true
+          elif [ "$code" != "0" ]; then
+            echo "::warning::self-check crashed (exit $code) — keeping the first render"
+          fi
+
+      - name: ⑥ Caption file
+        run: |
+          node -e '
+            const fs = require("fs");
+            const p = JSON.parse(fs.readFileSync("out/props.json", "utf8")).job;
+            const lines = [p.title || "", "", p.caption || ""];
+            const img = (p.credits || []).filter((c) => c.beat !== "music" && !/Pexels/i.test(c.license || ""));
+            if (img.length) lines.push("", "Images: " + img.map((c) => `${c.title} — ${c.artist} (${c.license})`).join("; "));
+            if (p.hooks && p.hooks.length) lines.push("", "--- alternative hooks ---", ...p.hooks);
+            fs.writeFileSync("out/caption.txt", lines.join("\n").trim() + "\n");
+          '
+
+      - name: Deliver
+        uses: actions/upload-artifact@v4
+        with:
+          name: studio-project-run${{ github.run_number }}
+          path: |
+            studio/out/reel.mp4
+            studio/out/poster.jpg
+            studio/out/caption.txt
+            studio/out/*.json
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: 📱 Phone link
+        env:
+          GH_TOKEN: ${{ github.token }}
+          JOB_FILE: ${{ steps.draft.outputs.draft }}
+        run: PHONE_NAME="web-${{ github.run_id }}" bash scripts/phone_link.sh web
+
+      - name: Save the draft
+        if: always()
+        working-directory: ${{ github.workspace }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add studio/src/data/drafts/ 2>/dev/null || true
+          git commit -m "studio: project draft ${{ steps.draft.outputs.draft }} [skip ci]" || { echo "nothing to commit"; exit 0; }
+          git pull --rebase --autostash || true
+          git push || echo "push skipped"

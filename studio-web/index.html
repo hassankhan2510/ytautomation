@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b0d">
+<title>Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0b0d; --panel: #141418; --panel2: #1b1b21; --line: #26262e; --ink: #f4f2ee; --muted: #9a98a3;
+    --accent: #c8102e; --accent2: #e23a52; --ok: #2fb67c; --warn: #e0a526; --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  main { max-width: 680px; margin: 0 auto; padding: 16px 16px 120px; }
+  header { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 18px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; letter-spacing: -0.3px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgba(200,16,46,.18); }
+  header a { color: var(--muted); text-decoration: none; font-size: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+  textarea, input[type=text], input[type=password], select {
+    width: 100%; background: var(--panel2); color: var(--ink); border: 1px solid var(--line); border-radius: 10px;
+    padding: 12px; font: inherit; outline: none; }
+  textarea { min-height: 150px; resize: vertical; }
+  textarea:focus, input:focus, select:focus { border-color: var(--accent); }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+  .seg label { display: block; text-align: center; padding: 9px 6px; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .seg input { display: none; }
+  .seg input:checked + span { color: var(--ink); }
+  .seg label:has(input:checked) { border-color: var(--accent); background: rgba(200,16,46,.12); color: var(--ink); }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--line); background: var(--panel2);
+    color: var(--ink); border-radius: 10px; padding: 11px 14px; font: inherit; font-weight: 500; cursor: pointer; text-decoration: none; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .btn.primary:disabled { opacity: .5; }
+  .btn.block { width: 100%; }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+  .asset { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; position: relative; }
+  .asset .thumb { aspect-ratio: 4/5; width: 100%; object-fit: cover; display: block; background: #000; }
+  .asset textarea { min-height: 64px; border: 0; border-top: 1px solid var(--line); border-radius: 0; font-size: 13px; padding: 8px; background: transparent; }
+  .asset .x { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.65); color: #fff; font-size: 16px; cursor: pointer; }
+  .asset .kind { position: absolute; top: 8px; left: 8px; font-size: 11px; background: rgba(0,0,0,.65); padding: 2px 7px; border-radius: 6px; }
+  .bar { height: 3px; background: var(--line); }
+  .bar > i { display: block; height: 100%; width: 0; background: var(--accent2); transition: width .2s; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .row label, .field label { display: block; font-size: 12px; color: var(--muted); margin: 0 0 6px; }
+  .field { margin-top: 10px; }
+  .swatches { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .sw { width: 34px; height: 34px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; }
+  .sw.on { border-color: var(--ink); }
+  .vo { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 10px 12px; background: var(--panel2); border-radius: 10px; font-size: 14px; }
+  .vo b { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  details summary { cursor: pointer; color: var(--muted); font-size: 14px; list-style: none; }
+  details summary::before { content: "＋ "; }
+  details[open] summary::before { content: "－ "; }
+  .sticky { position: fixed; left: 0; right: 0; bottom: 0; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(transparent, var(--bg) 35%); }
+  .sticky .inner { max-width: 680px; margin: 0 auto; }
+  .status { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 8px; min-height: 20px; }
+  .runs .run { padding: 14px 0; border-top: 1px solid var(--line); }
+  .runs .run:first-child { border-top: 0; padding-top: 0; }
+  .run .top { display: flex; align-items: center; gap: 10px; }
+  .run .title { flex: 1; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pill { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--panel2); color: var(--muted); white-space: nowrap; }
+  .pill.ok { background: rgba(47,182,124,.15); color: var(--ok); }
+  .pill.bad { background: rgba(226,58,82,.15); color: var(--accent2); }
+  .pill.live { background: rgba(224,165,38,.15); color: var(--warn); }
+  .run .meta { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .run video { width: 100%; max-height: 70vh; border-radius: 10px; margin-top: 10px; background: #000; }
+  .run .acts { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .err { color: var(--accent2); font-size: 14px; margin-top: 8px; }
+  .hidden { display: none !important; }
+  .login { max-width: 360px; margin: 18vh auto 0; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="brand"><span class="dot"></span>Studio</div>
+    <a href="#videos" id="toVideos">My videos ↓</a>
+  </header>
+
+  <section id="setup" class="card hidden"></section>
+
+  <section id="login" class="card login hidden">
+    <h2>Sign in</h2>
+    <input type="password" id="pw" placeholder="Password" autocomplete="current-password">
+    <button class="btn primary block" id="loginBtn" style="margin-top:10px">Enter</button>
+    <div class="err" id="loginErr"></div>
+  </section>
+
+  <div id="app" class="hidden">
+    <section class="card">
+      <h2>1 · Script</h2>
+      <textarea id="script" placeholder="Paste or write your script… (Urdu script, Roman Urdu or English)"></textarea>
+      <div class="seg" id="mode">
+        <label><input type="radio" name="mode" value="as-written" checked><span>Use my words</span></label>
+        <label><input type="radio" name="mode" value="ai-rewrite"><span>AI improves it</span></label>
+        <label><input type="radio" name="mode" value="from-voiceover"><span>From my voiceover</span></label>
+      </div>
+      <p class="hint" id="modeHint">The video uses your script exactly as written.</p>
+    </section>
+
+    <section class="card">
+      <h2>2 · Photos &amp; clips</h2>
+      <label class="btn block" for="files">＋ Add photos or clips</label>
+      <input type="file" id="files" accept="image/*,video/*" multiple class="hidden">
+      <p class="hint">Describe each one (who / what / where) — the AI places it where your script talks about it.</p>
+      <div class="grid" id="assets"></div>
+    </section>
+
+    <section class="card">
+      <h2>3 · Voice</h2>
+      <label class="btn block" for="voFile">🎙️ Upload your voiceover (optional)</label>
+      <input type="file" id="voFile" accept="audio/*,.m4a,.mp3,.wav,.opus,.ogg" class="hidden">
+      <div class="vo hidden" id="vo"><span>🎧</span><b id="voName"></b><button class="btn" id="voDel">Remove</button></div>
+      <div class="field">
+        <label for="voice">Who speaks</label>
+        <select id="voice">
+          <option value="upload">My uploaded voiceover</option>
+          <option value="mine" selected>Your cloned voice</option>
+          <option value="mine-sufyan">Sufyan</option>
+          <option value="mine-pariya">Pariya</option>
+          <option value="mine-sabeha">Sabeha</option>
+          <option value="kokoro">AI voice (Kokoro)</option>
+          <option value="edge">AI voice (Edge)</option>
+          <option value="none">No voice</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>4 · Look</h2>
+      <div class="row">
+        <div><label for="language">Language</label>
+          <select id="language"><option value="english">English</option><option value="urdu">Urdu</option></select></div>
+        <div><label for="style">Format</label>
+          <select id="style"><option value="explainer">Explainer</option><option value="story">Story</option><option value="techNews">Tech news</option><option value="breakdown">Breakdown</option><option value="buildInPublic">Build in public</option></select></div>
+      </div>
+      <div class="field"><label>Colour theme</label><div class="swatches" id="themes"></div></div>
+      <details class="field"><summary>More settings</summary>
+        <div class="row field">
+          <div><label for="channel">End card</label>
+            <select id="channel"><option value="none">Follow prompt</option><option value="cohort_zero">Cohort Zero logo</option></select></div>
+          <div><label for="backgrounds">Scenes without your media</label>
+            <select id="backgrounds"><option value="video">Stock video</option><option value="photo">Stock photos</option><option value="off">Generated</option></select></div>
+        </div>
+        <div class="row field">
+          <div><label for="music">Music</label><select id="music"><option value="auto">On</option><option value="none">Off</option></select></div>
+          <div><label for="sfx">Sound effects</label><select id="sfx"><option value="on">On</option><option value="off">Off</option></select></div>
+        </div>
+        <div class="field"><label for="title">Name (for your list)</label><input type="text" id="title" placeholder="e.g. Cohort Zero — no degree"></div>
+      </details>
+    </section>
+
+    <section class="card runs" id="videos">
+      <h2>My videos</h2>
+      <div id="runs"><p class="hint">Nothing yet — your videos appear here.</p></div>
+    </section>
+  </div>
+</main>
+
+<div class="sticky hidden" id="bottom"><div class="inner">
+  <div class="status" id="status"></div>
+  <button class="btn primary block" id="make">Make video</button>
+</div></div>
+
+<script type="module">
+const MOCK = new URLSearchParams(location.search).has("mock");
+const $ = (id) => document.getElementById(id);
+const THEMES = { crimson: "#c8102e", ocean: "#1e6fd9", grape: "#7a3cff", sunrise: "#ff7a2f", lagoon: "#12b5a6", mango: "#ffb21e",
+  mint: "#5ee0a0", neon: "#c6ff00", acid: "#d7ff3a", electric: "#2b6bff", paper: "#efe8da", taxi: "#ffd400" };
+let theme = "crimson", access = "private", voiceover = null;
+const assets = []; // {id, file, kind, desc, el, bar}
+
+const api = async (path, body) => {
+  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign(new Error(j.error || r.statusText), { status: r.status });
+  return j;
+};
+
+/* ── boot ── */
+async function boot() {
+  let cfg;
+  try { cfg = await api("/api/config"); } catch (e) { $("status").textContent = "Server not reachable"; return; }
+  access = cfg.access;
+  if (cfg.missing?.length) {
+    $("setup").classList.remove("hidden");
+    $("setup").innerHTML = `<h2>Setup needed</h2><p class="hint">Add these in Vercel → Project → Settings → Environment Variables (and connect a Blob store): <b>${cfg.missing.join(", ")}</b></p>`;
+  }
+  if (!cfg.authed) { $("login").classList.remove("hidden"); return; }
+  start();
+}
+function start() {
+  $("login").classList.add("hidden"); $("app").classList.remove("hidden"); $("bottom").classList.remove("hidden");
+  for (const [k, c] of Object.entries(THEMES)) {
+    const b = document.createElement("button"); b.className = "sw" + (k === theme ? " on" : ""); b.style.background = c; b.title = k; b.ariaLabel = k;
+    b.onclick = () => { theme = k; document.querySelectorAll(".sw").forEach((x) => x.classList.toggle("on", x === b)); };
+    $("themes").appendChild(b);
+  }
+  loadRuns(); setInterval(loadRuns, 15000);
+}
+$("loginBtn").onclick = async () => {
+  $("loginErr").textContent = "";
+  try { await api("/api/login", { password: $("pw").value }); start(); }
+  catch (e) { $("loginErr").textContent = e.message; }
+};
+$("pw").onkeydown = (e) => { if (e.key === "Enter") $("loginBtn").click(); };
+
+/* ── script mode ── */
+const HINTS = { "as-written": "The video uses your script exactly as written.",
+  "ai-rewrite": "The AI turns your text into a punchy script (facts stay yours).",
+  "from-voiceover": "Upload your voiceover — whatever you say becomes the script and captions." };
+$("mode").onchange = () => { const m = document.querySelector("input[name=mode]:checked").value; $("modeHint").textContent = HINTS[m]; if (m === "from-voiceover" && voiceover) $("voice").value = "upload"; };
+
+/* ── photos & clips ── */
+$("files").onchange = (e) => { for (const f of e.target.files) addAsset(f); e.target.value = ""; };
+function addAsset(file) {
+  const kind = file.type.startsWith("video") ? "clip" : "image";
+  const id = Math.random().toString(36).slice(2, 9);
+  const el = document.createElement("div"); el.className = "asset";
+  const url = URL.createObjectURL(file);
+  el.innerHTML = (kind === "clip" ? `<video class="thumb" src="${url}" muted playsinline preload="metadata"></video>` : `<img class="thumb" src="${url}" alt="">`) +
+    `<span class="kind">${kind === "clip" ? "Clip" : "Photo"}</span><button class="x" aria-label="Remove">×</button>` +
+    `<div class="bar"><i></i></div><textarea placeholder="What is this? e.g. Our Lahore office, 2024"></textarea>`;
+  const a = { id, file, kind, el, bar: el.querySelector(".bar i") };
+  const ta = el.querySelector("textarea"); ta.value = file.name.replace(/\.[^.]+$/, "").replace(/[_-]+/g, " ").replace(/^(IMG|VID|PXL|WA)\s?\d.*$/i, "");
+  el.querySelector(".x").onclick = () => { assets.splice(assets.indexOf(a), 1); el.remove(); URL.revokeObjectURL(url); };
+  a.desc = () => ta.value.trim();
+  assets.push(a); $("assets").appendChild(el);
+}
+
+/* ── voiceover ── */
+$("voFile").onchange = (e) => {
+  voiceover = e.target.files[0] || null; e.target.value = "";
+  $("vo").classList.toggle("hidden", !voiceover); $("voName").textContent = voiceover?.name || "";
+  if (voiceover) $("voice").value = "upload";
+};
+$("voDel").onclick = () => { voiceover = null; $("vo").classList.add("hidden"); if ($("voice").value === "upload") $("voice").value = "mine"; };
+
+/* ── make ── */
+const pid = () => (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)).toLowerCase();
+const clean = (n) => n.toLowerCase().replace(/[^a-z0-9.]+/g, "-").replace(/^-+|-+$/g, "").slice(-60) || "file";
+async function uploadOne(file, path, bar) {
+  if (MOCK) { for (let p = 0; p <= 100; p += 20) { bar && (bar.style.width = p + "%"); await new Promise((r) => setTimeout(r, 80)); } return { url: "https://x.public.blob.vercel-storage.com/" + path, pathname: path }; }
+  const { upload } = await import("https://esm.sh/@vercel/blob@2.9.0/client");
+  return upload(path, file, { access, handleUploadUrl: "/api/upload", multipart: file.size > 20e6,
+    onUploadProgress: (ev) => { if (bar) bar.style.width = ev.percentage + "%"; } });
+}
+$("make").onclick = async () => {
+  const mode = document.querySelector("input[name=mode]:checked").value;
+  const script = $("script").value.trim();
+  if (!script && !(voiceover && mode === "from-voiceover")) { $("status").textContent = "Write a script — or upload a voiceover and choose “From my voiceover”."; return; }
+  if ($("voice").value === "upload" && !voiceover) { $("status").textContent = "Upload your voiceover first (or pick another voice)."; return; }
+  $("make").disabled = true;
+  const id = pid();
+  try {
+    const items = [...assets];
+    let done = 0;
+    const tell = () => ($("status").textContent = `Uploading ${done}/${items.length + (voiceover ? 1 : 0)}…`);
+    tell();
+    const up = [];
+    for (let i = 0; i < items.length; i += 3) {   // 3 at a time (phones on mobile data)
+      up.push(...await Promise.all(items.slice(i, i + 3).map(async (a) => {
+        const r = await uploadOne(a.file, `projects/${id}/${clean(a.file.name)}`, a.bar); done++; tell();
+        return { pathname: r.pathname, url: r.url, name: a.file.name, kind: a.kind, description: a.desc() };
+      })));
+    }
+    let vo = null;
+    if (voiceover) { const r = await uploadOne(voiceover, `projects/${id}/${clean(voiceover.name)}`); done++; tell(); vo = { pathname: r.pathname, url: r.url, name: voiceover.name }; }
+    $("status").textContent = "Starting your video…";
+    const settings = { scriptMode: mode, voice: $("voice").value, language: $("language").value, style: $("style").value, theme,
+      channel: $("channel").value, backgrounds: $("backgrounds").value, music: $("music").value, sfx: $("sfx").value };
+    const r = await api("/api/make", { projectId: id, title: $("title").value.trim() || script.slice(0, 60), script, settings, voiceover: vo, assets: up });
+    $("status").textContent = "✅ Started — it usually takes 15–40 min (Urdu voice: longer). You can close this page.";
+    setTimeout(loadRuns, 4000); location.hash = "videos";
+  } catch (e) {
+    $("status").textContent = "❌ " + e.message;
+  } finally { $("make").disabled = false; }
+};
+
+/* ── my videos ── */
+const cleaned = new Set(JSON.parse((() => { try { return localStorage.getItem("cleaned") || "[]"; } catch { return "[]"; } })()));
+const ago = (t) => { const m = Math.round((Date.now() - new Date(t)) / 60000); return m < 60 ? `${m} min ago` : m < 1440 ? `${Math.round(m / 60)} h ago` : new Date(t).toLocaleDateString(); };
+async function loadRuns() {
+  let data;
+  try { data = await api("/api/runs"); } catch (e) { if (e.status === 401) location.reload(); return; }
+  const box = $("runs");
+  if (!data.runs.length) return;
+  const open = new Set([...box.querySelectorAll("video")].map((v) => v.dataset.id));
+  box.innerHTML = "";
+  for (const r of data.runs) {
+    const done = r.status === "completed" && r.conclusion === "success";
+    const failed = r.status === "completed" && !done;
+    const pill = done ? `<span class="pill ok">Ready</span>` : failed ? `<span class="pill bad">Failed</span>` : `<span class="pill live">${r.status === "queued" ? "Queued" : "Making…"}</span>`;
+    const d = document.createElement("div"); d.className = "run";
+    d.innerHTML = `<div class="top"><span class="title">${(r.title || "").replace(/\s*\[[a-z0-9-]+\]$/, "").replace(/</g, "&lt;")}</span>${pill}</div>
+      <div class="meta">${ago(r.created)}${!done && !failed && r.step ? " · " + r.step.replace(/</g, "&lt;") : ""}</div>
+      <div class="acts">${done ? `<button class="btn" data-watch="${r.id}">▶ Watch</button><a class="btn" href="${r.video}" download>⬇ Save video</a><a class="btn" href="${r.caption}" target="_blank" rel="noopener">Caption</a>` : ""}${failed ? `<a class="btn" href="${r.url}" target="_blank" rel="noopener">See what went wrong</a>` : ""}</div>`;
+    box.appendChild(d);
+    const w = d.querySelector("[data-watch]");
+    const show = () => { if (d.querySelector("video")) return; const v = document.createElement("video"); v.src = r.video; v.controls = true; v.playsInline = true; v.dataset.id = r.id; d.appendChild(v); };
+    if (w) w.onclick = show;
+    if (done && open.has(String(r.id))) show();
+    const stale = failed && Date.now() - new Date(r.updated) > 864e5;   // keep a failed project's uploads 1 day (retry)
+    if ((done || stale) && r.projectId && !cleaned.has(r.projectId) && !MOCK) {   // free the Blob space once the video exists
+      api("/api/cleanup", { projectId: r.projectId }).then(() => { cleaned.add(r.projectId); try { localStorage.setItem("cleaned", JSON.stringify([...cleaned])); } catch {} }).catch(() => {});
+    }
+  }
+}
+boot();
+</script>
+</body>
+</html>
