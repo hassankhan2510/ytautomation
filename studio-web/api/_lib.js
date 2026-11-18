@@ -79,6 +79,7 @@ export const CHOICES = {
   backgrounds: ["video", "photo", "off"],
   music: ["auto", "none"],
   sfx: ["on", "off"],
+  pace: ["fast", "normal", "turbo"],
 };
 
 export const safeId = (s) => /^[a-z0-9-]{6,40}$/.test(String(s || ""));

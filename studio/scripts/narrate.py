@@ -142,11 +142,10 @@ def synth_omnivoice(text):
     if _omni_lang_arg:
         kw[_omni_lang_arg] = lang
     if _omni_has_speed:
-        kw["speed"] = float(os.environ.get("VOICE_SPEED", "1.08"))  # a touch faster = more energy, fewer drags
+        kw["speed"] = SPEED  # PACE: the engine speaks faster itself (natural pitch, natural prosody)
     if globals().get("_omni_has_steps"):
-        # 16 diffusion steps = the makers' documented "faster inference" setting: ~2x faster than the default
-        # 32 on CPU runners (Urdu reels: ~64 -> ~30-35 min of voice). VOICE_STEPS=32 for maximum quality.
-        kw["num_step"] = int(os.environ.get("VOICE_STEPS", "16"))
+        # 32 diffusion steps = the makers' default = best quality (slower). VOICE_STEPS=16 is their "faster" setting.
+        kw["num_step"] = int(os.environ.get("VOICE_STEPS", "32"))
     audio = m.generate(**kw)
     return to_mono_24k(audio[0], 24000)
 
@@ -157,7 +156,7 @@ def synth_kokoro(text):
         from kokoro import KPipeline
 
         _kokoro = KPipeline(lang_code="a")
-    chunks = [a for _, _, a in _kokoro(text, voice="am_michael", speed=1.08) if a is not None]
+    chunks = [a for _, _, a in _kokoro(text, voice="am_michael", speed=SPEED) if a is not None]
     return to_mono_24k(np.concatenate(chunks) if chunks else np.zeros(1), 24000)
 
 
@@ -166,7 +165,7 @@ def synth_edge(text):
     import tempfile
 
     async def go(path):
-        await edge_tts.Communicate(text, "en-US-AndrewMultilingualNeural", rate="+8%").save(path)
+        await edge_tts.Communicate(text, "en-US-AndrewMultilingualNeural", rate=f"{round((SPEED - 1) * 100):+d}%").save(path)
 
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
         path = f.name
@@ -177,6 +176,69 @@ def synth_edge(text):
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", path, "-ar", str(SR), "-ac", "1", wav_path], check=True)
     data, sr = sf.read(wav_path)
     return to_mono_24k(data, sr)
+
+
+# PACE — energetic reels: the voice itself speaks faster (each engine's own speed control, so pitch and
+# prosody stay natural) and the pauses between lines get tighter. VOICE_SPEED still overrides the speed.
+PACES = {"normal": (1.08, 1.0, 0.18), "fast": (1.2, 0.55, 0.1), "turbo": (1.32, 0.35, 0.06)}
+PACE = os.environ.get("PACE", "normal") if os.environ.get("PACE", "normal") in PACES else "normal"
+SPEED = float(os.environ.get("VOICE_SPEED") or PACES[PACE][0])
+GAP_SCALE, LEAD_IN = PACES[PACE][1], PACES[PACE][2]
+
+
+def tempo(wav, factor):
+    """Pitch-preserving speed-up for an engine without its own speed control (Chatterbox clone)."""
+    if abs(factor - 1) < 0.01 or not len(wav):
+        return wav
+    import subprocess
+    r = subprocess.run(["ffmpeg", "-v", "error", "-f", "f32le", "-ar", str(SR), "-ac", "1", "-i", "pipe:0",
+                        "-af", f"atempo={factor:.3f}", "-f", "f32le", "-ar", str(SR), "-ac", "1", "pipe:1"],
+                       input=wav.astype(np.float32).tobytes(), capture_output=True, check=True)
+    return np.frombuffer(r.stdout, dtype=np.float32).copy()
+
+
+def clean_edges(wav, fade_in=0.008, fade_out=0.04):
+    """Remove the 'd'/'b' sound at the end of every line.
+
+    Measured on a real reel (Nov 2026): the voice engine ends each line by trailing off into creaky voice — 2-3
+    sharp, ISOLATED glottal pulses after the last vowel. An isolated pulse after a vowel is heard as a stop
+    consonant ('d', 'b'). Speech frames have a low peak/RMS ratio (crest); a lone pulse has a very high one.
+    So: find where real speech ends (loud enough AND not a lone pulse), cut just after it, tame any pulse left
+    in the last 150 ms, and fade both edges (no click from the cut). Returns (wav, removed_seconds, pulses)."""
+    n0 = len(wav)
+    f = int(0.01 * SR)
+    if n0 < 8 * f:
+        return wav, 0.0, 0
+    nf = n0 // f
+    fr = wav[: nf * f].reshape(nf, f)
+    rms = np.sqrt(np.mean(fr ** 2, axis=1)) + 1e-9
+    crest = np.max(np.abs(fr), axis=1) / rms
+    ref = np.percentile(rms, 90)
+    speech = (rms >= ref * 10 ** (-30 / 20)) & (crest < 4.5)
+    idx = np.where(speech)[0]
+    if not len(idx):
+        return wav, 0.0, 0
+    end = min(n0, (idx[-1] + 1) * f + int(0.015 * SR))
+    w = wav[:end].astype(np.float32).copy()
+    # de-click the tail: any sample far above the local level (median of |x| over 20 ms) is a pulse
+    tail = int(0.15 * SR)
+    a = max(0, len(w) - tail)
+    pulses = 0
+    win = int(0.02 * SR)
+    for s0 in range(a, len(w), win // 2):
+        seg = w[s0:s0 + win]
+        lvl = np.median(np.abs(seg)) + 1e-6
+        lim = 6.0 * lvl
+        over = np.abs(seg) > lim
+        if over.any():
+            pulses += 1
+            seg[over] = np.sign(seg[over]) * (lim + np.tanh((np.abs(seg[over]) - lim) / lim) * lim * 0.2)
+    fi, fo = min(int(fade_in * SR), len(w) // 4), min(int(fade_out * SR), len(w) // 4)
+    if fi:
+        w[:fi] *= 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, fi))
+    if fo:
+        w[-fo:] *= 0.5 + 0.5 * np.cos(np.linspace(0, np.pi, fo))
+    return w, (n0 - end) / SR, pulses
 
 
 def trim(wav, thresh=0.012, pad=0.04):
@@ -365,10 +427,11 @@ def main():
         os.makedirs(cache_dir, exist_ok=True)
     ref_id = f"{os.path.basename(REF)}:{os.path.getsize(REF)}" if os.path.exists(REF) else "noref"
     hits = 0
+    tail_fix = []
 
     def cache_path(eng_name, text):
         import hashlib
-        h = hashlib.sha1(f"{eng_name}|{ref_id}|{os.environ.get('VOICE_SPEED', '')}|{os.environ.get('VOICE_STEPS', '16')}|{text}".encode("utf-8")).hexdigest()[:20]
+        h = hashlib.sha1(f"{eng_name}|{ref_id}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|edges2|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 
     for i, beat in enumerate(job["beats"]):
@@ -390,6 +453,11 @@ def main():
         for eng in engines:
             try:
                 wav = trim(eng(text))
+                if eng is synth_mine:  # Chatterbox has no speed control of its own
+                    wav = tempo(wav, SPEED / 1.08)
+                wav, cut, pulses = clean_edges(wav)
+                if cut > 0.02 or pulses:
+                    tail_fix.append((cut, pulses))
                 if used is None:
                     used = eng.__name__
                 elif used != eng.__name__:
@@ -408,9 +476,13 @@ def main():
     if cache_dir:
         spoken = sum(1 for b in job["beats"] if (b.get("speak") or b.get("text", "")).strip())
         print(f"  voice cache: {hits}/{spoken} spoken lines reused, {spoken - hits} synthesised")
+    print(f"  pace: {PACE} (voice speed {SPEED:.2f}, pauses x{GAP_SCALE})")
+    if tail_fix:
+        print(f"  line endings cleaned: {len(tail_fix)} lines · {sum(c for c, _ in tail_fix):.2f}s of trailing creak cut · "
+              f"{sum(p for _, p in tail_fix)} end-of-line pulses tamed")
 
     # Join with natural pauses and record each beat's speech window.
-    audio, words, t = [], [], 0.18  # small lead-in so the first frame isn't mid-syllable
+    audio, words, t = [], [], LEAD_IN  # small lead-in so the first frame isn't mid-syllable
     audio.append(np.zeros(int(t * SR), dtype=np.float32))
     for beat, seg in zip(job["beats"], segments):
         start, dur = t, len(seg) / SR
@@ -427,6 +499,7 @@ def main():
         txt = beat.get("text", "").strip()
         # Tight pauses keep the flow (creator found the read too stop-start).
         gap = 0.22 if re.search(r"[.!?]['\")\]]?$", txt) else 0.1 if re.search(r"[,;:—–]$", txt) else 0.14
+        gap = max(0.04, gap * GAP_SCALE)
         gap += float(beat.get("hold") or 0)
         audio.append(np.zeros(int(gap * SR), dtype=np.float32))
         t += gap

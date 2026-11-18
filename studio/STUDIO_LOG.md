@@ -62,3 +62,16 @@ Finished videos: `https://github.com/hassankhan2510/ytautomation/releases/tag/re
 - Repo is PUBLIC: anything in `studio/projects/` and the reels release is public; web uploads are private and auto-deleted.
 - Remotion license: free only for companies ≤3 people. Vercel Hobby = non-commercial (move to Pro / Cloudflare when it's a business).
 - GitHub free runners must not render paying customers' videos (terms) — move rendering to a paid server then.
+
+## 2026-11-18 — "d"/"b" after every sentence: found and fixed · Pace control
+- **Diagnosis (measured, not guessed):** spectrograms of the last 300 ms of each line in reel web-44333673386 show the
+  voice engine (OmniVoice) ending every line in creaky voice: 2–3 sharp, isolated glottal pulses after the last vowel.
+  An isolated pulse after a vowel is heard as a stop consonant ("d"/"b"). Not the script (Urdu punctuation was already
+  converted), and not our joining (the pulses sit ~100 ms before the cut).
+- **Fix:** `clean_edges()` in narrate.py: real speech = loud enough AND low crest (a lone pulse has a very high
+  peak/RMS); cut 15 ms after it, tame any pulse left in the last 150 ms, 8 ms fade-in / 40 ms fade-out.
+  Synthetic test: tail peak 0.25 → 0.06 (same as a clean ending), vowel untouched. The log prints how many endings it cleaned.
+- **Quality:** OmniVoice back to 32 steps (makers' default). Voice cache key changed → old cached lines re-made once.
+- **Pace** (page + all studio workflows, default **fast**): normal 1.08× / pauses ×1 · fast 1.2× / pauses ×0.55 ·
+  turbo 1.32× / pauses ×0.35. Uses each engine's own speed control (natural pitch); the Chatterbox clone has none,
+  so it gets a pitch-preserving ffmpeg atempo.

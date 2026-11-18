@@ -24,9 +24,10 @@ CHOICES = {
     "backgrounds": ["video", "photo", "off"],
     "music": ["auto", "none"],
     "sfx": ["on", "off"],
+    "pace": ["fast", "normal", "turbo"],
 }
 DEFAULTS = {"scriptMode": "as-written", "voice": "mine", "language": "english", "style": "explainer", "theme": "crimson",
-            "channel": "none", "backgrounds": "video", "music": "auto", "sfx": "on"}
+            "channel": "none", "backgrounds": "video", "music": "auto", "sfx": "on", "pace": "fast"}
 OUT_KEYS = {"scriptMode": "script_mode"}
 IMG = (".jpg", ".jpeg", ".png", ".webp")
 VID = (".mp4", ".mov", ".m4v", ".webm")

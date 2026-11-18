@@ -57,6 +57,11 @@ on:
         type: choice
         options: ["on", "off"]
         default: "on"
+      pace:
+        description: "Pace — fast = energetic reel delivery (faster voice, tight pauses)"
+        type: choice
+        options: [fast, normal, turbo]
+        default: fast
 
 jobs:
   make:
@@ -173,6 +178,7 @@ jobs:
         env:
           VOICE: ${{ github.event.inputs.voice }}
           LANGUAGE: ${{ github.event.inputs.language }}
+          PACE: ${{ github.event.inputs.pace }}
           VOICEOVER: ${{ steps.proj.outputs.voiceover }}
           TRANSCRIPT: out/transcript.json
         run: python scripts/narrate.py out/props.json

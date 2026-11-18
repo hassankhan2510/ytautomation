@@ -57,6 +57,11 @@ on:
         type: choice
         options: ["on", "off"]
         default: "on"
+      pace:
+        description: "Pace — fast = energetic reel delivery (faster voice, tight pauses)"
+        type: choice
+        options: [fast, normal, turbo]
+        default: fast
 
 jobs:
   make:
@@ -139,6 +144,7 @@ jobs:
           # Urdu reels always switch to OmniVoice (the Chatterbox clone is English-only) — narrate.py does it.
           VOICE: ${{ github.event.inputs.voice }}
           LANGUAGE: ${{ github.event.inputs.language }}
+          PACE: ${{ github.event.inputs.pace }}
         run: python scripts/narrate.py out/props.json
 
       - name: ③b Fit the music to the story (drop on the reveal, ends on the beat)

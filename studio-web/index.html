@@ -153,6 +153,8 @@
       <div class="row">
         <div><label for="language">Language</label>
           <select id="language"><option value="english">English</option><option value="urdu">Urdu</option></select></div>
+        <div><label for="pace">Pace</label>
+          <select id="pace"><option value="fast">Fast — energetic</option><option value="normal">Normal — calm</option><option value="turbo">Turbo — rapid-fire</option></select></div>
         <div><label for="style">Format</label>
           <select id="style"><option value="explainer">Explainer</option><option value="story">Story</option><option value="techNews">Tech news</option><option value="breakdown">Breakdown</option><option value="buildInPublic">Build in public</option></select></div>
       </div>
@@ -303,7 +305,7 @@ async function makeVideo(stage) {
     if (voiceover) { const r = await uploadOne(voiceover, `projects/${id}/${clean(voiceover.name)}`); done++; tell(); vo = { pathname: r.pathname, url: r.url, name: voiceover.name }; }
     $("status").textContent = "Starting your video…";
     const settings = { scriptMode: mode, voice: $("voice").value, language: $("language").value, style: $("style").value, theme,
-      channel: $("channel").value, backgrounds: $("backgrounds").value, music: $("music").value, sfx: $("sfx").value };
+      channel: $("channel").value, backgrounds: $("backgrounds").value, music: $("music").value, sfx: $("sfx").value, pace: $("pace").value };
     const r = await api("/api/make", { projectId: id, stage, title: $("title").value.trim() || script.slice(0, 60), script, settings, voiceover: vo, assets: up });
     $("status").textContent = stage === "draft"
       ? "✅ Draft started — ready to edit in ~5–8 min (it appears under My videos)."

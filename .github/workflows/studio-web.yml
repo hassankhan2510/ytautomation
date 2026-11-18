@@ -182,6 +182,7 @@ jobs:
         env:
           VOICE: ${{ steps.cfg.outputs.voice }}
           LANGUAGE: ${{ steps.cfg.outputs.language }}
+          PACE: ${{ steps.cfg.outputs.pace }}
           VOICEOVER: ${{ steps.proj.outputs.voiceover }}
           TRANSCRIPT: out/transcript.json
           VOICE_CACHE: out/voicecache
