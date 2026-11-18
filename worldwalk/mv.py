@@ -461,7 +461,7 @@ def chunked_world(gen_fn, CAM, W, H, gt_rgb, gt_z, method, depth_model, chunk=9,
             ps.append(10 * math.log10(1 / max(float(np.mean((img[m] - final[f][m]) ** 2)), 1e-10)))
     chunked_world.world = world  # the built persistent state (for export / the phone viewer)
     back, back_holes = walk_back(world, CAM)
-    out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), **seam_parts(final[1:], imagined[1:]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
+    out = {"method": method, "lift": lift, "world_psnr": float(np.mean(ps)), "seam_ratio": seam_score(final[1:], imagined[1:]), **seam_parts(final[1:], imagined[1:]), **colour_glitch(final[1:], imagined[1:], gt_rgb[0]), "walk_back_holes_pct": 100 * back_holes, "median_lift_err": float(np.median(lift_err)) if lift_err else float("nan"),
            "imagined_pct": 100 * float(imagined[1:].mean()),
            "generator_calls": gen_calls, "chunks": chunks, "token_frac_per_chunk": [round(t, 4) for t in tok],
            "token_frac_mean": float(np.mean(tok)) if tok else float("nan"),
@@ -490,6 +490,32 @@ def refine_depth(zr, cov, mag):
         w = gaussian_filter(cov.astype(np.float32), k / 3)
         d = gaussian_filter(disp, k / 3) / np.maximum(w, 1e-4)
     return np.where(cov & (d > 1e-6), 1.0 / np.maximum(d, 1e-6), zr).astype(np.float32)
+
+
+def colour_glitch(final, imagined, ref):
+    """How 'AI-glitchy' the imagined pixels look, measured against the real photo (ref):
+    oversat = share of imagined pixels more saturated than the photo's 99.5th percentile chroma
+              (the neon cyan/green/blue blotches), hue_noise = mean local hue jitter where colour is
+              strong (rainbow fringes). Lower = cleaner; a real photo scores ~0.005 / its own jitter."""
+    def chroma(x):
+        return x.max(-1) - x.min(-1)
+    thr = float(np.quantile(chroma(ref), 0.995)) * 1.05
+    over, noise = [], []
+    for img, m in zip(final, imagined):
+        if m.mean() < 0.002:
+            continue
+        c = chroma(img)
+        over.append(float((c[m] > thr).mean()))
+        r, g, b = img[..., 0], img[..., 1], img[..., 2]
+        hue = np.arctan2(np.sqrt(3) * (g - b), 2 * r - g - b)
+        z = np.exp(1j * hue)
+        from scipy.ndimage import uniform_filter
+        R = np.abs(uniform_filter(z.real, 3) + 1j * uniform_filter(z.imag, 3))  # 1 = uniform hue, 0 = chaotic
+        strong = m & (c > 0.12)
+        if strong.sum() > 50:
+            noise.append(float((1 - R)[strong].mean()))
+    return {"oversat_pct": 100 * float(np.mean(over)) if over else float("nan"),
+            "hue_noise": float(np.mean(noise)) if noise else float("nan")}
 
 
 def token_novelty(masks, sp=16, tf=4, halo=1):
