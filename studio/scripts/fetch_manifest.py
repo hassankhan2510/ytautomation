@@ -11,6 +11,7 @@ import json
 import os
 import re
 import sys
+import urllib.error
 import urllib.parse
 import urllib.request
 
@@ -114,7 +115,11 @@ def main(url, pdir):
     for k, a in enumerate(m.get("assets") or [], 1):
         kind = "clip" if a.get("kind") == "clip" else "image"
         fn = safe_name(a.get("name"), k, VID if kind == "clip" else IMG, ".mp4" if kind == "clip" else ".jpg")
-        size = fetch(a["url"], os.path.join(pdir, fn))
+        try:
+            size = fetch(a["url"], os.path.join(pdir, fn))
+        except urllib.error.HTTPError as e:  # deleted from storage (or link expired): make the video without it
+            print(f"::warning::your {kind} '{a.get('name')}' is no longer in storage (HTTP {e.code}) — made without it; upload it again to include it")
+            continue
         desc = re.sub(r"[\r\n|]+", " ", str(a.get("description") or "")).strip()
         lines.append(f"{fn} | {desc}" if desc else f"{fn} | {os.path.splitext(str(a.get('name')))[0]}")
         print(f"  {kind:5s} {fn} ({size // 1024} KB) · {desc[:60]}")
@@ -137,6 +142,10 @@ def main(url, pdir):
         for k, v in s.items():
             f.write(f"{OUT_KEYS.get(k, k)}={v}\n")
         f.write(f"stage={stage}\nproject_id={pid}\nsettings_json={json.dumps(s)}\n")
+        # same script + same voice -> same spoken lines: a re-made video (new project) reuses them
+        import hashlib
+        skey = hashlib.sha1(f"{' '.join(str(m.get('script') or '').split())}|{s['voice']}|{s['language']}|{s['pace']}".encode("utf-8")).hexdigest()[:16]
+        f.write(f"script_key={skey}\n")
     print("settings:", s, "· stage:", stage, "· project:", pid)
 
 

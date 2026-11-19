@@ -106,6 +106,13 @@ pull = '''      - name: 📥 Pull your edited draft
           path: studio/out/voicecache
           key: voice-${{ steps.cfg.outputs.project_id }}-${{ github.run_id }}
           restore-keys: voice-${{ steps.cfg.outputs.project_id }}-
+      - name: 🗣️ Voice lines from an earlier video with the same script
+        if: ${{ steps.cfg.outputs.stage != 'final' }}
+        uses: actions/cache@v4
+        with:
+          path: studio/out/voicecache
+          key: voicetxt-${{ steps.cfg.outputs.script_key }}-${{ github.run_id }}
+          restore-keys: voicetxt-${{ steps.cfg.outputs.script_key }}-
 
 '''
 a = "      - name: ③ Narration"
