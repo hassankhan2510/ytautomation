@@ -190,7 +190,9 @@ jobs:
       - name: ④ Render the reel
         # a FIRST render is ~3x faster as one normal render than scene-by-scene (23 scenes: ~7 vs ~21 min);
         # the scene cache only pays off for re-renders after edits
-        run: npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+        run: |
+          npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+          test -s out/reel.mp4 || { echo "::error::the render produced no video"; exit 1; }
           npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
 
       - name: ⑤ Self-check — watch the render, fix the edit, render again

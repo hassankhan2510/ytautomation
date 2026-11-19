@@ -154,6 +154,7 @@ jobs:
       - name: ④ Render the reel
         run: |
           npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+          test -s out/reel.mp4 || { echo "::error::the render produced no video"; exit 1; }
           npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
 
       - name: ⑤ Self-check — watch the render, fix the edit, render again
