@@ -1,0 +1,308 @@
+{
+  "id": "2026-11-19-lahore-se-portugal-tak-12-saal-ka-journe",
+  "title": "Lahore se Portugal tak 12 saal ka journey",
+  "subject": "Tech career mentorship",
+  "theme": "crimson",
+  "seed": 7216,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "Lahore se Portugal tak 12 saal ka journey",
+    "Prani career advice ab kaam nahi karti",
+    "Sunday 8 PM: Global career session live"
+  ],
+  "caption": "Lahore to Portugal: 12 saal ka journey, ek session mein. \nKya aap ready hain global career ke liye? \n#CohortZero #TechCareer #RemoteWork #SoftwareDeveloper #CareerGrowth\n🎵 Music: \"Secrets of the Schoolyard\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-secrets.mp3",
+  "musicCredit": "\"Secrets of the Schoolyard\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 8,
+    "unique": 18,
+    "total": 18,
+    "families": 5,
+    "plain": 3,
+    "doc": 5,
+    "repeats": 0
+  },
+  "unverifiedNumbers": [
+    "22"
+  ],
+  "beats": [
+    {
+      "text": "Tech industry itni fast change ho rahi hai ke purani career advice ab kaam nahi karti.",
+      "primitive": "glitchTitle",
+      "energy": 3,
+      "speak": "Tech industry اتنی fast change ہو رہی ہے کہ پرانی career advice اب کام نہیں کرتی۔",
+      "emphasis": [
+        "fast change"
+      ],
+      "props": {
+        "title": "PURANI ADVICE DEAD"
+      },
+      "why": "Visualizes fast change via glitch",
+      "bg": "server room blue lights"
+    },
+    {
+      "text": "To sawal yeh hai, aap ki skills next five years mein relevant rahengi ya nahi?",
+      "primitive": "spotlight",
+      "energy": 2,
+      "speak": "تو سوال یہ ہے، آپ کی skills next five years میں relevant رہیں گی یا نہیں؟",
+      "emphasis": [
+        "relevant rahengi"
+      ],
+      "props": {
+        "word": "RELEVANT?"
+      },
+      "why": "Direct question focus on relevance",
+      "bg": "dark office desk lamp"
+    },
+    {
+      "text": "Agar yeh sawal aap ko bhi tension deta hai, to yeh session aap ke liye hai.",
+      "primitive": "commentCta",
+      "energy": 2,
+      "speak": "اگر یہ سوال آپ کو بھی tension دیتا ہے، تو یہ session آپ کے لیے ہے۔",
+      "emphasis": [
+        "session aap ke liye"
+      ],
+      "props": {
+        "keyword": "JOIN NOW",
+        "line": "Comment SESSION"
+      },
+      "why": "Direct invitation to join session",
+      "bg": "cozy home office setup"
+    },
+    {
+      "text": "Cohort Zero la raha hai ek live session: Navigating Career in Evolving Age of Technology.",
+      "primitive": "newsBanner",
+      "energy": 3,
+      "speak": "Cohort Zero لا رہا ہے ایک live session: Navigating Career in Evolving Age of Technology۔",
+      "emphasis": [
+        "Cohort Zero"
+      ],
+      "props": {
+        "headline": "LIVE: TECH CAREER NAVIGATION",
+        "label": "BREAKING",
+        "ticker": "Cohort Zero | Nov 22"
+      },
+      "why": "Announces live session launch",
+      "bg": "bright studio white walls"
+    },
+    {
+      "text": "Aur speaker koi aam banda nahi.",
+      "primitive": "declassified",
+      "energy": 3,
+      "speak": "اور speaker کوئی عام بندہ نہیں۔",
+      "emphasis": [
+        "koi aam banda nahi"
+      ],
+      "props": {
+        "lines": [
+          "SPEAKER IDENTITY",
+          "STATUS: TOP TIER",
+          "EXPERIENCE: DEEP"
+        ],
+        "reveal": 1,
+        "title": "FILE #01"
+      },
+      "why": "Reveals speaker is not average",
+      "bg": "old paper texture close up"
+    },
+    {
+      "text": "Muhammad Shahzaib Atif, ek Software Developer jin ke paas twelve years ka industry experience hai.",
+      "primitive": "museumFrame",
+      "energy": 2,
+      "speak": "Muhammad Shahzaib Atif، ایک Software Developer جن کے پاس twelve years کا industry experience ہے۔",
+      "emphasis": [
+        "twelve years"
+      ],
+      "props": {
+        "name": "Muhammad Shahzaib Atif",
+        "prompt": "Professional portrait of a software developer, neutral background, studio lighting"
+      },
+      "why": "Premium portrait of the speaker",
+      "bg": "gallery wall soft lighting"
+    },
+    {
+      "text": "Aaj kal woh Portugal mein on-site kaam kar rahe hain Divmac ke saath,",
+      "primitive": "locate",
+      "energy": 2,
+      "speak": "آج کل وہ Portugal میں on-site کام کر رہے ہیں Divmac کے ساتھ،",
+      "emphasis": [
+        "Portugal"
+      ],
+      "props": {
+        "place": "Portugal",
+        "lat": 39.4,
+        "lon": -8
+      },
+      "why": "Pinpoints current location Portugal",
+      "bg": "satellite view coastal region"
+    },
+    {
+      "text": "Aur us se pehle US remote teams mein STN ke saath",
+      "primitive": "versus",
+      "energy": 2,
+      "speak": "اور اس سے پہلے یو ایس remote teams میں ایس ٹی این کے ساتھ",
+      "emphasis": [
+        "US remote teams"
+      ],
+      "props": {
+        "left": "STN (US Remote)",
+        "right": "Divmac (Portugal)",
+        "leftSub": "Previous Role"
+      },
+      "why": "Contrasts previous remote role",
+      "bg": "modern remote work desk"
+    },
+    {
+      "text": "Aur Lahore mein CarbonTeq ke saath kaam kar chuke hain.",
+      "primitive": "factCard",
+      "energy": 2,
+      "speak": "اور Lahore میں CarbonTeq کے ساتھ کام کر چکے ہیں۔",
+      "emphasis": [
+        "Lahore"
+      ],
+      "why": "Pinpoints origin location Lahore",
+      "props": {
+        "fact": "Aur Lahore mein CarbonTeq ke saath kaam kar chuke hain."
+      }
+    },
+    {
+      "text": "Yaani local se global tak ka poora journey.",
+      "primitive": "mapRoute",
+      "energy": 3,
+      "speak": "یعنی local سے global تک کا پورا journey۔",
+      "emphasis": [
+        "local se global"
+      ],
+      "props": {
+        "points": [
+          {
+            "name": "Lahore"
+          },
+          {
+            "name": "US"
+          },
+          {
+            "name": "Portugal"
+          }
+        ],
+        "title": "GLOBAL JOURNEY"
+      },
+      "why": "Shows journey from local to global",
+      "bg": "world map digital lines"
+    },
+    {
+      "text": "Is session mein baat hogi ke apni tech skills ko future-proof kaise karein,",
+      "primitive": "auroraType",
+      "energy": 2,
+      "speak": "اس session میں بات ہوگی کہ اپنی tech skills کو future-proof کیسے کریں،",
+      "emphasis": [
+        "future-proof"
+      ],
+      "props": {
+        "word": "FUTURE-PROOF"
+      },
+      "why": "Premium statement on future-proofing",
+      "bg": "abstract gradient motion background"
+    },
+    {
+      "text": "international market mein entry kaise lein, aur ek standout global career kaise build karein.",
+      "primitive": "roadmap",
+      "energy": 2,
+      "speak": "international market میں entry کیسے لیں، اور ایک standout global career کیسے build کریں۔",
+      "emphasis": [
+        "global career build"
+      ],
+      "props": {
+        "steps": [
+          "Skills",
+          "Market Entry",
+          "Global Career"
+        ]
+      },
+      "why": "Visualizes career building steps",
+      "bg": "minimalist clean white space"
+    },
+    {
+      "text": "Aur woh join karein ge live, seedha Portugal se.",
+      "primitive": "splitFlap",
+      "energy": 3,
+      "speak": "اور وہ join کریں گے live، سیدھا Portugal سے۔",
+      "emphasis": [
+        "live, seedha Portugal"
+      ],
+      "props": {
+        "rows": [
+          "STATUS: LIVE",
+          "LOC: PORTUGAL",
+          "FEED: DIRECT"
+        ]
+      },
+      "why": "Live announcement style board",
+      "bg": "airport departure board lights"
+    },
+    {
+      "text": "Date note kar lein: Sunday, November twenty-two, raat eight PM, Pakistan time, live on Google Meet.",
+      "primitive": "calendar",
+      "energy": 3,
+      "speak": "Date نوٹ کر لیں: Sunday، November twenty-two، رات eight پی ایم، Pakistan time، live on Google Meet۔",
+      "emphasis": [
+        "November twenty-two"
+      ],
+      "props": {
+        "day": 22,
+        "month": "NOVEMBER"
+      },
+      "why": "Highlights specific date and time",
+      "bg": "desk calendar close up"
+    },
+    {
+      "text": "Spots limited hain, to baad mein yeh mat kehna ke pata nahi chala.",
+      "primitive": "highlight",
+      "energy": 3,
+      "speak": "Spots limited ہیں، تو بعد میں یہ مت کہنا کہ پتا نہیں چلا۔",
+      "emphasis": [
+        "Spots limited"
+      ],
+      "props": {},
+      "why": "Emphasizes limited spots urgency",
+      "bg": "red tinted abstract blur"
+    },
+    {
+      "text": "Register karne ka link caption mein hai.",
+      "primitive": "tape",
+      "energy": 2,
+      "speak": "Register کرنے کا link caption میں ہے۔",
+      "emphasis": [
+        "link caption mein"
+      ],
+      "props": {
+        "tape": "REGISTER NOW",
+        "word": "CAPTION"
+      },
+      "why": "Directs attention to caption link",
+      "bg": "minimalist white background"
+    },
+    {
+      "text": "Abhi register karein, aur us dost ko tag karein jo abroad career ke khwab dekhta hai.",
+      "primitive": "stomp",
+      "energy": 3,
+      "speak": "ابھی register کریں، اور اس دوست کو tag کریں جو abroad career کے خواب دیکھتا ہے۔",
+      "emphasis": [
+        "tag karein"
+      ],
+      "why": "Encourages tagging friends",
+      "bg": "social media feed scroll"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 2"
+      },
+      "hold": 2.2
+    }
+  ]
+}
