@@ -65,26 +65,49 @@ def safe_name(name, k, exts, default_ext):
     return f"{k:02d}-{base}{ext}"
 
 
-def manifest_link(path_or_url):
-    """The workflow gets only the manifest's NAME (projects/<id>/…): the link is fetched from the studio page
-    with RUNNER_KEY at run time, so no link appears in the public Actions logs."""
-    if not str(path_or_url).startswith("projects/"):
-        return path_or_url  # (old runs passed a full link)
+def runner_links(paths):
+    """Fresh short-lived read links for files in the studio's storage, fetched from the studio page with
+    RUNNER_KEY at run time (never printed, so no link appears in the public Actions logs)."""
     studio = os.environ.get("STUDIO_URL", "").rstrip("/")
     key = os.environ.get("RUNNER_KEY", "")
     if not studio.startswith("https://") or len(key) < 20:
         raise SystemExit("STUDIO_URL / RUNNER_KEY GitHub secrets are missing (see studio-web/README.md)")
-    req = urllib.request.Request(f"{studio}/api/runner", data=json.dumps({"key": key, "paths": [path_or_url]}).encode(),
+    req = urllib.request.Request(f"{studio}/api/runner", data=json.dumps({"key": key, "paths": list(paths)}).encode(),
                                  headers={"Content-Type": "application/json", "User-Agent": "studio-runner"})
     with urllib.request.urlopen(req, timeout=60) as r:
-        url = json.loads(r.read().decode())["urls"].get(path_or_url)
+        return json.loads(r.read().decode())["urls"]
+
+
+def manifest_link(path_or_url):
+    """The workflow gets only the manifest's NAME (projects/<id>/…)."""
+    if not str(path_or_url).startswith("projects/"):
+        return path_or_url  # (old runs passed a full link)
+    url = runner_links([path_or_url]).get(path_or_url)
     if not url:
         raise SystemExit("manifest not found in storage")
     return url
 
 
+def refresh_links(m):
+    """The links written into the manifest expire after 6 h (a re-run or a late final render would fail with
+    403). Every file also carries its storage name, so ask for fresh links; keep the old link as a fallback."""
+    files = [a for a in (m.get("assets") or []) + ([m["voiceover"]] if m.get("voiceover") else [])
+             if str(a.get("pathname") or "").startswith("projects/")]
+    if not files or not os.environ.get("RUNNER_KEY"):
+        return
+    try:
+        fresh = runner_links([a["pathname"] for a in files])
+    except Exception as e:  # keep the manifest's own links
+        print(f"  (could not refresh file links: {type(e).__name__})")
+        return
+    for a in files:
+        if fresh.get(a["pathname"]):
+            a["url"] = fresh[a["pathname"]]
+
+
 def main(url, pdir):
     m = json.loads(fetch(manifest_link(url)).decode("utf-8"))
+    refresh_links(m)
     os.makedirs(pdir, exist_ok=True)
     s = {**DEFAULTS, **{k: v for k, v in (m.get("settings") or {}).items() if k in CHOICES and v in CHOICES[k]}}
     lines = ["# downloaded from the web page"]
