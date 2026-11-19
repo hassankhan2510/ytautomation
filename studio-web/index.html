@@ -36,6 +36,7 @@
   .btn.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
   .btn.primary:disabled { opacity: .5; }
   .btn.block { width: 100%; }
+  .btn.danger { color: #ff8a8a; border-color: rgba(255,90,90,.35); background: transparent; }
   .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
   .asset { background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; position: relative; }
@@ -343,12 +344,23 @@ async function loadRuns() {
     const d = document.createElement("div"); d.className = "run";
     d.innerHTML = `<div class="top"><span class="title">${title}</span>${pill}</div>
       <div class="meta">${ago(r.created)}${r.stage === "final" ? " · final" : ""}${live && r.step ? " · " + r.step.replace(/</g, "&lt;") : ""}</div>
-      <div class="acts">${r.draftReady ? `<button class="btn primary" data-edit="1">✏️ Open editor</button>` : ""}${done ? `<button class="btn" data-watch="${r.id}">▶ Watch</button><a class="btn" href="${r.video}" download>⬇ Save video</a><a class="btn" href="${r.caption}" target="_blank" rel="noopener">Caption</a>${r.projectId && r.stage === "final" ? `<button class="btn" data-edit="1">✏️ Edit again</button>` : ""}` : ""}${failed ? `<a class="btn" href="${r.url}" target="_blank" rel="noopener">See what went wrong</a>` : ""}</div>`;
+      <div class="acts">${r.draftReady ? `<button class="btn primary" data-edit="1">✏️ Open editor</button>` : ""}${done ? `<button class="btn" data-watch="${r.id}">▶ Watch</button><a class="btn" href="${r.video}" download>⬇ Save video</a><a class="btn" href="${r.caption}" target="_blank" rel="noopener">Caption</a>${r.projectId && r.stage === "final" ? `<button class="btn" data-edit="1">✏️ Edit again</button>` : ""}` : ""}${failed ? `<a class="btn" href="${r.url}" target="_blank" rel="noopener">See what went wrong</a>` : ""}<button class="btn danger" data-del="${r.id}">🗑 ${live ? "Stop &amp; delete" : "Delete"}</button></div>`;
     box.appendChild(d);
     const w = d.querySelector("[data-watch]");
     const show = () => { if (d.querySelector("video")) return; const v = document.createElement("video"); v.src = r.video; v.controls = true; v.playsInline = true; v.dataset.id = r.id; d.appendChild(v); };
     if (w) w.onclick = show;
     d.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => openEditor(r.projectId, r.cleanTitle || "")));
+    d.querySelector("[data-del]").onclick = async (ev) => {
+      if (!confirm(`Delete "${(r.cleanTitle || "this video").slice(0, 60)}"?
+
+The video, its download link${live ? " (the run is stopped)" : ""} and its uploaded files are removed. This can't be undone.`)) return;
+      const b = ev.currentTarget; b.disabled = true; b.textContent = "Deleting…";
+      try {
+        const out = await api("/api/delete", { runId: r.id });
+        d.remove();
+        if (out.notes && out.notes.length) console.info("delete:", out.notes.join(" · "));
+      } catch (e) { b.disabled = false; b.textContent = "🗑 Delete"; alert("Could not delete: " + (e.message || e)); }
+    };
     if (done && open.has(String(r.id))) show();
     // free the uploads once a FINAL/direct video exists (a draft still needs them); keep the editable draft
     const stale = failed && Date.now() - new Date(r.updated) > 864e5;

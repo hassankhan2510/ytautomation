@@ -1,0 +1,31 @@
+name: "Studio — Delete a web video"
+
+# Started by the web page's 🗑 Delete button: removes ONE web video's files (web-<run id>.mp4 + its caption)
+# from the public "reels" release. The page deletes the run itself and the project's storage files.
+# The page's GitHub token can only read repository files, so this workflow does the release part.
+run-name: "delete web-${{ inputs.run_id }}"
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: "Run id of the web video to delete (digits only)"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  delete:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Delete the video files from the reels release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ inputs.run_id }}
+        run: |
+          [[ "$RUN_ID" =~ ^[0-9]{5,20}$ ]] || { echo "::error::bad run id"; exit 1; }
+          for f in "web-$RUN_ID.mp4" "web-$RUN_ID-caption.txt"; do
+            if gh release delete-asset reels "$f" -R "$GITHUB_REPOSITORY" -y 2>/dev/null; then echo "deleted $f"; else echo "not there: $f"; fi
+          done

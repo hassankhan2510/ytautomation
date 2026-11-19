@@ -39,6 +39,7 @@ http.createServer((req, res) => {
     if (u === "/api/login") return send(res, 200, { ok: true });
     if (u === "/api/runs") return send(res, 200, { runs });
     if (u === "/api/cleanup") return send(res, 200, { ok: true, deleted: 0 });
+    if (u === "/api/delete") { const id = Number(JSON.parse(body || "{}").runId); console.log("DELETE", id); runs = runs.filter((r) => r.id !== id); return send(res, 200, { ok: true, runDeleted: true, files: 3, notes: [] }); }
     if (u === "/api/draft" && req.method === "GET") {
       const props = JSON.parse(fs.readFileSync(path.join(here, "sample-props.json"), "utf8"));
       const media = {}, walk = (o) => { if (typeof o === "string") { if (/\.(jpe?g|png|webp|mp4|wav|mp3)$/i.test(o)) media[o] = "/studio-public/" + o; } else if (o && typeof o === "object") Object.values(o).forEach(walk); };
