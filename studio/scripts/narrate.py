@@ -81,21 +81,44 @@ def to_mono_24k(wav, sr):
     return wav
 
 
+_ref_clips = {}
+
+
+def ref_clip(name, lo, hi, target):
+    """A piece of the voice sample that starts and ends inside a pause (see pause_bounded_window)."""
+    if name not in _ref_clips:
+        import subprocess
+        import tempfile
+
+        clip = os.path.join(tempfile.gettempdir(), f"{name}_ref_clip.wav")
+        win = pause_bounded_window(REF, lo, hi, target)
+        if win:
+            start, dur = win
+            print(f"  {name} reference: {start:.2f}s–{start + dur:.2f}s ({dur:.1f} s, starts and ends inside a pause)")
+        else:
+            start, dur = most_fluent_window(REF, target), target
+            print(f"  {name} reference: most fluent {target:.0f} s window at {start:.1f}s (no clean pauses found)")
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", REF,
+                        "-af", "afade=t=in:d=0.01,areverse,afade=t=in:d=0.01,areverse", clip], check=True)
+        _ref_clips[name] = clip
+    return _ref_clips[name]
+
+
 def synth_mine(text):
     m = load_chatterbox()
+    # Chatterbox listens to only the first ~6 s of its sample: give it a 4-6 s piece bounded by pauses
+    # (the whole file cut at 6 s ended mid-word, and the clone copied the chopped ending).
     # Slightly more expressive + a touch faster than default = Gen-Z explainer pacing.
-    wav = m.generate(text, audio_prompt_path=REF, exaggeration=0.6, cfg_weight=0.4)
+    wav = m.generate(text, audio_prompt_path=ref_clip("chatterbox", 4.0, 6.0, 6.0), exaggeration=0.6, cfg_weight=0.4)
     return to_mono_24k(wav.squeeze().cpu().numpy(), m.sr)
 
 
 def load_omnivoice():
-    """OmniVoice (k2-fsa) on CPU. One voice-clone prompt from an 8 s clip of the reference (3-10 s is
+    """OmniVoice (k2-fsa) on CPU. One voice-clone prompt from a 5-10 s pause-bounded piece of the reference (3-10 s is
     what OmniVoice recommends), reused for every beat."""
     global _omni, _omni_prompt, _omni_lang_arg, _omni_has_speed
     if _omni is None:
         import inspect
-        import subprocess
-        import tempfile
 
         import torch
         from omnivoice import OmniVoice
@@ -106,16 +129,7 @@ def load_omnivoice():
         _omni_lang_arg = next((p for p in ("language", "language_id", "lang") if p in params), None)
         _omni_has_speed = "speed" in params
         globals()["_omni_has_steps"] = "num_step" in params
-        clip = os.path.join(tempfile.gettempdir(), "omni_ref_clip.wav")
-        win = pause_bounded_window(REF)
-        if win:
-            start, dur = win
-            print(f"  reference: {start:.2f}s–{start + dur:.2f}s ({dur:.1f} s, starts and ends inside a pause)")
-        else:
-            start, dur = most_fluent_window(REF, 8.0), 8.0
-            print(f"  reference: most fluent 8 s window starts at {start:.1f}s (no clean pause boundaries found)")
-        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", REF,
-                        "-af", "afade=t=in:d=0.01,areverse,afade=t=in:d=0.01,areverse", clip], check=True)
+        clip = ref_clip("omni", 5.0, 10.0, 8.0)
         _omni_prompt = _omni.create_voice_clone_prompt(ref_audio=clip) if hasattr(_omni, "create_voice_clone_prompt") else clip
         print(f"  OmniVoice ready (language arg: {_omni_lang_arg})")
     return _omni
@@ -513,7 +527,7 @@ def main():
         # tag "raw": the engine's line BEFORE clean_edges (so cleanup improvements never need re-synthesis);
         # tag "edges2": older caches, stored already cleaned once (cleaned again on top: harmless)
         import hashlib
-        rid = ref_id + (":pausewin" if "omni" in eng_name else "")  # new reference piece -> new voice lines
+        rid = ref_id + (":pausewin" if ("omni" in eng_name or "mine" in eng_name) else "")  # new reference piece -> new voice lines
         h = hashlib.sha1(f"{eng_name}|{rid}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|{tag}|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 

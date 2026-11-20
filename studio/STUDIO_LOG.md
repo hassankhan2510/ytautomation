@@ -91,3 +91,5 @@ Tested on projects/demo (4 assets → 22 scenes, clip windows 36/33/26/40/15/12 
 - New `pause_bounded_window`: the piece (5–10 s, most fluent) now starts and ends in the middle of a real
   pause (≥120 ms). Edges now 45–65 dB below speech for all 5 voices. 10 ms fades on the piece.
 - OmniVoice voice-cache key gets ":pausewin", so lines are synthesized again with the new piece (one slow run).
+- Same fix for the English engine (Chatterbox): it was given the whole file and listens to its first ~6 s,
+  which also cut mid-word for 4/5 voices. It now gets a 4–6 s pause-bounded piece (cache re-keyed too).
