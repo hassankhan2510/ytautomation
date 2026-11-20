@@ -216,8 +216,8 @@ def clean_edges(wav, fade_in=0.008):
     survived: same pulse count in the next reel). A pulse is a broadband click — that is what the ear hears
     as 'd'/'b'; the vowel itself lives below ~2 kHz. So, from where the last vowel starts to FADE:
       1. cross-fade into a low-passed copy (clicks lose their bite, the vowel keeps its body),
-      2. clamp anything far above the local level (hard limiter for single pulses),
-      3. fade the whole decay out (cosine), cut 15 ms after the last real speech.
+      2. fade the decay out (cosine), cut 15 ms after the last real speech.
+    (No hard limiter: v3's clipped every voice cycle and added a broadband crackle — seen in a real reel.)
     Returns (wav, removed_seconds, pulses_clamped)."""
     n0 = len(wav)
     f = int(0.01 * SR)
@@ -257,20 +257,13 @@ def clean_edges(wav, fade_in=0.008):
     pulses = 0
     if L > 8:
         # 1. into a low-passed copy over 20 ms (clicks lose their bite, the vowel keeps its body)
-        lp = _lowpass(tail, 1500.0)
+        ctx = min(ds, int(0.02 * SR))
+        lp = _lowpass(w[ds - ctx:], 1500.0)[ctx:]
         k = min(L, int(0.02 * SR))
         mix = np.ones(L, dtype=np.float32)
         mix[:k] = 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, k))
         tail = (1 - mix) * tail + mix * lp
-        # 2. limiter: no sample above 3.5x the local (20 ms) median level
-        win = int(0.02 * SR)
-        for s0 in range(0, L, win // 2):
-            seg = tail[s0:s0 + win]
-            lim = 3.5 * (np.median(np.abs(seg)) + 1e-6)
-            over = np.abs(seg) > lim
-            if over.any():
-                pulses += 1
-                seg[over] = np.sign(seg[over]) * lim
+        pulses = 1
         w[ds:] = tail
     # 3. fade out over the decay only (the last word keeps its loudness)
     fo_start = max(fade_at, end - int(0.1 * SR))
@@ -527,7 +520,7 @@ def main():
     print(f"  pace: {PACE} (voice speed {SPEED:.2f}, pauses x{GAP_SCALE})")
     if tail_fix:
         print(f"  line endings cleaned: {len(tail_fix)} lines · {sum(c for c, _ in tail_fix):.2f}s of trailing creak cut · "
-              f"{sum(p for _, p in tail_fix)} end-of-line clicks clamped")
+              f"{sum(p for _, p in tail_fix)} line endings softened")
 
     # Join with natural pauses and record each beat's speech window.
     audio, words, t = [], [], LEAD_IN  # small lead-in so the first frame isn't mid-syllable
