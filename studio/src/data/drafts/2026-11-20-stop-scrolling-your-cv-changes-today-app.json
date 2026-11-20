@@ -1,0 +1,317 @@
+{
+  "id": "2026-11-20-stop-scrolling-your-cv-changes-today-app",
+  "title": "Stop scrolling. Your CV changes today. Apply now.",
+  "subject": "campus ambassador program",
+  "theme": "crimson",
+  "seed": 2123,
+  "handle": "@cohort_zero",
+  "language": "english",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "Stop scrolling. Your CV changes today. Apply now.",
+    "Zero experience? That is exactly what we want.",
+    "Become the leader everyone knows on campus."
+  ],
+  "caption": "Stop scrolling. Your campus leadership era starts now. Who is the one in your class who needs to see this?\n\n#CohortZero #CampusAmbassador #StudentLeadership #FounderMindset #ApplyNow\n🎵 Music: \"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-inspired.mp3",
+  "musicCredit": "\"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 7,
+    "unique": 20,
+    "total": 20,
+    "families": 4,
+    "plain": 4,
+    "doc": 1,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "ہر campus میں ایک بندہ ہوتا ہے جسے سب جانتے ہیں جو ہر event",
+      "primitive": "stomp",
+      "energy": 3,
+      "emphasis": [
+        "campus",
+        "event"
+      ],
+      "props": {},
+      "why": "Confident student walking through crowd",
+      "bg": "busy university campus crowd"
+    },
+    {
+      "text": "lead کرتا ہے اور جس کا CV سب سے آگے ہوتا ہے اس بار",
+      "primitive": "strike",
+      "energy": 2,
+      "emphasis": [
+        "CV",
+        "آگے"
+      ],
+      "props": {
+        "wrong": "CV سب سے آگے",
+        "right": "اس بار وہ آپ"
+      },
+      "why": "Myth busting CV ranking",
+      "bg": "stack of printed resumes"
+    },
+    {
+      "text": "وہ بندہ آپ ہو سکتے ہیں Cohort Zero اپنا Campus Ambassador Program open کر",
+      "primitive": "newsBanner",
+      "energy": 3,
+      "emphasis": [
+        "Cohort Zero",
+        "open"
+      ],
+      "props": {
+        "headline": "Cohort Zero Program Open",
+        "label": "BREAKING",
+        "ticker": "Campus Ambassador Program Live"
+      },
+      "why": "Program open announcement",
+      "bg": "modern startup office interior"
+    },
+    {
+      "text": "رہا ہے اور یہ آپ کے campus کی سب سے بڑی leadership opportunity ہے",
+      "primitive": "highlight",
+      "energy": 2,
+      "emphasis": [
+        "leadership",
+        "opportunity"
+      ],
+      "props": {},
+      "why": "Emphasizing leadership opportunity",
+      "bg": "student leader speaking podium"
+    },
+    {
+      "text": "Cohort Zero ایک global founder ecosystem ہے جو لوگوں کو zero سے one تک",
+      "primitive": "factCard",
+      "energy": 2,
+      "emphasis": [
+        "global",
+        "ecosystem"
+      ],
+      "props": {
+        "fact": "Cohort Zero ایک global founder ecosystem ہے جو لوگوں کو zero سے one تک"
+      },
+      "why": "Global founder ecosystem"
+    },
+    {
+      "text": "لے کر جاتا ہے اور اب ہمیں ہر university میں ایسے leaders چاہئیں جو",
+      "primitive": "flip3d",
+      "energy": 2,
+      "emphasis": [
+        "zero",
+        "one"
+      ],
+      "why": "Zero to one journey"
+    },
+    {
+      "text": "یہ movement اپنے campus پر لے کر آئیں آپ اپنی university میں Cohort Zero",
+      "primitive": "commentCta",
+      "energy": 3,
+      "emphasis": [
+        "movement",
+        "campus"
+      ],
+      "props": {
+        "keyword": "LEAD",
+        "line": "Comment LEAD to join"
+      },
+      "why": "Bring movement to campus",
+      "bg": "student holding protest flag"
+    },
+    {
+      "text": "کو represent کریں گے workshops اور events lead کریں گے اور students کو real",
+      "primitive": "checklist",
+      "energy": 2,
+      "emphasis": [
+        "workshops",
+        "events"
+      ],
+      "props": {
+        "items": [
+          "Lead Workshops",
+          "Host Events",
+          "Connect Students"
+        ],
+        "title": "Your Role"
+      },
+      "why": "Listing ambassador duties",
+      "bg": "workshop networking handshake"
+    },
+    {
+      "text": "opportunities سے connect کریں گے اور بدلے میں آپ کو ملے گی Entrepreneurship training",
+      "primitive": "maskReveal",
+      "energy": 3,
+      "emphasis": [
+        "Entrepreneurship",
+        "training"
+      ],
+      "why": "Lead to training flow"
+    },
+    {
+      "text": "تاکہ آپ ideas سے آگے بڑھ کر real startups build کریں Masters abroad fellowships",
+      "primitive": "warp",
+      "energy": 2,
+      "emphasis": [
+        "startups",
+        "build"
+      ],
+      "props": {
+        "word": "BUILD"
+      },
+      "why": "Ideas to real startups",
+      "bg": "hyperspace star streaks"
+    },
+    {
+      "text": "اور scholarships جیسی global opportunities کی guidance Psychology اور mindset sessions تاکہ آپ اندر",
+      "primitive": "stickyNotes",
+      "energy": 2,
+      "emphasis": [
+        "fellowships",
+        "scholarships"
+      ],
+      "props": {
+        "notes": [
+          "Masters Abroad",
+          "Scholarships",
+          "Psychology",
+          "Mindset"
+        ]
+      },
+      "why": "List of global opportunities",
+      "bg": "colorful sticky notes wall"
+    },
+    {
+      "text": "سے بھی strong بنیں Personal branding communication اور public speaking اور ہماری global partnerships",
+      "primitive": "mindMap",
+      "energy": 2,
+      "emphasis": [
+        "branding",
+        "partnerships"
+      ],
+      "props": {
+        "center": "You",
+        "branches": [
+          "Personal Branding",
+          "Public Speaking",
+          "Global Partnerships",
+          "Communication"
+        ]
+      },
+      "why": "Branding and partnerships",
+      "bg": "public speaking stage lights"
+    },
+    {
+      "text": "کے ذریعے آپ کے projects real industry تک پہنچتے ہیں Real leadership experience جو",
+      "primitive": "quote",
+      "energy": 3,
+      "emphasis": [
+        "real",
+        "industry"
+      ],
+      "why": "Projects reach real industry"
+    },
+    {
+      "text": "آپ کے CV کو سب سے الگ کر دے گا اور founders industry experts",
+      "primitive": "radar",
+      "energy": 3,
+      "emphasis": [
+        "CV",
+        "experts"
+      ],
+      "props": {
+        "items": [
+          "Founders",
+          "Experts",
+          "Speakers",
+          "Your CV"
+        ],
+        "label": "Network Scan"
+      },
+      "why": "CV stands out with experts",
+      "bg": "radar screen scanning blips"
+    },
+    {
+      "text": "اور international speakers کے ساتھ وہ network جو لوگ سالوں میں بناتے ہیں آپ",
+      "primitive": "dotWave",
+      "energy": 2,
+      "emphasis": [
+        "network",
+        "speakers"
+      ],
+      "props": {
+        "word": "NETWORK"
+      },
+      "why": "Network expands rapidly",
+      "bg": "3d dot wave ocean"
+    },
+    {
+      "text": "کو perfect CV نہیں چاہیے بس drive چاہیے Leaders پیدا نہیں ہوتے build ہوتے ہیں",
+      "primitive": "blob",
+      "energy": 3,
+      "emphasis": [
+        "drive",
+        "build"
+      ],
+      "props": {
+        "word": "BUILD"
+      },
+      "why": "Leaders are built",
+      "bg": "liquid abstract morphing"
+    },
+    {
+      "text": "اور یہی وہ جگہ ہے جہاں آپ build ہوں گے Spots limited ہیں",
+      "primitive": "splitFlap",
+      "energy": 2,
+      "emphasis": [
+        "limited",
+        "spots"
+      ],
+      "props": {
+        "rows": [
+          "SPOTS",
+          "LIMITED"
+        ]
+      },
+      "why": "Limited spots warning",
+      "bg": "airport split flap display"
+    },
+    {
+      "text": "تو سوچنا بند کریں اور ابھی apply کریں link caption میں ہے اور یہ",
+      "primitive": "codeRain",
+      "energy": 3,
+      "emphasis": [
+        "apply",
+        "caption"
+      ],
+      "props": {
+        "word": "APPLY"
+      },
+      "why": "Apply now call to action",
+      "bg": "falling code matrix rain"
+    },
+    {
+      "text": "video اس دوست کو بھیجیں جو ہر society میں سب سے آگے ہوتا ہے",
+      "primitive": "zoomThrough",
+      "energy": 2,
+      "emphasis": [
+        "friend",
+        "send"
+      ],
+      "props": {
+        "word": "SEND",
+        "reveal": "TO FRIEND"
+      },
+      "why": "Send to friend CTA",
+      "bg": "phone screen interface"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
