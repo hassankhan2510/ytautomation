@@ -1,0 +1,362 @@
+{
+  "id": "2026-11-20-campus-pe-sirf-students-nahi-founders-ba",
+  "title": "Campus pe sirf students nahi, founders banein.",
+  "subject": "Campus Ambassador Program",
+  "theme": "crimson",
+  "seed": 687,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "Campus pe sirf students nahi, founders banein.",
+    "Ye opportunity aapke CV ko alag kar degi.",
+    "Zero se one tak ka safar shuru."
+  ],
+  "caption": "Founder banna chahate ho? Cohort Zero ka offer aapke liye hai. \nApply now or miss out? #CohortZero #CampusAmbassador #StudentFounder #Entrepreneurship #GrowthMindset\n🎵 Music: \"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-inspired.mp3",
+  "musicCredit": "\"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 0,
+    "unique": 20,
+    "total": 25,
+    "families": 5,
+    "plain": 10,
+    "doc": 3,
+    "repeats": 5
+  },
+  "beats": [
+    {
+      "text": "Campus mein sab kuch hota hai, lekin kya aap ke campus par founders aur leaders ban rahe hain?",
+      "primitive": "search",
+      "energy": 3,
+      "speak": "Campus میں سب کچھ ہوتا ہے، لیکن کیا آپ کے campus پر founders اور leaders بن رہے ہیں؟",
+      "emphasis": [
+        "founders"
+      ],
+      "props": {
+        "query": "campus founders",
+        "suggestions": [
+          "how to start startup",
+          "campus leadership",
+          "entrepreneurship training"
+        ],
+        "pick": 0
+      },
+      "why": "Matches 'campus mein sab kuch' visual idea",
+      "bg": "university students walking campus"
+    },
+    {
+      "text": "Agar nahi, to shayad yeh kaam aap ka hai.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "اگر نہیں، تو شاید یہ کام آپ کا ہے۔",
+      "emphasis": [
+        "aap ka"
+      ],
+      "why": "Confident, premium statement for direct address"
+    },
+    {
+      "text": "Cohort Zero apna Campus Ambassador Program open kar raha hai, aur sach kahen",
+      "primitive": "newsBanner",
+      "energy": 3,
+      "speak": "Cohort Zero اپنا Campus Ambassador Program open کر رہا ہے، اور سچ کہیں",
+      "emphasis": [
+        "open"
+      ],
+      "props": {
+        "headline": "Cohort Zero Campus Program Open",
+        "label": "BREAKING",
+        "ticker": "Global Ecosystem | Zero to One"
+      },
+      "why": "Announces program opening like breaking news",
+      "bg": "dynamic newsroom lights"
+    },
+    {
+      "text": "to yeh is saal ka sab se bada opportunity ho sakta hai.",
+      "primitive": "highlight",
+      "energy": 2,
+      "speak": "تو یہ اس سال کا سب سے بڑا opportunity ہو سکتا ہے۔",
+      "emphasis": [
+        "bada opportunity"
+      ],
+      "props": {},
+      "why": "Calms energy to emphasize 'biggest opportunity'",
+      "bg": "modern office desk close-up"
+    },
+    {
+      "text": "Cohort Zero ek global founder ecosystem hai,",
+      "primitive": "maskReveal",
+      "energy": 2,
+      "speak": "Cohort Zero ایک global founder ecosystem ہے،",
+      "emphasis": [
+        "ecosystem"
+      ],
+      "why": "Visualizes 'ecosystem' with central node"
+    },
+    {
+      "text": "jis ka mission hai logon ko zero se one tak le jana.",
+      "primitive": "quote",
+      "energy": 2,
+      "speak": "جس کا mission ہے لوگوں کو zero سے one تک لے جانا۔",
+      "emphasis": [
+        "zero se one"
+      ],
+      "why": "Shows 'zero to one' journey path"
+    },
+    {
+      "text": "Aur ab hamin har university mein aise log chahiyein jo yeh movement apne campus tak le kar aayen.",
+      "primitive": "typewriter",
+      "energy": 3,
+      "speak": "اور اب ہمیں ہر university میں ایسے لوگ چاہئیں جو یہ movement اپنے campus تک لے کر آئیں۔",
+      "emphasis": [
+        "har university"
+      ],
+      "why": "Visualizes 'har university mein' movement"
+    },
+    {
+      "text": "Bator Campus Ambassador, aap apni university mein Cohort Zero ko represent karen ge,",
+      "primitive": "parallax",
+      "energy": 2,
+      "speak": "بطور Campus Ambassador، آپ اپنی university میں Cohort Zero کو represent کریں گے،",
+      "emphasis": [
+        "represent"
+      ],
+      "props": {
+        "search": "university student ambassador",
+        "prompt": "Young confident student wearing branded t-shirt, holding a small flag, standing on a university lawn, golden hour lighting, high definition, no text",
+        "title": "Campus Ambassador"
+      },
+      "why": "Premium documentary feel for ambassador role",
+      "bg": "student holding flag campus"
+    },
+    {
+      "text": "students ko sessions aur opportunities se connect karenge, aur campus par workshops aur events lead karenge.",
+      "primitive": "checklist",
+      "energy": 2,
+      "speak": "students کو sessions اور opportunities سے connect کریں گے، اور campus پر workshops اور events lead کریں گے۔",
+      "emphasis": [
+        "workshops"
+      ],
+      "props": {
+        "items": [
+          "Sessions",
+          "Opportunities",
+          "Workshops",
+          "Events"
+        ],
+        "title": "Ambassador Duties"
+      },
+      "why": "Lists sessions, workshops, events clearly",
+      "bg": "workshop whiteboard setup"
+    },
+    {
+      "text": "Lekin asal baat yeh hai ke badle mein aap ko kya milta hai.",
+      "primitive": "decode",
+      "energy": 3,
+      "speak": "لیکن اصل بات یہ ہے کہ بدلے میں آپ کو کیا ملتا ہے۔",
+      "emphasis": [
+        "asal baat"
+      ],
+      "why": "Reveals 'asal baat' as a secret"
+    },
+    {
+      "text": "Entrepreneurship training, taake aap sirf ideas nahi balkay real startups build karna seekhen.",
+      "primitive": "auroraType",
+      "energy": 2,
+      "speak": "Entrepreneurship training، تاکہ آپ صرف ideas نہیں بلکہ real startups build کرنا سیکھیں۔",
+      "emphasis": [
+        "startups"
+      ],
+      "why": "Tech vibe for 'build startups'"
+    },
+    {
+      "text": "Global opportunities ki guidance, jaise Masters abroad, fellowships, scholarships aur international programs.",
+      "primitive": "list",
+      "energy": 2,
+      "speak": "Global opportunities کی guidance، جیسے Masters abroad، fellowships، scholarships اور international programs۔",
+      "emphasis": [
+        "Masters abroad"
+      ],
+      "props": {
+        "items": [
+          "Masters Abroad",
+          "Fellowships",
+          "Scholarships",
+          "Intl Programs"
+        ],
+        "title": "Global Guidance"
+      },
+      "why": "Clear list of global guidance items",
+      "bg": "passport and plane icons"
+    },
+    {
+      "text": "Psychology aur personal growth par sessions, taake aap ka mindset",
+      "primitive": "dnaHelix",
+      "energy": 2,
+      "speak": "Psychology اور personal growth پر sessions، تاکہ آپ کا mindset",
+      "emphasis": [
+        "mindset"
+      ],
+      "props": {
+        "label": "Mindset"
+      },
+      "why": "Science visual for 'psychology/mindset'",
+      "bg": "calm meditation room"
+    },
+    {
+      "text": "bhi utna hi strong ho jitni aap ki skills.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "بھی اتنا ہی strong ہو جتنی آپ کی skills۔",
+      "emphasis": [
+        "strong"
+      ],
+      "why": "Compares mindset strength to skills"
+    },
+    {
+      "text": "Personal branding, communication aur public speaking.",
+      "primitive": "stickyNotes",
+      "energy": 2,
+      "speak": "Personal branding، communication اور public speaking۔",
+      "emphasis": [
+        "branding"
+      ],
+      "props": {
+        "notes": [
+          "Branding",
+          "Comms",
+          "Speaking"
+        ]
+      },
+      "why": "Quick visual for branding/speaking",
+      "bg": "stage microphone close-up"
+    },
+    {
+      "text": "Yani hum career, mindset, growth, har aspect cover kar rahe hain.",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "یعنی ہم career، mindset، growth، ہر aspect cover کر رہے ہیں۔",
+      "emphasis": [
+        "har aspect"
+      ],
+      "why": "Shows 'har aspect' intersection"
+    },
+    {
+      "text": "Aur Cohort Zero sirf sessions tak limited nahi hai.",
+      "primitive": "flip3d",
+      "energy": 3,
+      "speak": "اور Cohort Zero صرف sessions تک محدود نہیں ہے۔",
+      "emphasis": [
+        "limited nahi"
+      ],
+      "why": "Busts 'sessions only' myth"
+    },
+    {
+      "text": "Hamari global partnerships ke zariye aap ke projects aur startups ko real industry",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "ہماری global partnerships کے ذریعے آپ کے projects اور startups کو real industry",
+      "emphasis": [
+        "real industry"
+      ],
+      "why": "Connects projects to industry"
+    },
+    {
+      "text": "Aur global platforms ke sath connect kiya jata hai,",
+      "primitive": "factCard",
+      "energy": 2,
+      "speak": "اور global platforms کے ساتھ connect کیا جاتا ہے،",
+      "emphasis": [
+        "global platforms"
+      ],
+      "props": {
+        "fact": "Aur global platforms ke sath connect kiya jata hai,"
+      },
+      "why": "Visualizes 'global platforms' reach"
+    },
+    {
+      "text": "Take aap ka kaam sirf classroom tak na rahe balke duniya tak pahunche.",
+      "primitive": "thenNow",
+      "energy": 3,
+      "speak": "تاکہ آپ کا کام صرف classroom تک نہ رہے بلکہ دنیا تک پہنچے۔",
+      "emphasis": [
+        "duniya tak"
+      ],
+      "props": {
+        "prompt": "Sepia toned classroom interior, old desks, dim light",
+        "prompt2": "Bright modern world map with digital connections, vibrant colors",
+        "then": "Classroom",
+        "now": "World"
+      },
+      "why": "Contrasts classroom to world",
+      "bg": "classroom door opening"
+    },
+    {
+      "text": "Aur sab se badh kar, real leadership experience.",
+      "primitive": "spotlight",
+      "energy": 3,
+      "speak": "اور سب سے بڑھ کر، real leadership experience۔",
+      "emphasis": [
+        "leadership"
+      ],
+      "props": {
+        "word": "Leadership"
+      },
+      "why": "Highlights 'leadership' as the key",
+      "bg": "dark stage spotlight"
+    },
+    {
+      "text": "Aap team lead karein ge, events manage karein ge, aur aisa experience lein",
+      "primitive": "isoBuild",
+      "energy": 2,
+      "speak": "آپ team lead کریں گے، events manage کریں گے، اور ایسا experience لیں",
+      "emphasis": [
+        "experience"
+      ],
+      "props": {
+        "layers": [
+          "Team Lead",
+          "Events",
+          "Management",
+          "Experience"
+        ]
+      },
+      "why": "Stacks leadership experience layers",
+      "bg": "isometric block stack"
+    },
+    {
+      "text": "Ge jo aap ke CV ko baqi sab se alag kar de.",
+      "primitive": "flip3d",
+      "energy": 3,
+      "speak": "گے جو آپ کے سی وی کو باقی سب سے الگ کر دے۔",
+      "emphasis": [
+        "alag kar de"
+      ],
+      "why": "Highlights CV uniqueness"
+    },
+    {
+      "text": "Sath mein founders, industry experts aur international speakers ke sath aisa network,",
+      "primitive": "zoomThrough",
+      "energy": 2,
+      "speak": "ساتھ میں founders، industry experts اور international speakers کے ساتھ ایسا network،",
+      "emphasis": [
+        "network"
+      ],
+      "props": {
+        "word": "Network",
+        "reveal": "Founders & Experts"
+      },
+      "why": "Fly into the network concept",
+      "bg": "crowd of professionals"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow for Day 2"
+      },
+      "hold": 2.2
+    }
+  ]
+}
