@@ -111,6 +111,13 @@ def main(url, pdir):
     refresh_links(m)
     os.makedirs(pdir, exist_ok=True)
     s = {**DEFAULTS, **{k: v for k, v in (m.get("settings") or {}).items() if k in CHOICES and v in CHOICES[k]}}
+    script_text = str(m.get("script") or "")
+    urdu_letters = len(re.findall(r"[؀-ۿ]", script_text))
+    if s["language"] != "urdu" and urdu_letters >= 15 and urdu_letters >= 0.2 * len(re.findall(r"[A-Za-z]", script_text)):
+        # Urdu letters in the script = an Urdu reel: the screen/captions get Roman Urdu (English letters) and
+        # the voice reads the Urdu. As "english" the Urdu letters went straight onto the screen.
+        print("::notice::your script is written in Urdu letters -> made as an Urdu reel (captions in English letters)")
+        s["language"] = "urdu"
     lines = ["# downloaded from the web page"]
     for k, a in enumerate(m.get("assets") or [], 1):
         kind = "clip" if a.get("kind") == "clip" else "image"

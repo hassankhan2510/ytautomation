@@ -206,6 +206,11 @@
 <script type="module">
 const MOCK = new URLSearchParams(location.search).has("mock");
 const $ = (id) => document.getElementById(id);
+// A script written in Urdu letters is an Urdu reel (Roman Urdu captions) — never let it go out as "English",
+// which would put Urdu letters on screen and give the voice text it cannot read.
+const hasUrduScript = (t) => { const u = (String(t).match(/[\u0600-\u06FF]/g) || []).length; return u >= 15 && u >= 0.2 * (String(t).match(/[A-Za-z]/g) || []).length; };
+{ const box = $("script"), lang = $("language");  // (module script: the page is already parsed)
+  if (box && lang) box.addEventListener("input", () => { if (lang.value !== "urdu" && hasUrduScript(box.value)) lang.value = "urdu"; }); }
 const THEMES = { crimson: "#c8102e", ocean: "#1e6fd9", grape: "#7a3cff", sunrise: "#ff7a2f", lagoon: "#12b5a6", mango: "#ffb21e",
   mint: "#5ee0a0", neon: "#c6ff00", acid: "#d7ff3a", electric: "#2b6bff", paper: "#efe8da", taxi: "#ffd400" };
 let theme = "crimson", access = "private", voiceover = null;
@@ -310,7 +315,7 @@ async function makeVideo(stage) {
     let vo = null;
     if (voiceover) { const r = await uploadOne(voiceover, `projects/${id}/${clean(voiceover.name)}`); done++; tell(); vo = { pathname: r.pathname, url: r.url, name: voiceover.name }; }
     $("status").textContent = "Starting your video…";
-    const settings = { scriptMode: mode, voice: $("voice").value, language: $("language").value, style: $("style").value, theme,
+    const settings = { scriptMode: mode, voice: $("voice").value, language: hasUrduScript(script) ? "urdu" : $("language").value, style: $("style").value, theme,
       channel: $("channel").value, backgrounds: $("backgrounds").value, music: $("music").value, sfx: $("sfx").value, pace: $("pace").value };
     const r = await api("/api/make", { projectId: id, stage, title: $("title").value.trim() || script.slice(0, 60), script, settings, voiceover: vo, assets: up });
     $("status").textContent = stage === "draft"
