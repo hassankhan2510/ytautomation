@@ -197,14 +197,28 @@ def tempo(wav, factor):
     return np.frombuffer(r.stdout, dtype=np.float32).copy()
 
 
-def clean_edges(wav, fade_in=0.008, fade_out=0.04):
+def _lowpass(x, hz):
+    """zero-phase FFT low-pass with a soft 400 Hz roll-off (short tails only)."""
+    n = len(x)
+    if n < 16:
+        return x
+    X = np.fft.rfft(x)
+    fr = np.fft.rfftfreq(n, 1 / SR)
+    X *= np.clip((hz + 400 - fr) / 400, 0, 1)
+    return np.fft.irfft(X, n).astype(np.float32)
+
+
+def clean_edges(wav, fade_in=0.008):
     """Remove the 'd'/'b' sound at the end of every line.
 
-    Measured on a real reel (Nov 2026): the voice engine ends each line by trailing off into creaky voice — 2-3
-    sharp, ISOLATED glottal pulses after the last vowel. An isolated pulse after a vowel is heard as a stop
-    consonant ('d', 'b'). Speech frames have a low peak/RMS ratio (crest); a lone pulse has a very high one.
-    So: find where real speech ends (loud enough AND not a lone pulse), cut just after it, tame any pulse left
-    in the last 150 ms, and fade both edges (no click from the cut). Returns (wav, removed_seconds, pulses)."""
+    Measured on real reels (Nov 2026): the voice engine ends each line in CREAKY voice — sharp, isolated
+    glottal pulses that start while the last vowel is still fading (v2 only cut after the vowel and they
+    survived: same pulse count in the next reel). A pulse is a broadband click — that is what the ear hears
+    as 'd'/'b'; the vowel itself lives below ~2 kHz. So, from where the last vowel starts to FADE:
+      1. cross-fade into a low-passed copy (clicks lose their bite, the vowel keeps its body),
+      2. clamp anything far above the local level (hard limiter for single pulses),
+      3. fade the whole decay out (cosine), cut 15 ms after the last real speech.
+    Returns (wav, removed_seconds, pulses_clamped)."""
     n0 = len(wav)
     f = int(0.01 * SR)
     if n0 < 8 * f:
@@ -220,24 +234,52 @@ def clean_edges(wav, fade_in=0.008, fade_out=0.04):
         return wav, 0.0, 0
     end = min(n0, (idx[-1] + 1) * f + int(0.015 * SR))
     w = wav[:end].astype(np.float32).copy()
-    # de-click the tail: any sample far above the local level (median of |x| over 20 ms) is a pulse
-    tail = int(0.15 * SR)
-    a = max(0, len(w) - tail)
+    # where the last vowel starts to fade: last frame within 6 dB of the line's loud level
+    loud = np.where(rms[: max(1, end // f)] >= ref * 10 ** (-6 / 20))[0]
+    fade_at = int((loud[-1] + 1) * f) if len(loud) else max(0, end - int(0.12 * SR))
+    # the FIRST click in the last 250 ms: a 1 ms spike of the >2 kHz signal far above its neighbourhood
+    lo = max(0, end - int(0.25 * SR))
+    hf = w[lo:] - _lowpass(w[lo:], 2000.0)
+    m1 = int(0.001 * SR)
+    nb = len(hf) // m1
+    first_click = None
+    if nb > 30:
+        pk = np.abs(hf[: nb * m1]).reshape(nb, m1).max(1)
+        for i in range(nb):
+            ring = pk[max(0, i - 15):i + 15]
+            if pk[i] > 6 * np.median(ring) and pk[i] > 0.01 and pk[i] == ring.max():
+                first_click = lo + i * m1
+                break
+    ds = min(fade_at, first_click - int(0.01 * SR)) if first_click is not None else fade_at
+    ds = max(lo, min(ds, end - int(0.06 * SR)))  # treat between the last 60 and 250 ms
+    tail = w[ds:].copy()
+    L = len(tail)
     pulses = 0
-    win = int(0.02 * SR)
-    for s0 in range(a, len(w), win // 2):
-        seg = w[s0:s0 + win]
-        lvl = np.median(np.abs(seg)) + 1e-6
-        lim = 6.0 * lvl
-        over = np.abs(seg) > lim
-        if over.any():
-            pulses += 1
-            seg[over] = np.sign(seg[over]) * (lim + np.tanh((np.abs(seg[over]) - lim) / lim) * lim * 0.2)
-    fi, fo = min(int(fade_in * SR), len(w) // 4), min(int(fade_out * SR), len(w) // 4)
+    if L > 8:
+        # 1. into a low-passed copy over 20 ms (clicks lose their bite, the vowel keeps its body)
+        lp = _lowpass(tail, 1500.0)
+        k = min(L, int(0.02 * SR))
+        mix = np.ones(L, dtype=np.float32)
+        mix[:k] = 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, k))
+        tail = (1 - mix) * tail + mix * lp
+        # 2. limiter: no sample above 3.5x the local (20 ms) median level
+        win = int(0.02 * SR)
+        for s0 in range(0, L, win // 2):
+            seg = tail[s0:s0 + win]
+            lim = 3.5 * (np.median(np.abs(seg)) + 1e-6)
+            over = np.abs(seg) > lim
+            if over.any():
+                pulses += 1
+                seg[over] = np.sign(seg[over]) * lim
+        w[ds:] = tail
+    # 3. fade out over the decay only (the last word keeps its loudness)
+    fo_start = max(fade_at, end - int(0.1 * SR))
+    fo = len(w) - fo_start
+    if fo > 8:
+        w[fo_start:] *= (0.5 + 0.5 * np.cos(np.linspace(0, np.pi, fo))).astype(np.float32)
+    fi = min(int(fade_in * SR), len(w) // 4)
     if fi:
         w[:fi] *= 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, fi))
-    if fo:
-        w[-fo:] *= 0.5 + 0.5 * np.cos(np.linspace(0, np.pi, fo))
     return w, (n0 - end) / SR, pulses
 
 
@@ -429,9 +471,11 @@ def main():
     hits = 0
     tail_fix = []
 
-    def cache_path(eng_name, text):
+    def cache_path(eng_name, text, tag="raw"):
+        # tag "raw": the engine's line BEFORE clean_edges (so cleanup improvements never need re-synthesis);
+        # tag "edges2": older caches, stored already cleaned once (cleaned again on top: harmless)
         import hashlib
-        h = hashlib.sha1(f"{eng_name}|{ref_id}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|edges2|{text}".encode("utf-8")).hexdigest()[:20]
+        h = hashlib.sha1(f"{eng_name}|{ref_id}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|{tag}|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 
     for i, beat in enumerate(job["beats"]):
@@ -442,8 +486,12 @@ def main():
             segments.append(np.zeros(int(0.4 * SR), dtype=np.float32))
             continue
         cp = cache_path(engines[0].__name__, text)
+        if cp and not os.path.exists(cp):
+            cp = cache_path(engines[0].__name__, text, "edges2")
         if cp and os.path.exists(cp):
-            wav = np.load(cp)
+            wav, cut, pulses = clean_edges(np.load(cp))
+            if cut > 0.02 or pulses:
+                tail_fix.append((cut, pulses))
             segments.append(wav)
             used = used or engines[0].__name__
             hits += 1
@@ -455,9 +503,6 @@ def main():
                 wav = trim(eng(text))
                 if eng is synth_mine:  # Chatterbox has no speed control of its own
                     wav = tempo(wav, SPEED / 1.08)
-                wav, cut, pulses = clean_edges(wav)
-                if cut > 0.02 or pulses:
-                    tail_fix.append((cut, pulses))
                 if used is None:
                     used = eng.__name__
                 elif used != eng.__name__:
@@ -468,10 +513,13 @@ def main():
                 engines = [x for x in engines if x is not eng] or engines
         if wav is None:
             raise SystemExit("All TTS engines failed.")
-        segments.append(wav)
         cpu = cache_path(used or engines[0].__name__, text)
         if cpu and (used or engines[0].__name__) == engines[0].__name__:  # only cache the primary voice
-            np.save(cpu, wav.astype(np.float32))
+            np.save(cpu, wav.astype(np.float32))  # raw: cleaned below, every run
+        wav, cut, pulses = clean_edges(wav)
+        if cut > 0.02 or pulses:
+            tail_fix.append((cut, pulses))
+        segments.append(wav)
         print(f"  beat {i + 1}/{len(job['beats'])}: {len(wav) / SR:4.1f}s  {text[:70]}")
     if cache_dir:
         spoken = sum(1 for b in job["beats"] if (b.get("speak") or b.get("text", "")).strip())
@@ -479,7 +527,7 @@ def main():
     print(f"  pace: {PACE} (voice speed {SPEED:.2f}, pauses x{GAP_SCALE})")
     if tail_fix:
         print(f"  line endings cleaned: {len(tail_fix)} lines · {sum(c for c, _ in tail_fix):.2f}s of trailing creak cut · "
-              f"{sum(p for _, p in tail_fix)} end-of-line pulses tamed")
+              f"{sum(p for _, p in tail_fix)} end-of-line clicks clamped")
 
     # Join with natural pauses and record each beat's speech window.
     audio, words, t = [], [], LEAD_IN  # small lead-in so the first frame isn't mid-syllable
