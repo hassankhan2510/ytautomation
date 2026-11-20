@@ -83,3 +83,11 @@ no-image look) · `mine` = **only my media** in every scene: per-scene pick by m
 twice in a row) minus wear; a clip returns as a different, non-overlapping high-interest window; a photo returns with a
 different camera move (`bgMove`: in/out/left/right in bgmedia.tsx). No uploads + `mine` → falls back to `off`.
 Tested on projects/demo (4 assets → 22 scenes, clip windows 36/33/26/40/15/12 s, photo moves rotate). preview.js rebuilt.
+
+## 2026-11-21 — "d/b" after lines: root cause in the voice SAMPLE piece
+- OmniVoice clones from an 8 s piece of voice/<name>.wav. The old picker cut it at a fixed 8 s length, so
+  it started and ended **mid-word** for every voice (last 50 ms only 8–14 dB below speech). The clone copies
+  that chopped ending → a stray consonant ('d'/'b') after lines; the end-cleanup only hid part of it.
+- New `pause_bounded_window`: the piece (5–10 s, most fluent) now starts and ends in the middle of a real
+  pause (≥120 ms). Edges now 45–65 dB below speech for all 5 voices. 10 ms fades on the piece.
+- OmniVoice voice-cache key gets ":pausewin", so lines are synthesized again with the new piece (one slow run).

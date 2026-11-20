@@ -107,12 +107,57 @@ def load_omnivoice():
         _omni_has_speed = "speed" in params
         globals()["_omni_has_steps"] = "num_step" in params
         clip = os.path.join(tempfile.gettempdir(), "omni_ref_clip.wav")
-        start = most_fluent_window(REF, 8.0)
-        print(f"  reference: most fluent 8 s window starts at {start:.1f}s")
-        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.2f}", "-t", "8", "-i", REF, clip], check=True)
+        win = pause_bounded_window(REF)
+        if win:
+            start, dur = win
+            print(f"  reference: {start:.2f}s–{start + dur:.2f}s ({dur:.1f} s, starts and ends inside a pause)")
+        else:
+            start, dur = most_fluent_window(REF, 8.0), 8.0
+            print(f"  reference: most fluent 8 s window starts at {start:.1f}s (no clean pause boundaries found)")
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", REF,
+                        "-af", "afade=t=in:d=0.01,areverse,afade=t=in:d=0.01,areverse", clip], check=True)
         _omni_prompt = _omni.create_voice_clone_prompt(ref_audio=clip) if hasattr(_omni, "create_voice_clone_prompt") else clip
         print(f"  OmniVoice ready (language arg: {_omni_lang_arg})")
     return _omni
+
+
+def pause_bounded_window(path, lo=5.0, hi=10.0, target=8.0):
+    """The voice sample piece the clone learns from must START and END inside a pause. A fixed 8 s cut
+    (the old way) chopped a word at both edges, and the clone copied that chopped ending: a stray 'd'/'b'
+    after every line. Returns (start, duration) of the most fluent piece between two pauses, or None."""
+    data, sr = sf.read(path)
+    if data.ndim > 1:
+        data = data.mean(axis=1)
+    hop = int(sr * 0.02)
+    rms = np.array([np.sqrt(np.mean(data[i:i + hop] ** 2) + 1e-12) for i in range(0, max(1, len(data) - hop), hop)])
+    if len(rms) < int(lo / 0.02):
+        return None
+    silent = rms < max(1e-4, np.percentile(rms, 95) * 10 ** (-28 / 20))
+    cuts = []  # middle of every pause >= 120 ms
+    k = 0
+    while k < len(silent):
+        if silent[k]:
+            j = k
+            while j < len(silent) and silent[j]:
+                j += 1
+            if (j - k) * 0.02 >= 0.12:
+                cuts.append(((k + j) / 2) * 0.02)
+            k = j
+        else:
+            k += 1
+    csum = np.concatenate([[0], np.cumsum(silent)])
+    best = None
+    for a in cuts:
+        for b in cuts:
+            d = b - a
+            if not lo <= d <= hi:
+                continue
+            ia, ib = int(a / 0.02), int(b / 0.02)
+            # hesitation inside the piece (the edge pauses themselves are fine), small pull toward ~8 s
+            score = (csum[ib] - csum[ia]) / max(1, ib - ia) + 0.01 * abs(d - target)
+            if best is None or score < best[0]:
+                best = (score, a, d)
+    return (best[1], best[2]) if best else None
 
 
 def most_fluent_window(path, win=8.0):
@@ -468,7 +513,8 @@ def main():
         # tag "raw": the engine's line BEFORE clean_edges (so cleanup improvements never need re-synthesis);
         # tag "edges2": older caches, stored already cleaned once (cleaned again on top: harmless)
         import hashlib
-        h = hashlib.sha1(f"{eng_name}|{ref_id}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|{tag}|{text}".encode("utf-8")).hexdigest()[:20]
+        rid = ref_id + (":pausewin" if "omni" in eng_name else "")  # new reference piece -> new voice lines
+        h = hashlib.sha1(f"{eng_name}|{rid}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|{tag}|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 
     for i, beat in enumerate(job["beats"]):
