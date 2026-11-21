@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     let voiceover = null;
     if (blobs.length) {
       const m = await (await fetch(await got.link(blobs[0].pathname), { cache: "no-store" })).json();
-      if (m.voiceover?.pathname) voiceover = { name: m.voiceover.name, url: await got.link(m.voiceover.pathname) };
+      if (m.voiceover?.pathname) voiceover = { name: m.voiceover.name, pathname: m.voiceover.pathname, url: await got.link(m.voiceover.pathname) };
     }
     const title = String(req.body?.title || got.draft.props?.job?.title || "web reel").replace(/\s+/g, " ").slice(0, 70);
     const manifest = { version: 1, stage: "final", projectId, title, script: "", settings: got.draft.settings || {}, voiceover, assets: [] };

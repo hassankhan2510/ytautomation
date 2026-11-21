@@ -397,21 +397,27 @@ async function openEditor(projectId, title) {
   } catch (e) { $("status").textContent = "❌ " + e.message; }
 }
 $("edBack").onclick = async () => {
-  if (ED?.dirty) await saveDraft();
+  clearTimeout(ED?.saveT);
+  if (ED?.dirty && !(await saveDraft()) && !confirm("Your last edits could not be saved. Leave the editor and lose them?")) return;
   ED?.P?.unmount(); ED = null;
   $("editor").classList.add("hidden"); $("app").classList.remove("hidden");
   $("renderFinal").classList.add("hidden"); $("makeRow").classList.remove("hidden");
   loadRuns();
 };
 function changed() {   // live preview now, autosave a moment later
-  ED.dirty = true; $("edSaved").textContent = "editing…";
+  ED.dirty = true; ED.rev = (ED.rev || 0) + 1; $("edSaved").textContent = "editing…";
   clearTimeout(ED.prevT); ED.prevT = setTimeout(() => ED.P.update(ED.props, ED.media), 200);
   clearTimeout(ED.saveT); ED.saveT = setTimeout(saveDraft, 2500);
 }
+// returns true when everything is saved. Edits made WHILE a save is in flight stay "dirty" and are saved next.
 async function saveDraft() {
-  if (!ED || !ED.dirty) return;
-  try { await api("/api/draft", { projectId: ED.pid, props: ED.props }); ED.dirty = false; $("edSaved").textContent = "saved ✓"; }
-  catch (e) { $("edSaved").textContent = "not saved: " + e.message; }
+  if (!ED || !ED.dirty) return true;
+  const ed = ED, rev = ed.rev || 0;
+  try {
+    await api("/api/draft", { projectId: ed.pid, props: ed.props });
+    if ((ed.rev || 0) === rev) { ed.dirty = false; if (ED === ed) $("edSaved").textContent = "saved ✓"; return true; }
+    return saveDraft();   // edited during the save -> save again
+  } catch (e) { if (ED === ed) $("edSaved").textContent = "not saved: " + e.message; return false; }
 }
 const isVid = (k) => /\.(mp4|mov|m4v|webm)$/i.test(k);
 const isImg = (k) => /\.(jpe?g|png|webp)$/i.test(k);
@@ -482,7 +488,8 @@ $("edAdd").onclick = () => {
 $("renderFinal").onclick = async () => {
   $("renderFinal").disabled = true;
   try {
-    ED.dirty = true; await saveDraft();
+    clearTimeout(ED.saveT); ED.dirty = true;
+    if (!(await saveDraft())) throw new Error("your edits could not be saved — check your connection and press Render again");
     await api("/api/render", { projectId: ED.pid, title: ED.title });
     $("status").textContent = "🎬 Final render started — voice for changed lines only, then music, render, self-check (~10-30 min).";
     $("edBack").click();

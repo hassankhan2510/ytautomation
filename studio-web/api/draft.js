@@ -6,7 +6,7 @@ import { ACCESS, isAuthed, json, safeId } from "./_lib.js";
 async function linker() {
   if (ACCESS === "public") return async (pathname) => (await list({ prefix: pathname, limit: 1 })).blobs[0]?.url;
   const tok = await issueSignedToken({ pathname: "*", operations: ["get"], validUntil: Date.now() + 6 * 3600e3 });
-  return async (pathname) => (await presignUrl(tok, { operation: "get", pathname, access: "private" })).presignedUrl;
+  return async (pathname) => (await presignUrl(tok, { operation: "get", pathname, access: "private", useCache: false })).presignedUrl;  // never an old cached draft
 }
 
 export async function readDraft(projectId) {

@@ -4,7 +4,7 @@
 # Release called "reels". Release files are direct links: tap → the video plays in the phone
 # browser → Share / Download → save to Gallery. The run summary shows the links at the top.
 #   usage (from studio/): bash scripts/phone_link.sh <name-slug>
-# Needs GH_TOKEN with contents:write. Never fails the run.
+# Needs GH_TOKEN with contents:write. Never fails the run — except web videos (web-*) whose upload failed.
 set -u
 SLUG=$(echo "${1:-reel}" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]\+/-/g; s/^-//; s/-$//' | cut -c1-50)
 NAME="${PHONE_NAME:-$(date -u +%m%d)-run${GITHUB_RUN_NUMBER:-0}-${SLUG:-reel}}"  # PHONE_NAME: fixed name (web runs: web-<run id>)
@@ -20,7 +20,14 @@ gh release view "$TAG" -R "$REPO" >/dev/null 2>&1 ||
 cp out/reel.mp4 "out/$NAME.mp4"
 FILES=("out/$NAME.mp4")
 [ -f out/caption.txt ] && cp out/caption.txt "out/$NAME-caption.txt" && FILES+=("out/$NAME-caption.txt")
-gh release upload "$TAG" -R "$REPO" "${FILES[@]}" --clobber || { echo "::warning::upload to the reels release failed"; exit 0; }
+ok=0
+for try in 1 2 3; do gh release upload "$TAG" -R "$REPO" "${FILES[@]}" --clobber && { ok=1; break; }; sleep $((try * 10)); done
+if [ "$ok" != 1 ]; then
+  # web videos: the page shows "Ready" (and frees the uploads) only for a successful run — so FAIL here,
+  # never report a video that has no file
+  case "$NAME" in web-*) echo "::error::could not upload the video to the reels release"; exit 1 ;; esac
+  echo "::warning::upload to the reels release failed"; exit 0
+fi
 
 BASE="https://github.com/$REPO/releases/download/$TAG"
 {

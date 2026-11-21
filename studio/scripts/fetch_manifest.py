@@ -134,8 +134,11 @@ def main(url, pdir):
     if m.get("voiceover"):
         ext = os.path.splitext(str(m["voiceover"].get("name", "")))[1].lower()
         ext = ext if ext in AUD else ".m4a"
-        size = fetch(m["voiceover"]["url"], os.path.join(pdir, f"voiceover{ext}"))
-        print(f"  voiceover{ext} ({size // 1024} KB)")
+        try:
+            size = fetch(m["voiceover"]["url"], os.path.join(pdir, f"voiceover{ext}"))
+            print(f"  voiceover{ext} ({size // 1024} KB)")
+        except urllib.error.HTTPError as e:
+            raise SystemExit(f"::error::your voiceover '{m['voiceover'].get('name')}' is no longer in storage (HTTP {e.code}) — upload it again")
     elif s["voice"] == "upload":
         print("  ! voice=upload but no voiceover was uploaded -> using the default cloned voice")
         s["voice"] = "mine"
