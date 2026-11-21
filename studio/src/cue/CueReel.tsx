@@ -17,7 +17,9 @@ type Unit = {
   f0: number; enter: Track;
   exit: { f0: number; dur: number; op: number[]; ty: number[]; bl: number[] };
   pulse?: { f0: number; sc: number[] };
-  count?: { prefix: string; suffix: string; decimals: number; values: number[] };
+  count?: { f0?: number; prefix: string; suffix: string; decimals: number; values: number[] };
+  dim?: number; lit?: { f0: number; pop: number[] };
+  chip?: { x: number; size: number; label: string };
 };
 type Scene = { id: string; start: number; end: number; camera: { from: number; to: number }; units: Unit[] };
 export type CuePlan = {
@@ -56,7 +58,14 @@ function unitState(u: Unit, f: number) {
     op *= u.exit.op[k]; ty += u.exit.ty[k]; bl += u.exit.bl[k];
   }
   if (u.pulse && f >= u.pulse.f0 && f < u.pulse.f0 + u.pulse.sc.length) sc *= u.pulse.sc[f - u.pulse.f0];
-  return { ty, sc, op, bl, i };
+  let lit = 1;
+  if (u.dim != null && u.lit) {
+    const k = f - u.lit.f0;
+    lit = k < 0 ? u.dim : Math.min(1, u.dim + (1 - u.dim) * ((k + 1) / 4));
+    if (k >= 0 && k < u.lit.pop.length) sc *= u.lit.pop[k];
+    op *= lit;
+  }
+  return { ty, sc, op, bl, i, lit };
 }
 
 const Background: React.FC<{ c: Record<string, string>; w: number; h: number }> = ({ c, w, h }) => {
@@ -66,6 +75,8 @@ const Background: React.FC<{ c: Record<string, string>; w: number; h: number }> 
     <AbsoluteFill style={{ background: c.bg }}>
       <AbsoluteFill style={{ background: `radial-gradient(ellipse 75% 45% at ${gx}% ${gy}%, ${c.glow}55 0%, ${c.bg2}88 45%, transparent 75%)` }} />
       <AbsoluteFill style={{ background: `radial-gradient(ellipse 120% 60% at 50% 120%, ${c.bg2} 0%, transparent 60%)` }} />
+      <AbsoluteFill style={{ background: `radial-gradient(circle at ${70 - 20 * Math.sin(f / 210)}% ${78 + 6 * Math.sin(f / 160)}%, ${c.glow}26 0%, transparent 38%)` }} />
+      <AbsoluteFill style={{ opacity: 0.05, backgroundImage: `linear-gradient(${c.ink} 1px, transparent 1px), linear-gradient(90deg, ${c.ink} 1px, transparent 1px)`, backgroundSize: `${w / 12}px ${w / 12}px`, backgroundPosition: `0 ${(f * 0.4) % (w / 12)}px`, maskImage: "radial-gradient(ellipse 70% 55% at 50% 45%, black 20%, transparent 75%)", WebkitMaskImage: "radial-gradient(ellipse 70% 55% at 50% 45%, black 20%, transparent 75%)" }} />
       <AbsoluteFill style={{ boxShadow: `inset 0 0 ${Math.round(w * 0.28)}px ${Math.round(w * 0.06)}px rgba(0,0,0,0.85)` }} />
       <svg width={w} height={h} style={{ position: "absolute", opacity: 0.07, mixBlendMode: "screen" }}>
         <filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed={f % 7} /></filter>
@@ -94,9 +105,19 @@ const UnitView: React.FC<{ u: Unit; f: number; c: Record<string, string> }> = ({
   if (u.lines) {
     // a block: stat / kicker / label / item / by — text may count up
     let shown = u.text;
-    if (u.count) { const k = f - u.f0; shown = k < u.count.values.length ? `${u.count.prefix}${u.count.values[Math.max(0, k)].toFixed(u.count.decimals)}${u.count.suffix}` : u.text; }
+    if (u.count) { const k = f - (u.count.f0 ?? u.f0); shown = k < 0 ? `${u.count.prefix}${(0).toFixed(u.count.decimals)}${u.count.suffix}` : k < u.count.values.length ? `${u.count.prefix}${u.count.values[k].toFixed(u.count.decimals)}${u.count.suffix}` : u.text; }
+    const chip = u.chip ? (
+      <div style={{ position: "absolute", left: u.chip.x - u.x, top: (lh - u.chip.size) / 2, width: u.chip.size, height: u.chip.size, borderRadius: u.chip.size * 0.18,
+        background: c.accent, color: c.ink, fontFamily: fam("Unbounded-900"), fontWeight: 900, fontSize: u.chip.size * 0.42, display: "flex", alignItems: "center", justifyContent: "center",
+        boxShadow: `0 0 ${u.chip.size * 0.5}px ${c.glow}55` }}>{u.chip.label}</div>
+    ) : null;
+    const kickerLine = u.kind === "kicker" ? (
+      <div style={{ position: "absolute", left: -u.fontSize * 1.6, top: lh * 0.48, width: u.fontSize * 1.1, height: Math.max(3, u.fontSize * 0.09), background: c.accent, borderRadius: 2,
+        transform: `scaleX(${ease(s.i / 9)})`, transformOrigin: "right center" }} />
+    ) : null;
     return (
       <div style={{ position: "absolute", left: u.x, top: u.y, width: u.w, ...tf(u.w / 2, (u.lines.length * lh) / 2) }}>
+        {chip}{kickerLine}
         {u.lines.map((l, i) => (
           <div key={i} style={{ ...textStyle, filter: undefined, position: "absolute", left: u.count ? 0 : l.x, top: l.y, width: u.count ? u.w : undefined, textAlign: u.count ? "center" : undefined }}>
             {txt(u.count && i === 0 ? shown : l.text)}
@@ -105,7 +126,15 @@ const UnitView: React.FC<{ u: Unit; f: number; c: Record<string, string> }> = ({
       </div>
     );
   }
-  const word = <div style={{ ...textStyle, position: "absolute", left: 0, top: 0, ...tf(u.w / 2, lh / 2) }}>{txt(u.text)}</div>;
+  // emphasis: a crimson marker sweeps in BEHIND the word (exact width from the compiler's font engine)
+  const hitF = u.pulse ? u.pulse.f0 + 4 : u.lit ? u.lit.f0 : u.f0 + u.enter.ty.length;
+  const sweep = u.accent ? ease((f - hitF) / 7) : 0;
+  const marker = u.accent && sweep > 0 ? (
+    <div style={{ position: "absolute", left: -u.fontSize * 0.08, top: lh * 0.14, height: lh * 0.78, width: (u.w + u.fontSize * 0.16) * sweep,
+      background: c.accent, borderRadius: u.fontSize * 0.06, boxShadow: `0 0 ${u.fontSize * 0.4}px ${c.glow}66` }} />
+  ) : null;
+  if (u.accent && sweep > 0) { textStyle.color = c.ink; textStyle.textShadow = "none"; }
+  const word = <div style={{ position: "absolute", left: 0, top: 0, ...tf(u.w / 2, lh / 2) }}>{marker}<div style={{ ...textStyle, position: "relative" }}>{txt(u.text)}</div></div>;
   if (u.mask && u.line) {
     const pad = u.fontSize * 0.28;
     return (
@@ -124,7 +153,7 @@ const Captions: React.FC<{ words: { w: string; start: number; end: number }[]; t
   return (
     <div style={{ position: "absolute", left: 0, width: w, top: h * 0.81, textAlign: "center", fontFamily: fam("InterTight-800"), fontWeight: 800, fontSize: w * 0.052, letterSpacing: "-0.01em" }}>
       {group.map((x, k) => (
-        <span key={k} style={{ color: a + k === i ? c.ink : `${c.ink}66`, padding: "0 0.18em", textShadow: a + k === i ? `0 0 18px ${c.glow}` : "none" }}>{x.w}</span>
+        <span key={k} style={{ color: a + k === i ? c.ink : `${c.ink}77`, padding: "0.04em 0.22em", margin: "0 0.04em", borderRadius: "0.22em", background: a + k === i ? c.accent : "transparent", boxShadow: a + k === i ? `0 0 22px ${c.glow}88` : "none" }}>{x.w}</span>
       ))}
     </div>
   );
@@ -139,13 +168,15 @@ export const CueReel: React.FC<CueProps> = ({ plan, aspect, audio, captions = tr
   const t = f / fps;
   const sc = A.scenes.find((s) => t >= s.start && t < s.end) || A.scenes[A.scenes.length - 1];
   const u = ease((t - sc.start) / Math.max(0.01, sc.end - sc.start));
-  const cam = sc.camera.from + (sc.camera.to - sc.camera.from) * u;
+  const snap = 1 + 0.045 * (1 - ease((t - sc.start) / 0.28));                 // punch-in on every cut
+  const cam = (sc.camera.from + (sc.camera.to - sc.camera.from) * u) * snap;
   return (
     <AbsoluteFill>
       <Background c={plan.colors} w={w} h={h} />
       <AbsoluteFill style={{ transform: `scale(${cam})`, transformOrigin: "50% 42%" }}>
         {sc.units.map((x, k) => <UnitView key={k} u={x} f={f} c={plan.colors} />)}
       </AbsoluteFill>
+      <div style={{ position: "absolute", left: 0, top: 0, height: Math.max(6, h * 0.004), width: `${Math.min(100, (t / plan.duration) * 100)}%`, background: `linear-gradient(90deg, ${plan.colors.accent}, ${plan.colors.accentHi})`, boxShadow: `0 0 12px ${plan.colors.glow}` }} />
       {captions && plan.captions ? <Captions words={plan.captions} t={t} c={plan.colors} w={w} h={h} /> : null}
       {plan.music ? (
         <Audio src={staticFile(plan.music.src)} loop={plan.music.loop}

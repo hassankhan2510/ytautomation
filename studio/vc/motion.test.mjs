@@ -58,7 +58,9 @@ test("kinetic sync: title words the voice says appear as they are said", () => {
   const units = plan.aspects["9:16"].scenes[0].units.filter((u) => u.kind === "title");
   const banda = units.find((u) => u.text === "banda");
   const said = words.find((w) => w.w === "banda").start;
-  assert.ok(Math.abs(banda.f0 / FPS - (said - 0.05)) <= 1 / FPS, `banda at ${banda.f0 / FPS}, said at ${said}`);
+  // spoken late in the scene -> the title is revealed at once and "banda" LIGHTS UP as it is said
+  const at = banda.lit ? banda.lit.f0 / FPS : banda.f0 / FPS;
+  assert.ok(Math.abs(at - said) <= 2 / FPS, `banda lights/enters at ${at}, said at ${said}`);
   assert.ok(banda.accent && banda.pulse, "emphasis word is accented and pulses");
   assert.ok(Math.min(...banda.pulse.sc) < 1, "pulse has a wind-up before the hit");
 });
@@ -78,4 +80,19 @@ test("count-up: a stat counts to its value and ends exactly on it", () => {
   assert.equal(st.count.prefix, "");
   assert.equal(st.count.suffix, "%");
   assert.equal(st.count.values.at(-1), 70);
+});
+
+test("no dead screen: every scene shows something within 0.5 s of its start", () => {
+  const plan = compile(SRC, { words: voice(SRC) });
+  for (const sc of plan.aspects["9:16"].scenes) {
+    const first = Math.min(...sc.units.map((u) => u.f0)) / FPS;
+    assert.ok(first - sc.start <= 0.5, `${sc.id}: first visual at ${first.toFixed(2)} s, scene starts ${sc.start.toFixed(2)} s`);
+  }
+});
+
+test("karaoke reveal: revealed words start dimmed and light up in spoken order", () => {
+  const plan = compile(SRC, { words: voice(SRC) });
+  const ws = plan.aspects["9:16"].scenes[0].units.filter((u) => u.kind === "title");
+  assert.ok(ws.every((u) => u.dim && u.lit), "all words of the revealed title carry dim + lit");
+  for (let i = 1; i < ws.length; i++) assert.ok(ws[i].lit.f0 >= ws[i - 1].lit.f0, "lights up in reading order");
 });

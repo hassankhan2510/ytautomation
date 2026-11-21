@@ -97,7 +97,7 @@ export function compileMotion(scene, boxes, opts = {}) {
   const seedLoud = opts.loudAt || (() => null);
   const exitDur = EXIT[scene.mood] ?? 0.22;
   const exitT = scene.end - exitDur;
-  const stats = { units: 0, shortened: 0, early: 0, demoted: 0, synced: 0 };
+  const stats = { units: 0, shortened: 0, early: 0, demoted: 0, synced: 0, revealed: 0 };
 
   // 1. units (a title/quote/body is animated word by word; the rest as blocks)
   const groups = [];
@@ -134,6 +134,37 @@ export function compileMotion(scene, boxes, opts = {}) {
       g.synced = true; stats.synced++;
     }
   }
+
+  // 2b. NO DEAD SCREEN. (a) a synced title whose words come late (or would be up too briefly to read) is
+  //     REVEALED: all words enter at the start of the scene, dimmed, and each lights up as it is spoken
+  //     (karaoke) — the eye has the whole idea at once, the voice drives the emphasis.
+  //     (b) supporting lines (label / kicker / by) whose hero lands late appear first, as the setup.
+  const READ_MIN = 0.9;
+  for (const g of groups) {
+    if (g.synced) {
+      const late = g.wordTimes[0] - scene.start > 0.6;
+      const brief = g.wordTimes.some((t) => exitT - t < READ_MIN);
+      if (late || brief) {
+        g.revealLit = g.wordTimes.map((t) => t + 0.03);
+        g.synced = false; g.revealed = true;
+        g.t0 = Math.min(g.t0, scene.start + 0.12);
+        stats.revealed = (stats.revealed || 0) + 1;
+      }
+    }
+  }
+  const heroLate = groups.some((g) => (g.kind === "stat" || g.kind === "title") && g.t0 - scene.start > 0.8);
+  if (heroLate) for (const g of groups) if (["label", "kicker", "by"].includes(g.kind)) g.t0 = Math.min(g.t0, scene.start + 0.12);
+  //     (c) still nothing early? every late block is pre-revealed dimmed and LIGHTS UP on its word
+  //         (a stat shows a dim 0 and counts up as the number is spoken)
+  if (groups.length && Math.min(...groups.map((g) => g.t0)) - scene.start > 0.5) {
+    let n = 0;
+    for (const g of groups) if (!g.perWord && g.t0 - scene.start > 0.5) {
+      g.blockLit = g.t0; g.t0 = scene.start + 0.12 + 0.08 * n++; g.revealed = true;
+      stats.revealed = (stats.revealed || 0) + 1;
+    }
+  }
+  for (const g of groups) if (g.revealed) g.big = false;          // revealed = soft entrance; the light-up is the hit
+  groups.sort((a, c) => a.t0 - c.t0 || a.bi - c.bi);
 
   // 3. joint deadline + attention sweep
   let prevSalientEnd = -Infinity;
@@ -181,6 +212,10 @@ export function compileMotion(scene, boxes, opts = {}) {
         const t = g.synced ? g.wordTimes[k] : g.t0 + g.stagger * k;
         const unit = make(t, { text: u.w.text, x: r2(b.x + ln.x + u.w.x), y: r2(b.y + ln.y), w: u.w.w, line: { x: r2(b.x + ln.x), y: r2(b.y + ln.y), w: ln.w, h: r2(b.fontSize * b.lineHeight) },
           mask: g.kind === "title" && scene.mood !== "hype" });
+        if (g.revealLit) {
+          unit.dim = 0.32;
+          unit.lit = { f0: Math.round(g.revealLit[k] * FPS), pop: [1.07, 1.05, 1.03, 1.015, 1.005, 1] };
+        }
         if (emph && norm(u.w.text) === emph) {
           unit.accent = true;
           if (g.el.pulse != null) { const p = pulseTrack(g.amp); unit.pulse = { f0: Math.round(g.el.pulse * FPS) - p.lead, sc: p.sc }; }
@@ -188,12 +223,13 @@ export function compileMotion(scene, boxes, opts = {}) {
         units.push(unit);
       });
     } else {
-      const unit = make(g.t0, { text: b.text, x: b.x, y: b.y, w: b.w, lines: b.lines.map((l) => ({ text: l.text, x: l.x, y: l.y })) });
+      const unit = make(g.t0, { text: b.text, x: b.x, y: b.y, w: b.w, chip: b.chip, lines: b.lines.map((l) => ({ text: l.text, x: l.x, y: l.y })) });
+      if (g.blockLit != null) { unit.dim = 0.32; unit.lit = { f0: Math.round(g.blockLit * FPS), pop: [1.12, 1.08, 1.04, 1.02, 1.005, 1] }; }
       const m = g.kind === "stat" && /^([^\d]*)([\d][\d.,]*)(.*)$/.exec(b.text);
       if (m) {
         const to = parseFloat(m[2].replace(/,/g, "")), dec = (m[2].split(".")[1] || "").length;
         const n = Math.max(2, Math.round(Math.min(0.9, Math.max(0.5, g.d * 1.4)) * FPS));
-        unit.count = { prefix: m[1], suffix: m[3], decimals: dec, values: Array.from({ length: n }, (_, i) => { const u = (i + 1) / n; return +(to * (1 - Math.pow(1 - u, 3))).toFixed(dec); }) };
+        unit.count = { f0: unit.lit ? unit.lit.f0 : unit.f0, prefix: m[1], suffix: m[3], decimals: dec, values: Array.from({ length: n }, (_, i) => { const u = (i + 1) / n; return +(to * (1 - Math.pow(1 - u, 3))).toFixed(dec); }) };
       }
       units.push(unit);
     }
