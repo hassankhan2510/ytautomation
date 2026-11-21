@@ -566,7 +566,8 @@ def main():
     cache_dir = os.environ.get("VOICE_CACHE")
     if cache_dir:
         os.makedirs(cache_dir, exist_ok=True)
-    ref_id = f"{os.path.basename(REF)}:{os.path.getsize(REF)}" if os.path.exists(REF) else "noref"
+    import hashlib as _h
+    ref_id = f"{os.path.basename(REF)}:{_h.sha1(open(REF, 'rb').read()).hexdigest()[:12]}" if os.path.exists(REF) else "noref"
     hits = 0
     tail_fix = []
     pause_cut = []
@@ -603,7 +604,11 @@ def main():
         wav = None
         for eng in engines:
             try:
-                wav = trim(eng(text))
+                try:
+                    wav = trim(eng(text))
+                except Exception as e1:  # one retry before giving up on this engine
+                    print(f"  beat {i}: {eng.__name__} failed once ({type(e1).__name__}) — retrying")
+                    wav = trim(eng(text))
                 if eng is synth_mine:  # Chatterbox has no speed control of its own
                     wav = tempo(wav, SPEED / 1.08)
                 if used is None:

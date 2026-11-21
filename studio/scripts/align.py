@@ -107,7 +107,7 @@ def align(script_tokens, spoken, gap=-0.45, min_sim=0.5):
     if n == 0:
         return []
     if m == 0:
-        return [(None, None)] * n
+        return [None] * n
     S = [[0.0] * (m + 1) for _ in range(n + 1)]
     B = [[0] * (m + 1) for _ in range(n + 1)]  # 0 diag, 1 up (skip script), 2 left (skip spoken)
     for i in range(1, n + 1):

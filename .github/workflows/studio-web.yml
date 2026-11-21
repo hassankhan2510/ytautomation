@@ -52,7 +52,8 @@ jobs:
         env:
           RUNNER_KEY: ${{ secrets.RUNNER_KEY }}
           STUDIO_URL: ${{ secrets.STUDIO_URL }}
-        run: python scripts/fetch_manifest.py "${{ inputs.manifest_path }}" "$PROJECT_DIR"
+          MANIFEST_PATH: ${{ inputs.manifest_path }}
+        run: python scripts/fetch_manifest.py "$MANIFEST_PATH" "$PROJECT_DIR"
       - name: Find the project files
         id: proj
         run: |
@@ -218,7 +219,8 @@ jobs:
           set -e
           if [ "$code" = "3" ]; then
             echo "↻ scene fixes applied — re-rendering only the changed scenes" | tee -a "$GITHUB_STEP_SUMMARY"
-            npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=error
+            cp out/reel.mp4 out/reel_first.mp4
+            npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=error && test -s out/reel.mp4 || { echo "::warning::re-render failed — keeping the first render"; cp out/reel_first.mp4 out/reel.mp4; }
             python scripts/critic.py out/reel.mp4 out/props.json out/critic2.json --apply || true
           elif [ "$code" != "0" ]; then
             echo "::warning::self-check crashed (exit $code) — keeping the first render"

@@ -40,7 +40,8 @@ fetch = '''      - name: Fetch the project from the web page
         env:
           RUNNER_KEY: ${{ secrets.RUNNER_KEY }}
           STUDIO_URL: ${{ secrets.STUDIO_URL }}
-        run: python scripts/fetch_manifest.py "${{ inputs.manifest_path }}" "$PROJECT_DIR"
+          MANIFEST_PATH: ${{ inputs.manifest_path }}
+        run: python scripts/fetch_manifest.py "$MANIFEST_PATH" "$PROJECT_DIR"
 '''
 anchor = "      - name: Find the project files\n"
 assert anchor in jobs

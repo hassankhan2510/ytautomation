@@ -81,8 +81,8 @@ def runner_links(paths):
 
 def manifest_link(path_or_url):
     """The workflow gets only the manifest's NAME (projects/<id>/…)."""
-    if not str(path_or_url).startswith("projects/"):
-        return path_or_url  # (old runs passed a full link)
+    if not re.fullmatch(r"projects/[a-z0-9-]{6,40}/[A-Za-z0-9._-]+\.json", str(path_or_url)):
+        raise SystemExit("manifest_path must be a storage path like projects/<id>/manifest-….json")
     url = runner_links([path_or_url]).get(path_or_url)
     if not url:
         raise SystemExit("manifest not found in storage")

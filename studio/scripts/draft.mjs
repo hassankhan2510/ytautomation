@@ -184,7 +184,9 @@ ${language === "urdu" ? `LANGUAGE: "Urdish" for a Pakistani Gen-Z audience — M
 FACTS (strict): every number, date, name, place, material, weight, cause and "that's why" reason in the script must come from the SOURCE. Do NOT add outside knowledge — even well-known true facts. Never invent statistics, quotes, studies or sources. Make it gripping through framing, questions and pacing, not extra facts.
 STYLE: ${STYLES[style] || STYLES.explainer}${directionsText}${assetHints && !verbatim ? `
 CREATOR'S OWN VISUALS (photos/clips that will be placed where the script talks about them — where it is natural and TRUE to the source, give each one a line it can illustrate; never invent facts about them): ${assetHints}` : ""}`;
-const segments = verbatim ? segment(paragraph).slice(0, 24) : [];
+const allSegments = verbatim ? segment(paragraph) : [];
+if (allSegments.length > 24) console.log(`::warning::your script has ${allSegments.length} lines — only the first 24 are used (shorter reels keep viewers)`);
+const segments = allSegments.slice(0, 24);
 const writerUser = verbatim ? `SCRIPT SEGMENTS:\n${segments.map((s, i) => `${i + 1}. ${s}`).join("\n")}` : `SOURCE:\n"""${paragraph.slice(0, 6000)}"""`;
 
 console.log("① WRITER…");
@@ -393,7 +395,7 @@ if (style === "buildInPublic" && day) {
 }
 // End card is VISUAL only — no spoken "follow for more" line (creator's call): just the Follow prompt.
 const cta = style === "buildInPublic" ? `Follow for Day ${(day ?? 1) + 1}` : "Follow";
-beats.push({ text: "", primitive: "outro", energy: 1, props: { cta }, hold: 2.2 });
+beats.push({ text: "", primitive: "outro", energy: 1, props: { cta }, hold: 1.2 });
 
 /* ═════════════ SCENE GUARD — no demo data, no outside facts on screen ═════════════
  * (a) A data scene whose required props are missing would show its built-in DEMO content (e.g.
