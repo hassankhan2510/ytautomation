@@ -41,3 +41,6 @@ docs/market/
 
 # deep-tech plans + pitch IP — never in the public repo
 docs/deeptech/
+
+# CUE demo media (your voice) — local only
+studio/public/cue/demo/
