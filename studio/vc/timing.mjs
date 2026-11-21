@@ -108,5 +108,49 @@ export function solveTime(prog, opts = {}) {
       if (sc.elements[n].t < min) sc.elements[n].t = Math.min(min, Math.max(sc.start, sc.end - 0.3));
     }
   });
-  return { scenes: out, duration: prevEnd, diagnostics };
+  // 5. READING TIME (hard rule, subtitle standard): every text must stay up long enough to read —
+  //    chars / CPS (+0.3 s to find it), at least 5/6 s; words the voice is saying count half.
+  //    Fix order: (a) appear up to 0.35 s BEFORE its word, (b) a hold of at most 0.3 s at the cut (the
+  //    compiler owns the audio timeline: plan.audio splices the voice around holds), (c) report it.
+  const CPS = opts.cps ?? 17, EXIT = 0.22, PREROLL = 0.35, MAXHOLD = opts.maxHold ?? 0.3;
+  const audio = [];
+  let offset = 0, srcCursor = 0;
+  out.forEach((sc, i) => {
+    const shift = (x) => x + offset;
+    if (offset) {
+      sc.end = shift(sc.end); sc.speech = sc.speech.map(shift);
+      sc.words = sc.words.map((w) => ({ ...w, start: shift(w.start), end: shift(w.end) }));
+      for (const e of sc.elements) { e.t = shift(e.t); if (e.itemTimes) e.itemTimes = e.itemTimes.map(shift); if (e.pulse != null) e.pulse = shift(e.pulse); }
+    }
+    if (i) sc.start = out[i - 1].end;                       // a scene starts where the previous one ends (holds included)
+    const spoken = new Set(sc.words.map((w) => norm(w.w)));
+    const need = (txt) => {
+      let chars = 0;
+      for (const w of String(txt).split(/\s+/).filter(Boolean)) chars += (spoken.has(norm(w)) ? 0.5 : 1) * (w.length + 1);
+      return Math.max(5 / 6, chars / CPS + 0.3);
+    };
+    let deficit = 0;
+    const fit = (t, txt, anchored) => {
+      const n = need(txt), latestStart = sc.end - EXIT - n;
+      if (t <= latestStart) return t;
+      const earliest = anchored ? Math.max(sc.start, t - PREROLL) : sc.start;
+      const t2 = Math.max(earliest, latestStart);
+      deficit = Math.max(deficit, t2 - latestStart);
+      return t2;
+    };
+    for (const e of sc.elements) {
+      const txt = [e.text, e.label, e.by].filter(Boolean).join(" ");
+      if (e.itemTimes) { e.itemTimes = e.itemTimes.map((t, n) => fit(t, e.items[n], true)); e.t = e.itemTimes[0]; }
+      else e.t = fit(e.t, txt, e.anchored);
+    }
+    const hold = Math.min(MAXHOLD, deficit);
+    if (deficit > MAXHOLD + 1e-6) diagnostics.push(`scene ${sc.id}: text is too fast to read (${deficit.toFixed(2)} s short even after appearing early + a ${MAXHOLD} s hold) — shorten the on-screen text or say more`);
+    // audio: the voice plays straight through this scene, then pauses `hold` at the cut
+    const srcEnd = sc.end - offset;
+    audio.push({ from: +srcCursor.toFixed(3), to: +srcEnd.toFixed(3), at: +(srcCursor + offset).toFixed(3) });
+    srcCursor = srcEnd;
+    if (hold > 0.005) { sc.end += hold; sc.hold = +hold.toFixed(3); offset += hold; }
+  });
+  const duration = out.length ? out[out.length - 1].end : 0;
+  return { scenes: out, duration, audio, holds: out.filter((s) => s.hold).map((s) => ({ scene: s.id, dur: s.hold })), diagnostics };
 }

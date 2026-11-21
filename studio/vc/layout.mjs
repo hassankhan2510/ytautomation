@@ -1,8 +1,11 @@
-// SPACE SOLVE: one scene's elements -> boxes on a canvas, for any aspect ratio. A box-glue stack: the
-// biggest type scale where every line fits the safe area, nothing overlaps, hierarchy holds (title >> body)
-// and nothing goes under the platform UI. If even the smallest readable scale cannot fit, it says so
-// (diagnostic) instead of overflowing silently.
-// Text width is ESTIMATED from per-glyph-class advance widths (no font shaper yet — honest v0 limit).
+// SPACE SOLVE: one scene's elements -> boxes on a canvas, for any aspect ratio.
+//  * EXACT text widths from our font engine (same TTF files the renderer draws with)
+//  * BALANCED line breaking (minimum-raggedness dynamic programme, Knuth-Plass family): lines of similar
+//    length, a lone last word ("widow") is penalised, every line fits the box
+//  * box-glue stack: the biggest type scale (binary search) where everything fits the safe area, no
+//    overlap, hierarchy held by the style's size ratios; "does not fit" is reported, never overflowed
+//  * every WORD gets its exact x/y inside its line -> per-word motion and emphasis without re-measuring
+import { getStyle } from "./style.mjs";
 
 export const CANVAS = {
   "9:16": { w: 1080, h: 1920, safe: { x0: 90, x1: 990, y0: 250, y1: 1480 } },   // bottom = captions + app UI
@@ -11,49 +14,81 @@ export const CANVAS = {
   "4:5": { w: 1080, h: 1350, safe: { x0: 80, x1: 1000, y0: 110, y1: 1110 } },
 };
 
-// size = fraction of the reference length; lh = line height; w = average advance in em
-export const ROLE_SPEC = {
-  kicker: { size: 0.05, lh: 1.1, maxLines: 1, w: 0.66, upper: true, weight: 800, floor: 26 },
-  title: { size: 0.14, lh: 1.0, maxLines: 3, w: 0.56, weight: 900, floor: 54 },
-  body: { size: 0.062, lh: 1.22, maxLines: 4, w: 0.5, weight: 600, floor: 34 },
-  stat: { size: 0.3, lh: 0.95, maxLines: 1, w: 0.62, weight: 900, floor: 110 },
-  label: { size: 0.058, lh: 1.15, maxLines: 2, w: 0.5, weight: 700, floor: 32 },
-  item: { size: 0.078, lh: 1.12, maxLines: 2, w: 0.53, weight: 800, floor: 38 },
-  quote: { size: 0.085, lh: 1.15, maxLines: 4, w: 0.5, weight: 700, floor: 40 },
-  by: { size: 0.045, lh: 1.2, maxLines: 1, w: 0.5, weight: 600, floor: 26 },
-};
+const show = (s, spec) => (spec.upper ? s.toUpperCase() : s);
 
-const glyphW = (ch) => (/[il.,'’:;!|]/.test(ch) ? 0.55 : /[mwMW@%]/.test(ch) ? 1.45 : /[A-Z0-9]/.test(ch) ? 1.18 : ch === " " ? 0.55 : 1);
-export const textWidth = (s, fs, spec) => [...(spec.upper ? s.toUpperCase() : s)].reduce((a, c) => a + glyphW(c), 0) * spec.w * fs * (spec.upper ? 1.08 : 1);
-
-export function wrap(text, fs, spec, maxW) {
-  const words = String(text).split(/\s+/).filter(Boolean);
-  const lines = [];
-  let cur = "";
-  for (const w of words) {
-    if (textWidth(w, fs, spec) > maxW) return null;               // one word wider than the box
-    const t = cur ? cur + " " + w : w;
-    if (textWidth(t, fs, spec) <= maxW) cur = t;
-    else { lines.push(cur); cur = w; }
+/** Balanced breaking. Returns lines (arrays of word indices) or null if impossible within maxLines. */
+export function breakLines(words, widthOf, spaceW, maxW, maxLines) {
+  const n = words.length;
+  if (!n) return [];
+  const w = words.map(widthOf);
+  if (w.some((x) => x > maxW)) return null;
+  // cost[i] = best cost of setting words[i..] ; lines counted to respect maxLines
+  const INF = 1e18;
+  const best = Array.from({ length: maxLines + 1 }, () => new Float64Array(n + 1).fill(INF));
+  const next = Array.from({ length: maxLines + 1 }, () => new Int32Array(n + 1).fill(-1));
+  for (let L = 0; L <= maxLines; L++) best[L][n] = 0;
+  for (let L = 1; L <= maxLines; L++) {
+    for (let i = n - 1; i >= 0; i--) {
+      let lineW = -spaceW;
+      for (let j = i; j < n; j++) {
+        lineW += spaceW + w[j];
+        if (lineW > maxW) break;
+        const rest = best[L - 1][j + 1];
+        if (rest >= INF) continue;
+        const last = j === n - 1;
+        const slack = (maxW - lineW) / maxW;
+        let c = last ? 0.25 * slack * slack : slack * slack;   // the last line may be shorter, not a stub
+        if (last && j === i && n > 2) c += 0.6;                 // widow: a single word alone on the last line
+        if (c + rest < best[L][i]) { best[L][i] = c + rest; next[L][i] = j + 1; }
+      }
+    }
   }
-  if (cur) lines.push(cur);
-  return lines.length <= spec.maxLines ? lines : null;
+  if (best[maxLines][0] >= INF) return null;
+  // fewer lines is better when the cost is similar (balanced, not stretched)
+  let L = maxLines;
+  const lines = [];
+  for (let i = 0; i < n; ) { const j = next[L][i]; lines.push([...Array(j - i).keys()].map((k) => i + k)); i = j; L--; }
+  return lines;
 }
 
-// element -> list of typographic blocks (a stat is number + label, a list is N items…)
+function setText(text, fs, spec, maxW) {
+  const m = spec.metrics;
+  const tr = spec.tracking;
+  const words = show(text, spec).split(/\s+/).filter(Boolean);
+  const widthOf = (s) => m.measure(s, fs, tr);
+  const spaceW = m.measure(" ", fs, tr);
+  // balanced breaking for 1..maxLines lines: prefer the FEWEST lines whose result is balanced
+  let lines = null;
+  for (let L = 1; L <= spec.maxLines && !lines; L++) lines = breakLines(words, widthOf, spaceW, maxW, L);
+  if (!lines) return null;
+  const out = lines.map((idx) => {
+    const str = idx.map((k) => words[k]).join(" ");
+    const lw = widthOf(str);
+    const wordsPos = [];
+    let x = 0;
+    idx.forEach((k, n) => {
+      if (n) x = widthOf(idx.slice(0, n).map((q) => words[q]).join(" ") + " ");
+      wordsPos.push({ text: words[k], x: +x.toFixed(2), w: +widthOf(words[k]).toFixed(2) });
+    });
+    return { text: str, w: lw, words: wordsPos };
+  });
+  return out;
+}
+
 function blocksOf(el) {
   switch (el.role) {
     case "stat": return [{ kind: "stat", text: el.text }, ...(el.label ? [{ kind: "label", text: el.label }] : [])];
     case "list": return el.items.map((t, i) => ({ kind: "item", text: t, item: i }));
     case "quote": return [{ kind: "quote", text: `“${el.text}”` }, ...(el.by ? [{ kind: "by", text: `— ${el.by}` }] : [])];
-    case "caption": return [];                                      // captions live in the caption band
+    case "caption": return [];
     default: return [{ kind: el.role, text: el.text }];
   }
 }
 
-export function solveLayout(elements, aspect = "9:16") {
+export function solveLayout(elements, aspect = "9:16", styleName = "cohort-zero") {
   const C = CANVAS[aspect];
   if (!C) throw new Error(`unknown aspect ${aspect}`);
+  const style = getStyle(styleName);
   const { x0, x1, y0, y1 } = C.safe;
   const W = x1 - x0, H = y1 - y0;
   const ref = Math.min(W, H * 0.8);
@@ -66,42 +101,48 @@ export function solveLayout(elements, aspect = "9:16") {
     for (const g of groups) {
       const gb = [];
       for (const b of g.blocks) {
-        const spec = ROLE_SPEC[b.kind];
+        const spec = style.roles[b.kind];
         const fs = Math.round(spec.size * ref * s);
-        const lines = wrap(b.text, fs, spec, W);
+        const lines = setText(b.text, fs, spec, W);
         if (!lines) return null;
-        const h = lines.length * fs * spec.lh;
-        gb.push({ ...b, fs, lines, h, w: Math.max(...lines.map((l) => textWidth(l, fs, spec))) });
+        gb.push({ ...b, spec, fs, lines, h: lines.length * fs * spec.lh, w: Math.max(...lines.map((l) => l.w)) });
       }
-      const inner = gb.reduce((a, b) => a + b.h, 0) + (gb.length - 1) * gb[0].fs * 0.12;
+      const inner = gb.reduce((a, b) => a + b.h, 0) + (gb.length - 1) * gb[0].fs * 0.14;
       placed.push({ g, gb, h: inner });
       total += inner;
     }
-    const gaps = placed.slice(1).map((p, n) => 0.42 * Math.max(p.gb[0].fs, placed[n].gb[placed[n].gb.length - 1].fs));
+    const gaps = placed.slice(1).map((p, n) => 0.45 * Math.max(p.gb[0].fs, placed[n].gb[placed[n].gb.length - 1].fs));
     total += gaps.reduce((a, b) => a + b, 0);
     return total <= H ? { placed, gaps, total } : null;
   };
 
-  let lo = 0.3, hi = 1.0, best = attempt(hi) ? hi : null;
+  let best = attempt(1) ? 1 : null;
   if (best == null) {
+    let lo = 0.3, hi = 1.0;
     for (let it = 0; it < 22; it++) { const mid = (lo + hi) / 2; if (attempt(mid)) lo = mid; else hi = mid; }
     best = attempt(lo) ? lo : null;
   }
   if (best == null) return { aspect, scale: 0, boxes: [], diagnostics: ["does not fit even at 30% type size — too much text for one scene; split it"] };
   const sol = attempt(best);
-  // optical centre: a little above the middle of the safe area
-  let y = y0 + Math.max(0, (H - sol.total) * 0.42);
+  let y = y0 + Math.max(0, (H - sol.total) * 0.42);           // optical centre: a little above the middle
   const boxes = [];
   sol.placed.forEach((p, n) => {
     if (n) y += sol.gaps[n - 1];
-    for (const b of p.gb) {
-      const spec = ROLE_SPEC[b.kind];
+    p.gb.forEach((b, k) => {
+      if (k) y += p.gb[k - 1].fs * 0.14;
+      const spec = b.spec;
       if (b.fs < spec.floor) diagnostics.push(`${b.kind} "${b.text.slice(0, 24)}" is ${b.fs}px, below the readable ${spec.floor}px — shorten it`);
-      boxes.push({ el: p.g.i, kind: b.kind, item: b.item, text: b.text, lines: b.lines, fontSize: b.fs, lineHeight: spec.lh, weight: spec.weight, upper: !!spec.upper,
-        x: Math.round(x0 + (W - b.w) / 2), y: Math.round(y), w: Math.round(b.w), h: Math.round(b.h) });
-      y += b.h + b.fs * 0.12;
-    }
-    y -= p.gb[p.gb.length - 1].fs * 0.12;
+      const lineH = b.fs * spec.lh;
+      const bx = x0 + (W - b.w) / 2;
+      boxes.push({
+        el: p.g.i, kind: b.kind, item: b.item, text: b.text,
+        font: { family: spec.family, weight: spec.weight, file: spec.font, tracking: spec.tracking, upper: !!spec.upper },
+        color: spec.color, fontSize: b.fs, lineHeight: spec.lh,
+        x: +bx.toFixed(2), y: +y.toFixed(2), w: +b.w.toFixed(2), h: +b.h.toFixed(2),
+        lines: b.lines.map((l, li) => ({ text: l.text, x: +((W - l.w) / 2 + x0 - bx).toFixed(2), y: +(li * lineH).toFixed(2), w: +l.w.toFixed(2), words: l.words })),
+      });
+      y += b.h;
+    });
   });
   return { aspect, scale: Math.round(best * 1000) / 1000, boxes, diagnostics };
 }

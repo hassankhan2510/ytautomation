@@ -18,7 +18,7 @@ scene steps mood=hype
   say "Teen kaam karo idea team aur launch"
   list "Idea|Team|Launch"
 scene end mood=warm
-  say "Cohort Zero join karo"
+  say "Cohort Zero join karo aur yaad rakho start before you're ready"
   quote "Start before you're ready" by="Cohort Zero"
 `;
 
@@ -58,7 +58,8 @@ test("time: elements land on the word that names them", () => {
   assert.ok(Math.abs(box.enter.t - (seventy.start - 0.08)) < 1e-6, `stat enters at ${box.enter.t}, voice says seventy at ${seventy.start}`);
   const items = plan.aspects["9:16"].scenes[2].boxes.filter((b) => b.kind === "item");
   const said = ["idea", "team", "launch"].map((x) => words.find((w) => w.w === x).start - 0.08);
-  items.forEach((b, i) => assert.ok(Math.abs(b.enter.t - said[i]) < 1e-6, `item ${i}`));
+  // an item lands on its word, or up to 0.35 s before it when it needs the time to be read
+  items.forEach((b, i) => assert.ok(b.enter.t <= said[i] + 1e-6 && b.enter.t >= said[i] - 0.35 - 1e-6, `item ${i} at ${b.enter.t}, word at ${said[i]}`));
   const title = plan.aspects["9:16"].scenes[0].boxes.find((b) => b.kind === "title");
   assert.equal(title.pulse.t, words.find((w) => w.w === "banda").start);
 });
@@ -70,10 +71,11 @@ test("time: cuts never fall inside speech; they snap to a beat when one is in th
   const beat = lastOfScene0.end + 0.1;
   const plan = compile(SRC, { words, beats: [beat, 99] });
   const sc = plan.aspects["9:16"].scenes;
-  assert.ok(Math.abs(sc[0].end - beat) < 1e-3);
+  assert.ok(Math.abs(sc[0].end - (sc[0].hold || 0) - beat) < 1e-3, "the cut (where the voice pauses) is on the beat; a reading hold may follow it");
   for (let i = 0; i < sc.length - 1; i++) {
     assert.ok(sc[i].end >= sc[i].speech[1] && sc[i].end <= sc[i + 1].speech[0], `cut ${i} inside speech`);
     assert.equal(sc[i].end, sc[i + 1].start);
+    if (sc[i].hold) assert.ok(sc[i].hold <= 0.3 + 1e-9);
   }
 });
 
@@ -132,4 +134,19 @@ test("no timestamps: falls back to an estimate and says so", () => {
   const plan = compile(SRC);
   assert.ok(plan.duration > 3);
   assert.ok(plan.diagnostics.some((d) => /estimated/.test(d)));
+});
+
+test("reading time: every text is up long enough (17 chars/s, >= 5/6 s), holds <= 0.3 s and spliced into the audio", () => {
+  const words = voice(SRC);
+  const plan = compile(SRC, { words });
+  for (const sc of plan.aspects["9:16"].scenes) for (const b of sc.boxes) {
+    const visible = b.exit.t - b.enter.t;
+    assert.ok(visible >= 5 / 6 - 1e-6, `${sc.id} ${b.kind} visible only ${visible.toFixed(2)} s`);
+  }
+  // audio splice covers the whole voice, in order, with the holds as gaps
+  const a = plan.audio;
+  assert.equal(a[0].from, 0);
+  for (let i = 1; i < a.length; i++) assert.ok(Math.abs(a[i].from - a[i - 1].to) < 1e-6);
+  const totalHold = plan.holds.reduce((x, h) => x + h.dur, 0);
+  assert.ok(Math.abs(a[a.length - 1].at - a[a.length - 1].from - (totalHold - (plan.holds.at(-1)?.scene === plan.aspects["9:16"].scenes.at(-1).id ? plan.holds.at(-1).dur : 0))) < 1e-6);
 });
