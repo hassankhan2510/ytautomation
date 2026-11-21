@@ -37,3 +37,7 @@ whiteboard/node_modules/
 whiteboard/out/
 whiteboard/public/audio/
 whiteboard/scripts/__pycache__/
+docs/market/
+
+# deep-tech plans + pitch IP — never in the public repo
+docs/deeptech/
