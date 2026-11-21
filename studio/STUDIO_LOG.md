@@ -102,3 +102,13 @@ Tested on projects/demo (4 assets → 22 scenes, clip windows 36/33/26/40/15/12 
   inside the piece are shortened to 0.15 s, so the clone learns a quick rhythm.
 - Safety net `tighten`: every line's internal silences are capped by pace (normal 0.24 s / fast 0.16 s /
   turbo 0.11 s, 10 ms cross-fade). Logged as "long pauses inside lines shortened". Cache re-keyed ":pausewin2".
+
+## 2026-11-21 — voice lost its emotion (my regressions) → expressive delivery
+User: "no emotion, just fluent". Causes (all from the last 2 days): (1) voice-sample piece chosen as the
+smoothest stretch and its pauses squeezed to 0.15 s → the clone copied a rushed flat rhythm; (2) pause cap
+inside lines 0.16 s killed the breath before punchlines; (3) "fast" = 1.2x speed flattens pitch movement.
+Fix: piece = most EXPRESSIVE fluent stretch between pauses (YIN pitch range in semitones, octave-error
+guarded, + loudness dynamics, minus hesitation): sabeha 7.6→9.0 st, saher 7.0→10.0 st, voice_ref
+6.0→7.6 st / 2.5→3.9 dB (sufyan, pariya: short samples, unchanged). Piece keeps natural pauses (only
+>0.35 s shortened). Pause cap inside lines: normal 0.42 / fast 0.32 / turbo 0.22 s. Pace speeds: normal
+1.05, fast 1.12, turbo 1.25. Cache re-keyed (":expr1").

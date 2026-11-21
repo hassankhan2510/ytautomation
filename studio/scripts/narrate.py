@@ -94,16 +94,18 @@ def ref_clip(name, lo, hi, target):
         win = pause_bounded_window(REF, lo, hi, target)
         if win:
             start, dur = win
-            print(f"  {name} reference: {start:.2f}s–{start + dur:.2f}s ({dur:.1f} s, starts and ends inside a pause)")
+            ex = getattr(pause_bounded_window, "last", None)
+            print(f"  {name} reference: {start:.2f}s–{start + dur:.2f}s ({dur:.1f} s, between pauses" + (f", pitch range {ex[0]:.1f} semitones, loudness dynamics {ex[1]:.1f} dB)" if ex else ")"))
         else:
             start, dur = most_fluent_window(REF, target), target
             print(f"  {name} reference: most fluent {target:.0f} s window at {start:.1f}s (no clean pauses found)")
         subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", REF,
                         "-af", "afade=t=in:d=0.01,areverse,afade=t=in:d=0.01,areverse", clip], check=True)
-        # the clone copies the sample's rhythm: no hesitation pauses in it either
+        # the clone copies the sample's rhythm: keep its natural phrasing pauses (they ARE the emotion),
+        # only real dead air is shortened
         x, csr = sf.read(clip, dtype="float32")
         if x.ndim == 1:
-            x, cut = tighten(x, csr, 0.15)
+            x, cut = tighten(x, csr, 0.35)
             sf.write(clip, x, csr)
             if cut > 0.01:
                 print(f"  {name} reference: {cut:.2f}s of pauses inside the piece shortened")
@@ -142,10 +144,55 @@ def load_omnivoice():
     return _omni
 
 
+def pitch_track(x, sr, hop_s=0.01, win_s=0.04, fmin=70.0, fmax=420.0):
+    """YIN-style F0 per 10 ms frame (cumulative-mean-normalised difference); NaN where unvoiced."""
+    if sr != 16000:
+        n = int(len(x) * 16000 / sr)
+        x = np.interp(np.linspace(0, len(x) - 1, n), np.arange(len(x)), x)
+        sr = 16000
+    W, H = int(win_s * sr), int(hop_s * sr)
+    lmin, lmax = int(sr / fmax), int(sr / fmin)
+    nf = max(0, (len(x) - W - lmax) // H)
+    f0 = np.full(nf, np.nan)
+    for i in range(nf):
+        fr = x[i * H: i * H + W + lmax]
+        if np.sqrt(np.mean(fr[:W] ** 2)) < 1e-3:
+            continue
+        d = np.array([np.sum((fr[:W] - fr[l:l + W]) ** 2) for l in range(1, lmax + 1)])
+        cm = d * np.arange(1, lmax + 1) / np.maximum(np.cumsum(d), 1e-12)
+        seg = cm[lmin - 1:]
+        k = int(np.argmin(seg))
+        if seg[k] < 0.18:
+            f0[i] = sr / (k + lmin)
+    return f0
+
+
+def expressiveness(x, sr):
+    """How alive a stretch of speech sounds: pitch movement (semitone spread of voiced frames) + loudness
+    dynamics. A flat, 'just fluent' piece scores low — and the clone copies whatever the piece does."""
+    f0 = pitch_track(x, sr)
+    v = f0[~np.isnan(f0)]
+    if len(v) < 20:
+        return 0.0, 0.0
+    st = 12 * np.log2(v / np.median(v))
+    # octave errors (a tracker jumping to half/double pitch) are not expression: fold them back, then
+    # drop frames that jump > 4 st from their neighbours' median (tracking glitches)
+    st = np.where(st > 9, st - 12, np.where(st < -9, st + 12, st))
+    if len(st) > 5:
+        med = np.array([np.median(st[max(0, i - 2): i + 3]) for i in range(len(st))])
+        st = st[np.abs(st - med) < 4]
+    hop = int(sr * 0.02)
+    rms = np.array([np.sqrt(np.mean(x[i:i + hop] ** 2) + 1e-12) for i in range(0, len(x) - hop, hop)])
+    db = 20 * np.log10(rms[rms > np.percentile(rms, 40)])
+    return float(np.percentile(st, 90) - np.percentile(st, 10)), float(np.std(db))
+
+
 def pause_bounded_window(path, lo=5.0, hi=10.0, target=8.0):
     """The voice sample piece the clone learns from must START and END inside a pause. A fixed 8 s cut
     (the old way) chopped a word at both edges, and the clone copied that chopped ending: a stray 'd'/'b'
-    after every line. Returns (start, duration) of the most fluent piece between two pauses, or None."""
+    after every line. Among pieces between two pauses it picks the most EXPRESSIVE fluent one (pitch
+    range + loudness dynamics, minus hesitation) — the clone copies the piece's emotion as well as its
+    voice. Returns (start, duration) or None."""
     data, sr = sf.read(path)
     if data.ndim > 1:
         data = data.mean(axis=1)
@@ -171,18 +218,26 @@ def pause_bounded_window(path, lo=5.0, hi=10.0, target=8.0):
         else:
             k += 1
     csum = np.concatenate([[0], np.cumsum(silent)])
-    best = None
+    cands = []
     for a in starts:
         for b in ends:
             d = b - a
-            if not lo <= d <= hi:
-                continue
-            ia, ib = int(a / 0.02), int(b / 0.02)
-            # hesitation/silence inside the piece, small pull toward the target length
-            score = (csum[ib] - csum[ia]) / max(1, ib - ia) + 0.01 * abs(d - target)
-            if best is None or score < best[0]:
-                best = (score, a, d)
-    return (best[1], best[2]) if best else None
+            if lo <= d <= hi:
+                ia, ib = int(a / 0.02), int(b / 0.02)
+                cands.append(((csum[ib] - csum[ia]) / max(1, ib - ia), a, d))
+    if not cands:
+        return None
+    # shortlist the fluent ones (hesitation within 0.08 of the best), then the most expressive wins
+    best_h = min(c[0] for c in cands)
+    short = sorted([c for c in cands if c[0] <= best_h + 0.08], key=lambda c: c[0] + 0.01 * abs(c[2] - target))[:24]
+    scored = []
+    for h, a, d in short:
+        seg = data[int(a * sr): int((a + d) * sr)]
+        span, dyn = expressiveness(seg, sr)
+        scored.append((-(span / 6.0 + dyn / 6.0) + 2.5 * h + 0.01 * abs(d - target), a, d, span, dyn))
+    scored.sort()
+    pause_bounded_window.last = scored[0][3:]
+    return (scored[0][1], scored[0][2])
 
 
 def most_fluent_window(path, win=8.0):
@@ -250,7 +305,7 @@ def synth_edge(text):
 
 # PACE — energetic reels: the voice itself speaks faster (each engine's own speed control, so pitch and
 # prosody stay natural) and the pauses between lines get tighter. VOICE_SPEED still overrides the speed.
-PACES = {"normal": (1.08, 1.0, 0.18), "fast": (1.2, 0.55, 0.1), "turbo": (1.32, 0.35, 0.06)}
+PACES = {"normal": (1.05, 1.0, 0.18), "fast": (1.12, 0.6, 0.1), "turbo": (1.25, 0.4, 0.06)}  # speed above ~1.15 flattens the voice's ups and downs
 PACE = os.environ.get("PACE", "normal") if os.environ.get("PACE", "normal") in PACES else "normal"
 SPEED = float(os.environ.get("VOICE_SPEED") or PACES[PACE][0])
 GAP_SCALE, LEAD_IN = PACES[PACE][1], PACES[PACE][2]
@@ -346,7 +401,7 @@ def clean_edges(wav, fade_in=0.008):
     return w, (n0 - end) / SR, pulses
 
 
-MAX_PAUSE = {"normal": 0.24, "fast": 0.16, "turbo": 0.11}
+MAX_PAUSE = {"normal": 0.42, "fast": 0.32, "turbo": 0.22}  # a breath before a punchline stays; dead air goes
 
 
 def tighten(wav, sr=None, keep=None):
@@ -576,7 +631,7 @@ def main():
         # tag "raw": the engine's line BEFORE clean_edges (so cleanup improvements never need re-synthesis);
         # tag "edges2": older caches, stored already cleaned once (cleaned again on top: harmless)
         import hashlib
-        rid = ref_id + (":pausewin2" if ("omni" in eng_name or "mine" in eng_name) else "")  # new reference piece -> new voice lines
+        rid = ref_id + (":expr1" if ("omni" in eng_name or "mine" in eng_name) else "")  # new reference piece -> new voice lines
         h = hashlib.sha1(f"{eng_name}|{rid}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|{tag}|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 
