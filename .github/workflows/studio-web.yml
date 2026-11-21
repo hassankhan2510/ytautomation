@@ -205,13 +205,28 @@ jobs:
         if: ${{ steps.cfg.outputs.stage != 'draft' }}
         # a FIRST render is ~3x faster as one normal render than scene-by-scene (23 scenes: ~7 vs ~21 min);
         # the scene cache only pays off for re-renders after edits
+        env:
+          ENGINE: ${{ steps.cfg.outputs.engine || 'classic' }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_API_KEY_2: ${{ secrets.GROQ_API_KEY_2 }}
+          GROQ_MODEL: ${{ vars.GROQ_MODEL }}
+          GROQ_FALLBACK_MODEL: ${{ vars.GROQ_FALLBACK_MODEL }}
+          GROQ_TPM: ${{ vars.GROQ_TPM }}
         run: |
-          npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
-          test -s out/reel.mp4 || { echo "::error::the render produced no video"; exit 1; }
-          npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
+          if [ "$ENGINE" = "cue" ]; then
+            echo "🧩 CUE engine: the free LLM writes the program, our compiler solves layout, timing and motion" | tee -a "$GITHUB_STEP_SUMMARY"
+            node vc/pipeline.mjs out/props.json out/cue_props.json
+            npx remotion render Cue out/reel.mp4 --props=out/cue_props.json --concurrency=2 --log=info
+            test -s out/reel.mp4 || { echo "::error::the render produced no video"; exit 1; }
+            npx remotion still Cue out/poster.jpg --props=out/cue_props.json --frame=45 || true
+          else
+            npx remotion render Reel out/reel.mp4 --props=out/props.json --concurrency=2 --log=info
+            test -s out/reel.mp4 || { echo "::error::the render produced no video"; exit 1; }
+            npx remotion still Reel out/poster.jpg --props=out/props.json --frame=20 || true
+          fi
 
       - name: ⑤ Self-check — watch the render, fix the edit, render again
-        if: ${{ steps.cfg.outputs.stage != 'draft' }}
+        if: ${{ ((steps.cfg.outputs.engine || 'classic') != 'cue') && steps.cfg.outputs.stage != 'draft' }}
         run: |
           set +e
           python scripts/critic.py out/reel.mp4 out/props.json out/critic1.json --apply

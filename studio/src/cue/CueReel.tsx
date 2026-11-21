@@ -25,6 +25,7 @@ export type CuePlan = {
   audio?: { from: number; to: number; at: number }[];
   captions?: { w: string; start: number; end: number }[];
   aspects: Record<string, { canvas: { w: number; h: number }; scenes: Scene[] }>;
+  music?: { src: string; step: number; gain: number[]; loop: boolean };
 };
 export type CueProps = { plan: CuePlan; aspect: string; audio?: string; captions?: boolean };
 
@@ -146,6 +147,10 @@ export const CueReel: React.FC<CueProps> = ({ plan, aspect, audio, captions = tr
         {sc.units.map((x, k) => <UnitView key={k} u={x} f={f} c={plan.colors} />)}
       </AbsoluteFill>
       {captions && plan.captions ? <Captions words={plan.captions} t={t} c={plan.colors} w={w} h={h} /> : null}
+      {plan.music ? (
+        <Audio src={staticFile(plan.music.src)} loop={plan.music.loop}
+          volume={(fr) => { const m = plan.music!; const x = fr / fps / m.step, i = Math.floor(x); const a = m.gain[Math.min(i, m.gain.length - 1)] ?? 0.3, b = m.gain[Math.min(i + 1, m.gain.length - 1)] ?? a; return a + (b - a) * (x - i); }} />
+      ) : null}
       {audio && plan.audio ? plan.audio.map((s, k) => (
         <Sequence key={k} from={Math.round(s.at * fps)} durationInFrames={Math.max(1, Math.round((s.to - s.from) * fps))}>
           <Audio src={staticFile(audio)} startFrom={Math.round(s.from * fps)} />

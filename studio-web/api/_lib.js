@@ -80,6 +80,7 @@ export const CHOICES = {
   music: ["auto", "none"],
   sfx: ["on", "off"],
   pace: ["fast", "normal", "turbo"],
+  engine: ["classic", "cue"],
 };
 
 export const safeId = (s) => /^[a-z0-9-]{6,40}$/.test(String(s || ""));

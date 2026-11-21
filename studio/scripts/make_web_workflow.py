@@ -47,7 +47,7 @@ anchor = "      - name: Find the project files\n"
 assert anchor in jobs
 jobs = jobs.replace(anchor, fetch + anchor, 1)
 jobs = jobs.replace("github.event.inputs.script", "steps.cfg.outputs.script_mode")
-for k in ("voice", "language", "style", "theme", "channel", "backgrounds", "music", "sfx", "pace"):
+for k in ("voice", "language", "style", "theme", "channel", "backgrounds", "music", "sfx", "pace", "engine"):
     jobs = jobs.replace(f"github.event.inputs.{k}", f"steps.cfg.outputs.{k}")
 jobs = jobs.replace("${{ github.event.inputs.project }}", "web-${{ github.run_id }}")
 # phone link: a fixed, predictable name the page can find: web-<run id>.mp4
