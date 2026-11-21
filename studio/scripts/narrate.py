@@ -100,6 +100,13 @@ def ref_clip(name, lo, hi, target):
             print(f"  {name} reference: most fluent {target:.0f} s window at {start:.1f}s (no clean pauses found)")
         subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.3f}", "-t", f"{dur:.3f}", "-i", REF,
                         "-af", "afade=t=in:d=0.01,areverse,afade=t=in:d=0.01,areverse", clip], check=True)
+        # the clone copies the sample's rhythm: no hesitation pauses in it either
+        x, csr = sf.read(clip, dtype="float32")
+        if x.ndim == 1:
+            x, cut = tighten(x, csr, 0.15)
+            sf.write(clip, x, csr)
+            if cut > 0.01:
+                print(f"  {name} reference: {cut:.2f}s of pauses inside the piece shortened")
         _ref_clips[name] = clip
     return _ref_clips[name]
 
@@ -147,7 +154,10 @@ def pause_bounded_window(path, lo=5.0, hi=10.0, target=8.0):
     if len(rms) < int(lo / 0.02):
         return None
     silent = rms < max(1e-4, np.percentile(rms, 95) * 10 ** (-28 / 20))
-    cuts = []  # middle of every pause >= 120 ms
+    # Cut at the EDGES of pauses >= 120 ms: start 40 ms before speech resumes, end 60 ms after it stops.
+    # (Cutting in the MIDDLE of pauses left up to ~0.5 s of silence on each side of the piece — OmniVoice
+    # then judged the speaker slow and filled every line with long pauses: 3-min reels, 40 s of dead air.)
+    starts, ends = [], []
     k = 0
     while k < len(silent):
         if silent[k]:
@@ -155,19 +165,20 @@ def pause_bounded_window(path, lo=5.0, hi=10.0, target=8.0):
             while j < len(silent) and silent[j]:
                 j += 1
             if (j - k) * 0.02 >= 0.12:
-                cuts.append(((k + j) / 2) * 0.02)
+                ends.append(min(j, k + 3) * 0.02)       # speech stopped at k
+                starts.append(max(k, j - 2) * 0.02)     # speech resumes at j
             k = j
         else:
             k += 1
     csum = np.concatenate([[0], np.cumsum(silent)])
     best = None
-    for a in cuts:
-        for b in cuts:
+    for a in starts:
+        for b in ends:
             d = b - a
             if not lo <= d <= hi:
                 continue
             ia, ib = int(a / 0.02), int(b / 0.02)
-            # hesitation inside the piece (the edge pauses themselves are fine), small pull toward ~8 s
+            # hesitation/silence inside the piece, small pull toward the target length
             score = (csum[ib] - csum[ia]) / max(1, ib - ia) + 0.01 * abs(d - target)
             if best is None or score < best[0]:
                 best = (score, a, d)
@@ -333,6 +344,42 @@ def clean_edges(wav, fade_in=0.008):
     if fi:
         w[:fi] *= 0.5 - 0.5 * np.cos(np.linspace(0, np.pi, fi))
     return w, (n0 - end) / SR, pulses
+
+
+MAX_PAUSE = {"normal": 0.24, "fast": 0.16, "turbo": 0.11}
+
+
+def tighten(wav, sr=None, keep=None):
+    """Dead air kills retention. Any silence INSIDE a line longer than the pace allows is shortened to that
+    length (a 10 ms cross-fade at the joint), so no engine or voice sample can stretch a reel with pauses."""
+    SR = sr or globals()["SR"]
+    keep = keep or MAX_PAUSE.get(PACE, 0.16)
+    hop = int(SR * 0.01)
+    n = len(wav) // hop
+    if n < 10:
+        return wav, 0.0
+    rms = np.sqrt(np.mean(wav[: n * hop].reshape(n, hop) ** 2, axis=1) + 1e-12)
+    quiet = rms < np.percentile(rms, 90) * 10 ** (-32 / 20)
+    out, pos, removed, k, x = [], 0, 0.0, 0, int(SR * 0.01)
+    while k < n:
+        if quiet[k]:
+            j = k
+            while j < n and quiet[j]:
+                j += 1
+            if k > 0 and j < n and (j - k) * 0.01 > keep:  # inside the line, too long
+                a = k * hop + int(keep / 2 * SR)              # keep half the pause on each side
+                b = j * hop - int(keep / 2 * SR)
+                head, tail = wav[pos:a], wav[b:b + x]
+                if len(head) >= x and len(tail) == x:
+                    r = np.linspace(0, 1, x, dtype=np.float32)
+                    out.append(head[:-x]); out.append(head[-x:] * (1 - r) + tail * r)
+                    pos = b + x
+                    removed += (b - a) / SR
+            k = j
+        else:
+            k += 1
+    out.append(wav[pos:])
+    return np.concatenate(out).astype(np.float32), removed
 
 
 def trim(wav, thresh=0.012, pad=0.04):
@@ -522,12 +569,13 @@ def main():
     ref_id = f"{os.path.basename(REF)}:{os.path.getsize(REF)}" if os.path.exists(REF) else "noref"
     hits = 0
     tail_fix = []
+    pause_cut = []
 
     def cache_path(eng_name, text, tag="raw"):
         # tag "raw": the engine's line BEFORE clean_edges (so cleanup improvements never need re-synthesis);
         # tag "edges2": older caches, stored already cleaned once (cleaned again on top: harmless)
         import hashlib
-        rid = ref_id + (":pausewin" if ("omni" in eng_name or "mine" in eng_name) else "")  # new reference piece -> new voice lines
+        rid = ref_id + (":pausewin2" if ("omni" in eng_name or "mine" in eng_name) else "")  # new reference piece -> new voice lines
         h = hashlib.sha1(f"{eng_name}|{rid}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|{tag}|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 
@@ -543,6 +591,8 @@ def main():
             cp = cache_path(engines[0].__name__, text, "edges2")
         if cp and os.path.exists(cp):
             wav, cut, pulses = clean_edges(np.load(cp))
+            wav, squeezed = tighten(wav)
+            pause_cut.append(squeezed)
             if cut > 0.02 or pulses:
                 tail_fix.append((cut, pulses))
             segments.append(wav)
@@ -570,6 +620,8 @@ def main():
         if cpu and (used or engines[0].__name__) == engines[0].__name__:  # only cache the primary voice
             np.save(cpu, wav.astype(np.float32))  # raw: cleaned below, every run
         wav, cut, pulses = clean_edges(wav)
+        wav, squeezed = tighten(wav)
+        pause_cut.append(squeezed)
         if cut > 0.02 or pulses:
             tail_fix.append((cut, pulses))
         segments.append(wav)
@@ -578,6 +630,7 @@ def main():
         spoken = sum(1 for b in job["beats"] if (b.get("speak") or b.get("text", "")).strip())
         print(f"  voice cache: {hits}/{spoken} spoken lines reused, {spoken - hits} synthesised")
     print(f"  pace: {PACE} (voice speed {SPEED:.2f}, pauses x{GAP_SCALE})")
+    print(f"  long pauses inside lines shortened: {sum(1 for x in pause_cut if x > 0)} lines · {sum(pause_cut):.1f}s of dead air removed (max pause {MAX_PAUSE.get(PACE, 0.16):.2f}s)")
     if tail_fix:
         print(f"  line endings cleaned: {len(tail_fix)} lines · {sum(c for c, _ in tail_fix):.2f}s of trailing creak cut · "
               f"{sum(p for _, p in tail_fix)} line endings softened")

@@ -93,3 +93,12 @@ Tested on projects/demo (4 assets → 22 scenes, clip windows 36/33/26/40/15/12 
 - OmniVoice voice-cache key gets ":pausewin", so lines are synthesized again with the new piece (one slow run).
 - Same fix for the English engine (Chatterbox): it was given the whole file and listens to its first ~6 s,
   which also cut mid-word for 4/5 voices. It now gets a 4–6 s pause-bounded piece (cache re-keyed too).
+
+## 2026-11-21 — dead air regression (my bug) fixed
+- The pause-bounded sample piece was cut in the MIDDLE of pauses → up to ~0.5 s of silence at each edge.
+  OmniVoice read the speaker as slow: run 44799517194 = 182.7 s reel, 88 pauses ≥0.3 s (40.6 s of dead air)
+  vs 22 pauses / 8 s before.
+- Now: the piece is cut at pause EDGES (40–60 ms of silence each side, measured on all 5 voices) and pauses
+  inside the piece are shortened to 0.15 s, so the clone learns a quick rhythm.
+- Safety net `tighten`: every line's internal silences are capped by pace (normal 0.24 s / fast 0.16 s /
+  turbo 0.11 s, 10 ms cross-fade). Logged as "long pauses inside lines shortened". Cache re-keyed ":pausewin2".
