@@ -108,7 +108,7 @@ const UnitView: React.FC<{ u: Unit; f: number; c: Record<string, string> }> = ({
     if (u.count) { const k = f - (u.count.f0 ?? u.f0); shown = k < 0 ? `${u.count.prefix}${(0).toFixed(u.count.decimals)}${u.count.suffix}` : k < u.count.values.length ? `${u.count.prefix}${u.count.values[k].toFixed(u.count.decimals)}${u.count.suffix}` : u.text; }
     const chip = u.chip ? (
       <div style={{ position: "absolute", left: u.chip.x - u.x, top: (lh - u.chip.size) / 2, width: u.chip.size, height: u.chip.size, borderRadius: u.chip.size * 0.18,
-        background: c.accent, color: c.ink, fontFamily: fam("Unbounded-900"), fontWeight: 900, fontSize: u.chip.size * 0.42, display: "flex", alignItems: "center", justifyContent: "center",
+        background: c.accent, color: c.ink, fontFamily: fam("Unbounded-900"), fontWeight: 900, fontSize: u.chip.size * 0.5, letterSpacing: "-0.04em", display: "flex", alignItems: "center", justifyContent: "center",
         boxShadow: `0 0 ${u.chip.size * 0.5}px ${c.glow}55` }}>{u.chip.label}</div>
     ) : null;
     const kickerLine = u.kind === "kicker" ? (

@@ -96,3 +96,13 @@ test("karaoke reveal: revealed words start dimmed and light up in spoken order",
   assert.ok(ws.every((u) => u.dim && u.lit), "all words of the revealed title carry dim + lit");
   for (let i = 1; i < ws.length; i++) assert.ok(ws[i].lit.f0 >= ws[i - 1].lit.f0, "lights up in reading order");
 });
+
+test("lists: items enter in reading order, share one left edge, and the chip never overlaps the text", () => {
+  const src = 'scene role mood=serious\n  say "Bator ambassador aap university mein Cohort Zero ko represent karenge"\n  kicker "Your role"\n  list "Represent|Connect|Lead"';
+  const words = []; let t = 0.2; for (const w of src.split("\n")[1].match(/"(.*)"/)[1].split(" ")) { words.push({ w, start: t, end: t + 0.26 }); t += 0.3; }
+  const plan = compile(src, { words });
+  const items = plan.aspects["9:16"].scenes[0].units.filter((u) => u.kind === "item");
+  for (let i = 1; i < items.length; i++) assert.ok(items[i].f0 >= items[i - 1].f0, `item ${i} enters before item ${i - 1}`);
+  assert.ok(items.every((u) => Math.abs(u.x - items[0].x) < 0.01), "one left edge");
+  for (const u of items) assert.ok(u.chip.x + u.chip.size <= u.x + u.lines[0].x - 1, "chip clear of the text");
+});

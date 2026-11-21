@@ -126,6 +126,11 @@ export function solveLayout(elements, aspect = "9:16", styleName = "cohort-zero"
   }
   if (best == null) return { aspect, scale: 0, boxes: [], diagnostics: ["does not fit even at 30% type size — too much text for one scene; split it"] };
   const sol = attempt(best);
+  // a list reads as a list: every item of one element starts at the same left edge (group centred)
+  for (const p of sol.placed) {
+    const items = p.gb.filter((b) => b.kind === "item");
+    if (items.length > 1) { const mw = Math.max(...items.map((b) => b.w)); for (const b of items) b.groupW = mw; }
+  }
   let y = y0 + Math.max(0, (H - sol.total) * 0.47);           // optical centre: just above the middle
   const boxes = [];
   sol.placed.forEach((p, n) => {
@@ -135,14 +140,14 @@ export function solveLayout(elements, aspect = "9:16", styleName = "cohort-zero"
       const spec = b.spec;
       if (b.fs < spec.floor) diagnostics.push(`${b.kind} "${b.text.slice(0, 24)}" is ${b.fs}px, below the readable ${spec.floor}px — shorten it`);
       const lineH = b.fs * spec.lh;
-      const bx = x0 + (W - b.w - b.chip) / 2 + b.chip;
+      const bx = x0 + (W - (b.groupW ?? b.w) - b.chip) / 2 + b.chip;
       boxes.push({
         el: p.g.i, kind: b.kind, item: b.item, text: b.text,
         font: { family: spec.family, weight: spec.weight, file: spec.font, tracking: spec.tracking, upper: !!spec.upper },
         color: spec.color, fontSize: b.fs, lineHeight: spec.lh,
         x: +bx.toFixed(2), y: +y.toFixed(2), w: +b.w.toFixed(2), h: +b.h.toFixed(2),
         ...(b.chip ? { chip: { x: +(bx - b.chip).toFixed(2), size: Math.round(b.fs * 0.95), label: String((b.item ?? 0) + 1).padStart(2, "0") } } : {}),
-        lines: b.lines.map((l, li) => ({ text: l.text, x: +((W - l.w) / 2 + x0 - bx).toFixed(2), y: +(li * lineH).toFixed(2), w: +l.w.toFixed(2), words: l.words })),
+        lines: b.lines.map((l, li) => ({ text: l.text, x: b.kind === "item" ? 0 : +((b.w - l.w) / 2).toFixed(2), y: +(li * lineH).toFixed(2), w: +l.w.toFixed(2), words: l.words })),
       });
       y += b.h;
     });

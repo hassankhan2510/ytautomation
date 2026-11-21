@@ -89,6 +89,7 @@ export function solveTime(prog, opts = {}) {
           if (j != null) { after = j; return Math.max(sc.start, sc.words[j].start - lead); }
           return Math.min(latest, sc.start + 0.25 + 0.38 * n);
         });
+        for (let n = 1; n < e.itemTimes.length; n++) e.itemTimes[n] = Math.max(e.itemTimes[n], e.itemTimes[n - 1] + 0.3);
         e.t = e.itemTimes[0];
       } else {
         const j = find(el.at || el.text, el.at ? -1 : lastIdx);
