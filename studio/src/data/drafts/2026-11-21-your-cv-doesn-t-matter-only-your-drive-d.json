@@ -1,0 +1,300 @@
+{
+  "id": "2026-11-21-your-cv-doesn-t-matter-only-your-drive-d",
+  "title": "Your CV doesn't matter. Only your drive does.",
+  "subject": "Campus Leadership Program",
+  "theme": "crimson",
+  "seed": 7887,
+  "handle": "@cohort_zero",
+  "language": "urdu",
+  "logo": "brand/cohortzero-mark.png",
+  "hooks": [
+    "Your CV doesn't matter. Only your drive does.",
+    "Become the leader every campus talks about.",
+    "Global founder network? You're one click away."
+  ],
+  "caption": "Stop waiting for the perfect CV. Build your leadership now. \n\nWho is the most driven person on your campus? Tag them below! 👇\n\n#CohortZero #CampusAmbassador #Leadership #StartupLife #GenZ\n🎵 Music: \"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "music": "music/tech-inspired.mp3",
+  "musicCredit": "\"Inspired\" Kevin MacLeod (incompetech.com) — Licensed under Creative Commons: By Attribution 4.0 License — http://creativecommons.org/licenses/by/4.0/",
+  "quality": {
+    "score": 7.5,
+    "unique": 20,
+    "total": 20,
+    "families": 5,
+    "plain": 4,
+    "doc": 2,
+    "repeats": 0
+  },
+  "beats": [
+    {
+      "text": "Har campus mein ek banda hota hai jise sab jaante hain jo har event",
+      "primitive": "stomp",
+      "energy": 3,
+      "speak": "ہر campus میں ایک بندہ ہوتا ہے جسے سب جانتے ہیں جو ہر event",
+      "emphasis": [
+        "event"
+      ],
+      "props": {},
+      "why": "High energy hook, visualizes the confident leader",
+      "bg": "confident student walking university campus"
+    },
+    {
+      "text": "lead karta hai aur jiska CV sab se aage hota hai is baar",
+      "primitive": "factCard",
+      "energy": 2,
+      "speak": "lead کرتا ہے اور جس کا سی وی سب سے آگے ہوتا ہے اس بار",
+      "emphasis": [
+        "CV"
+      ],
+      "props": {
+        "fact": "lead karta hai aur jiska CV sab se aage hota hai is baar"
+      },
+      "why": "Visualizes the 'polished CV' detail"
+    },
+    {
+      "text": "woh banda aap ho sakte hain Cohort Zero apna Campus Ambassador Program open kar",
+      "primitive": "warp",
+      "energy": 3,
+      "speak": "وہ بندہ آپ ہو سکتے ہیں Cohort Zero اپنا Campus Ambassador Program open کر",
+      "emphasis": [
+        "Cohort Zero"
+      ],
+      "props": {
+        "word": "Cohort Zero"
+      },
+      "why": "Big reveal of the program name",
+      "bg": "hyperspace star streaks rushing past"
+    },
+    {
+      "text": "raha hai aur yeh aap ke campus ki sab se badi leadership opportunity hai",
+      "primitive": "maskReveal",
+      "energy": 3,
+      "speak": "رہا ہے اور یہ آپ کے campus کی سب سے بڑی leadership opportunity ہے",
+      "emphasis": [
+        "leadership"
+      ],
+      "props": {
+        "kicker": "The Opportunity"
+      },
+      "why": "Editorial headline for the leadership opportunity",
+      "bg": "aerial view university campus buildings"
+    },
+    {
+      "text": "Cohort Zero ek global founder ecosystem hai jo logon ko zero se one tak",
+      "primitive": "flip3d",
+      "energy": 2,
+      "speak": "Cohort Zero ایک global founder ecosystem ہے جو لوگوں کو zero سے one تک",
+      "emphasis": [
+        "zero"
+      ],
+      "props": {},
+      "why": "Kinetic type for the zero to one journey",
+      "bg": "abstract geometric shapes transforming"
+    },
+    {
+      "text": "lay kar jata hai aur ab humein har university mein aise leaders chahiyein jo",
+      "primitive": "highlight",
+      "energy": 2,
+      "speak": "لے کر جاتا ہے اور اب ہمیں ہر university میں ایسے leaders چاہئیں جو",
+      "emphasis": [
+        "university"
+      ],
+      "why": "Shows global university reach and pins"
+    },
+    {
+      "text": "yeh movement apne campus par lay kar aayen aap apni university mein Cohort Zero",
+      "primitive": "dotWave",
+      "energy": 2,
+      "speak": "یہ movement اپنے campus پر لے کر آئیں آپ اپنی university میں Cohort Zero",
+      "emphasis": [
+        "movement"
+      ],
+      "props": {
+        "word": "Cohort Zero"
+      },
+      "why": "Premium calm backdrop for the movement",
+      "bg": "3d ocean of dots rolling"
+    },
+    {
+      "text": "ko represent karenge workshops aur events lead karenge aur students ko real",
+      "primitive": "roadmap",
+      "energy": 2,
+      "speak": "کو represent کریں گے workshops اور events lead کریں گے اور students کو real",
+      "emphasis": [
+        "represent"
+      ],
+      "props": {
+        "steps": [
+          "Represent Campus",
+          "Lead Workshops",
+          "Connect Students"
+        ],
+        "done": 3
+      },
+      "why": "Visualizes the step-by-step ambassador role",
+      "bg": "dynamic workshop session footage"
+    },
+    {
+      "text": "opportunities se connect karenge aur badle mein aap ko milegi Entrepreneurship training",
+      "primitive": "burst",
+      "energy": 3,
+      "speak": "opportunities سے connect کریں گے اور بدلے میں آپ کو ملے گی Entrepreneurship training",
+      "emphasis": [
+        "training"
+      ],
+      "props": {
+        "word": "Training"
+      },
+      "why": "High energy reveal of the training benefit",
+      "bg": "bright abstract particle explosion"
+    },
+    {
+      "text": "taake aap ideas se aage barh kar real startups build karen Masters abroad fellowships",
+      "primitive": "quote",
+      "energy": 3,
+      "speak": "تاکہ آپ ideas سے آگے بڑھ کر real startups build کریں Masters abroad fellowships",
+      "emphasis": [
+        "startups"
+      ],
+      "why": "Shows growth from idea to real startup"
+    },
+    {
+      "text": "aur scholarships jaisi global opportunities ki guidance Psychology aur mindset sessions taake aap andar",
+      "primitive": "flowField",
+      "energy": 2,
+      "speak": "اور scholarships جیسی global opportunities کی guidance Psychology اور mindset sessions تاکہ آپ اندر",
+      "emphasis": [
+        "mindset"
+      ],
+      "props": {
+        "word": "Mindset"
+      },
+      "why": "Calm premium backdrop for mindset sessions",
+      "bg": "calm meditating student silhouette"
+    },
+    {
+      "text": "se bhi strong banen Personal branding communication aur public speaking aur hamari global partnerships",
+      "primitive": "zoomThrough",
+      "energy": 2,
+      "speak": "سے بھی strong بنیں Personal branding communication اور public speaking اور ہماری global partnerships",
+      "emphasis": [
+        "branding"
+      ],
+      "props": {
+        "word": "Branding",
+        "reveal": "Global Partnerships"
+      },
+      "why": "Dynamic transition through the skills list",
+      "bg": "confident speaker on stage lighting"
+    },
+    {
+      "text": "ke zariye aap ke projects real industry tak pohnchte hain Real leadership experience jo",
+      "primitive": "typewriter",
+      "energy": 3,
+      "speak": "کے ذریعے آپ کے projects real industry تک پہنچتے ہیں Real leadership experience جو",
+      "emphasis": [
+        "industry"
+      ],
+      "why": "Shows the path from project to industry"
+    },
+    {
+      "text": "aap ke CV ko sab se alag kar dega aur founders industry experts",
+      "primitive": "radar",
+      "energy": 2,
+      "speak": "آپ کے سی وی کو سب سے الگ کر دے گا اور founders industry experts",
+      "emphasis": [
+        "alag"
+      ],
+      "props": {
+        "items": [
+          "Leadership",
+          "Network",
+          "Projects"
+        ],
+        "label": "Your Edge"
+      },
+      "why": "Scans for the unique CV advantage",
+      "bg": "abstract radar sweep lines"
+    },
+    {
+      "text": "aur international speakers ke sath woh network jo log saalon mein banate hain aap",
+      "primitive": "phoneCall",
+      "energy": 3,
+      "speak": "اور international speakers کے ساتھ وہ network جو لوگ سالوں میں بناتے ہیں آپ",
+      "emphasis": [
+        "network"
+      ],
+      "props": {
+        "caller": "The Network",
+        "subtitle": "Founders & Experts"
+      },
+      "why": "Visualizes connecting with the network",
+      "bg": "diverse professionals montage"
+    },
+    {
+      "text": "ko perfect CV nahi chahiye bas drive chahiye Leaders paida nahi hote build hote hain",
+      "primitive": "strike",
+      "energy": 3,
+      "speak": "کو perfect سی وی نہیں چاہیے بس drive چاہیے Leaders پیدا نہیں ہوتے build ہوتے ہیں",
+      "emphasis": [
+        "drive"
+      ],
+      "props": {
+        "wrong": "Perfect CV",
+        "right": "Drive"
+      },
+      "why": "Myth-bust: perfect CV vs drive",
+      "bg": "intense focused face close up"
+    },
+    {
+      "text": "Aur yahi woh jagah hai jahan aap build honge Spots limited hain",
+      "primitive": "verdict",
+      "energy": 3,
+      "speak": "اور یہی وہ جگہ ہے جہاں آپ build ہوں گے Spots limited ہیں",
+      "emphasis": [
+        "limited"
+      ],
+      "props": {
+        "claim": "Spots Open",
+        "verdict": "LIMITED",
+        "good": false
+      },
+      "why": "Urgency stamp for limited spots",
+      "bg": "red alert warning lights"
+    },
+    {
+      "text": "Toh sochna band karein aur abhi apply karein link caption mein hai aur yeh",
+      "primitive": "commentCta",
+      "energy": 3,
+      "speak": "تو سوچنا بند کریں اور ابھی apply کریں link caption میں ہے اور یہ",
+      "emphasis": [
+        "apply"
+      ],
+      "props": {
+        "keyword": "APPLY",
+        "line": "Link in caption"
+      },
+      "why": "Direct engagement CTA for application",
+      "bg": "phone screen link in caption"
+    },
+    {
+      "text": "video is dost ko bhejein jo har society mein sab se aage hota hai",
+      "primitive": "solarSystem",
+      "energy": 2,
+      "speak": "video اس دوست کو بھیجیں جو ہر society میں سب سے آگے ہوتا ہے",
+      "emphasis": [
+        "dost"
+      ],
+      "why": "Final push to share with a friend",
+      "bg": "phone screen share button tap"
+    },
+    {
+      "text": "",
+      "primitive": "outro",
+      "energy": 1,
+      "props": {
+        "cta": "Follow"
+      },
+      "hold": 2.2
+    }
+  ]
+}
