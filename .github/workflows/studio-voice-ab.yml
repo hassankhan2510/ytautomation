@@ -1,0 +1,42 @@
+name: "Studio — Voice A/B (pick the cleanest voice piece by ear)"
+
+# Clones one voice from its 3 most fluent 8 s pieces and speaks the same Urdu lines with each.
+# Download the artifact, listen, and tell Claude which letter (A/B/C) has no 'd'/'b' at line ends.
+run-name: "voice A/B — ${{ inputs.voice }}"
+on:
+  workflow_dispatch:
+    inputs:
+      voice:
+        description: "Voice sample name (file in studio/voice/)"
+        type: choice
+        options: [sabeha, sufyan, pariya, saher, voice_ref]
+        default: sabeha
+
+jobs:
+  ab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: Install CPU PyTorch + OmniVoice
+        run: |
+          pip install torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
+          pip install omnivoice soundfile numpy
+      - name: Speak the test lines from 3 different voice pieces
+        env:
+          VOICE_NAME: ${{ inputs.voice }}
+          PACE: fast
+        run: python scripts/voice_ab.py "$VOICE_NAME"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: voice-ab-${{ inputs.voice }}-run${{ github.run_number }}
+          path: studio/out/voiceab/*.wav
+          retention-days: 14
