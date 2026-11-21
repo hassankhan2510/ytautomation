@@ -112,3 +112,12 @@ guarded, + loudness dynamics, minus hesitation): sabeha 7.6→9.0 st, saher 7.0�
 6.0→7.6 st / 2.5→3.9 dB (sufyan, pariya: short samples, unchanged). Piece keeps natural pauses (only
 >0.35 s shortened). Pause cap inside lines: normal 0.42 / fast 0.32 / turbo 0.22 s. Pace speeds: normal
 1.05, fast 1.12, turbo 1.25. Cache re-keyed (":expr1").
+
+## 2026-11-21 — voice processing RESTORED to the original (creator's call)
+Creator: the d/b only ever happened with Sabeha (added Nov 17; complaints from Nov 18); Sufyan, Pariya and
+the creator's own voice were always fine. Measurements confirm my "creak" detector was not specific (same
+counts on every voice — it catches normal consonants), so the line-end cleanup / pause capping / sample-
+piece selection were treating every voice for one voice's problem. All removed: original 8 s most-fluent
+reference clip, Chatterbox gets the whole sample, no line-end cleanup, no pause squeezing. Kept: Urdu
+punctuation → plain punctuation in the voice text (۔ was read as a letter), quality 32 steps, Pace option.
+Sabeha gets her own fix after an A/B listening test (VOICE_REF_START table, voice_ab workflow).

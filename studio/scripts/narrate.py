@@ -118,7 +118,7 @@ def synth_mine(text):
     # Chatterbox listens to only the first ~6 s of its sample: give it a 4-6 s piece bounded by pauses
     # (the whole file cut at 6 s ended mid-word, and the clone copied the chopped ending).
     # Slightly more expressive + a touch faster than default = Gen-Z explainer pacing.
-    wav = m.generate(text, audio_prompt_path=ref_clip("chatterbox", 4.0, 6.0, 6.0), exaggeration=0.6, cfg_weight=0.4)
+    wav = m.generate(text, audio_prompt_path=REF, exaggeration=0.6, cfg_weight=0.4)
     return to_mono_24k(wav.squeeze().cpu().numpy(), m.sr)
 
 
@@ -138,7 +138,13 @@ def load_omnivoice():
         _omni_lang_arg = next((p for p in ("language", "language_id", "lang") if p in params), None)
         _omni_has_speed = "speed" in params
         globals()["_omni_has_steps"] = "num_step" in params
-        clip = ref_clip("omni", 5.0, 10.0, 8.0)
+        # ORIGINAL reference (restored 2026-11-21 at the creator's request): the most fluent 8 s of the
+        # sample, as it was when every voice sounded right. Per-voice fixes go in VOICE_REF_START below.
+        import subprocess, tempfile
+        clip = os.path.join(tempfile.gettempdir(), "omni_ref_clip.wav")
+        start = VOICE_REF_START.get(os.path.basename(REF)) or most_fluent_window(REF, 8.0)
+        print(f"  reference: 8 s clip starting at {start:.1f}s")
+        subprocess.run(["ffmpeg", "-y", "-v", "error", "-ss", f"{start:.2f}", "-t", "8", "-i", REF, clip], check=True)
         _omni_prompt = _omni.create_voice_clone_prompt(ref_audio=clip) if hasattr(_omni, "create_voice_clone_prompt") else clip
         print(f"  OmniVoice ready (language arg: {_omni_lang_arg})")
     return _omni
@@ -238,6 +244,11 @@ def pause_bounded_window(path, lo=5.0, hi=10.0, target=8.0):
     scored.sort()
     pause_bounded_window.last = scored[0][3:]
     return (scored[0][1], scored[0][2])
+
+
+# Per-voice start of the 8 s reference clip, only for voices whose default clip misbehaves (set after an
+# A/B listening test, never guessed). Empty = every voice uses its most fluent 8 s.
+VOICE_REF_START = {}
 
 
 def most_fluent_window(path, win=8.0):
@@ -631,7 +642,7 @@ def main():
         # tag "raw": the engine's line BEFORE clean_edges (so cleanup improvements never need re-synthesis);
         # tag "edges2": older caches, stored already cleaned once (cleaned again on top: harmless)
         import hashlib
-        rid = ref_id + (":expr1" if ("omni" in eng_name or "mine" in eng_name) else "")  # new reference piece -> new voice lines
+        rid = ref_id + (":orig8" if "omni" in eng_name else "")  # restored original reference clip
         h = hashlib.sha1(f"{eng_name}|{rid}|{SPEED}|{os.environ.get('VOICE_STEPS', '32')}|{tag}|{text}".encode("utf-8")).hexdigest()[:20]
         return os.path.join(cache_dir, f"{h}.npy") if cache_dir else None
 
@@ -646,11 +657,7 @@ def main():
         if cp and not os.path.exists(cp):
             cp = cache_path(engines[0].__name__, text, "edges2")
         if cp and os.path.exists(cp):
-            wav, cut, pulses = clean_edges(np.load(cp))
-            wav, squeezed = tighten(wav)
-            pause_cut.append(squeezed)
-            if cut > 0.02 or pulses:
-                tail_fix.append((cut, pulses))
+            wav = np.load(cp)
             segments.append(wav)
             used = used or engines[0].__name__
             hits += 1
@@ -679,18 +686,12 @@ def main():
         cpu = cache_path(used or engines[0].__name__, text)
         if cpu and (used or engines[0].__name__) == engines[0].__name__:  # only cache the primary voice
             np.save(cpu, wav.astype(np.float32))  # raw: cleaned below, every run
-        wav, cut, pulses = clean_edges(wav)
-        wav, squeezed = tighten(wav)
-        pause_cut.append(squeezed)
-        if cut > 0.02 or pulses:
-            tail_fix.append((cut, pulses))
         segments.append(wav)
         print(f"  beat {i + 1}/{len(job['beats'])}: {len(wav) / SR:4.1f}s  {text[:70]}")
     if cache_dir:
         spoken = sum(1 for b in job["beats"] if (b.get("speak") or b.get("text", "")).strip())
         print(f"  voice cache: {hits}/{spoken} spoken lines reused, {spoken - hits} synthesised")
     print(f"  pace: {PACE} (voice speed {SPEED:.2f}, pauses x{GAP_SCALE})")
-    print(f"  long pauses inside lines shortened: {sum(1 for x in pause_cut if x > 0)} lines · {sum(pause_cut):.1f}s of dead air removed (max pause {MAX_PAUSE.get(PACE, 0.16):.2f}s)")
     if tail_fix:
         print(f"  line endings cleaned: {len(tail_fix)} lines · {sum(c for c, _ in tail_fix):.2f}s of trailing creak cut · "
               f"{sum(p for _, p in tail_fix)} line endings softened")
